@@ -52,13 +52,13 @@
   }
 
   p {
-    clear: left;
-    padding: 30, 0, 10, 0;
+    margin: 1em;
+    text-wrap: pretty;
   }
 
   button {
     clear: bottom;
-    margin: 10px;
+    margin: 5px;
   }
 
   hr {
@@ -78,24 +78,30 @@
     margin: 20px;
     color: @primary;
   }
-}
 
-textarea {
-  background: @primary-bg;
-  border: none;
-  outline: none;
-  color: @primary-disabled;
-
-  &.json {
-    display:block;
-    width:100%;
-    min-height: 10em;
-    resize: vertical;
-    user-select: text;
-    margin:1em 0;
+  input {
+    width: 6%;
+    margin: 5px;
+    text-align: center;
   }
-}
 
-.dismiss {
-  background-color: @primary-bg;
+  textarea {
+    background: @primary-bg;
+    border: none;
+    outline: none;
+    color: @primary-disabled;
+
+    &.json {
+      display:block;
+      width:100%;
+      min-height: 10em;
+      resize: vertical;
+      user-select: text;
+      margin:1em 0;
+    }
+  }
+
+  .dismiss {
+    background-color: @primary-bg;
+  }
 }
