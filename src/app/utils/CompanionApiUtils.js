@@ -38,6 +38,7 @@ export const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
   'SideWinder': 'sidewinder',
   'Type6': 'type_6_transporter',
   'Type7': 'type_7_transport',
+  'Type8': 'type_8_transport',
   'Type9': 'type_9_heavy',
   'Type9_Military': 'type_10_defender',
   'TypeX': 'alliance_chieftain',
