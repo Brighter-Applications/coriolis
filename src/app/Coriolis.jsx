@@ -70,7 +70,6 @@ export default class Coriolis extends React.Component {
       page: null,
       // Announcements must have an expiry date in format "YYYY-MM-DDTHH:MM:SSZ"
       announcements: [{expiry: "2024-11-30T00:00:00Z", text: "31/10/2024: Mandalay added to the shipyard"}], //{expiry: "2024-12-06T00:00:00Z", text: "05/11/2024: Concord Cannon added to the outfitting"}],
-
       language: getLanguage(Persist.getLangCode()),
       route: {},
       sizeRatio: Persist.getSizeRatio()
