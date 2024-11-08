@@ -68,7 +68,7 @@ export default class Coriolis extends React.Component {
     this.state = {
       noTouch: !('ontouchstart' in window || navigator.msMaxTouchPoints || navigator.maxTouchPoints),
       page: null,
-      announcements: [{expiry: "31-08-2024", text: "25/08/2024: Type 8 Transporter added to the shipyard"}],
+      announcements: [{expiry: "2024-11-30T00:00:00Z", text: "25/08/2024: Type 8 Transporter added to the shipyard"}, {expiry: "2024-12-06T00:00:00Z", text: "05/11/2024: Concord Cannon added to outfitting"}],
       language: getLanguage(Persist.getLangCode()),
       route: {},
       sizeRatio: Persist.getSizeRatio()
