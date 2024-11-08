@@ -388,9 +388,11 @@ export default class Header extends TranslatedComponent {
     if (this.props.announcements) {
       announcements = [];
       for (let announce of this.props.announcements) {
-        if (announce.expiry < Date.now()) {
+        // Announcement has expired, skip it
+        if (Date.now() > Date.parse(announce.expiry)) {
           continue;
         }
+        // Add announcements which have not expired to the menu
         announcements.push(<Announcement text={announce.text} />);
         announcements.push(<hr/>);
       }
@@ -398,7 +400,6 @@ export default class Header extends TranslatedComponent {
     return (
       <div className='menu-list' onClick={ (e) => e.stopPropagation() } style={{ whiteSpace: 'nowrap' }}>
         {announcements}
-        <hr />
       </div>
     );
   }
