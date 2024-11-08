@@ -52,7 +52,8 @@ export default class ShipSummaryTable extends TranslatedComponent {
     const boostTooltip = canBoost ? 'TT_SUMMARY_BOOST' : canThrust ? 'TT_SUMMARY_BOOST_NONFUNCTIONAL' : 'TT_SUMMARY_SPEED_NONFUNCTIONAL';
     const canJump = ship.getSlotStatus(ship.standard[2]) == 3;
     const sgMetrics = Calc.shieldMetrics(ship, pips.sys);
-    const shipBoost = canBoost ?  Calc.calcBoost(ship) : 'No Boost';
+    const distBoost = canBoost ?  Calc.calcBoost(ship) : 'No Boost';
+    //const shipBoost = ship.boostInterval(ship)
     const restingHeat = Math.sqrt(((ship.standard[0].m.pgen * ship.standard[0].m.eff) / ship.heatCapacity) / 0.2);
     const armourMetrics = Calc.armourMetrics(ship);
     let shieldColour = 'blue';
@@ -72,6 +73,7 @@ export default class ShipSummaryTable extends TranslatedComponent {
               <tr className='main'>
                 <th rowSpan={2} className={ cn({ 'bg-warning-disabled': !canThrust }) }>{translate('speed')}</th>
                 <th rowSpan={2} className={ cn({ 'bg-warning-disabled': !canBoost }) }>{translate('boost')}</th>
+                <th onMouseEnter={termtip.bind(null, 'TT_SUMMARY_BOOST_INTERVALS', { cap: 0 })}colSpan={2} className={ cn({ 'bg-warning-disabled': !canBoost }) }>{translate('boost int')}</th>
                 <th colSpan={5} className={ cn({ 'bg-warning-disabled': !canJump }) }>{translate('jump range')}</th>
                 <th rowSpan={2}>{translate('shield')}</th>
                 <th rowSpan={2}>{translate('integrity')}</th>
@@ -86,10 +88,11 @@ export default class ShipSummaryTable extends TranslatedComponent {
                 <th onMouseEnter={termtip.bind(null, 'hull hardness', { cap: 0 })} onMouseLeave={hide} rowSpan={2}>{translate('hrd')}</th>
                 <th rowSpan={2}>{translate('crew')}</th>
                 <th onMouseEnter={termtip.bind(null, 'mass lock factor', { cap: 0 })} onMouseLeave={hide} rowSpan={2}>{translate('MLF')}</th>
-                <th onMouseEnter={termtip.bind(null, 'TT_SUMMARY_BOOST_INTERVAL', { cap: 0 })} onMouseLeave={hide} rowSpan={2}>{translate('boost interval')}</th>
                 <th rowSpan={2}>{translate('resting heat (Beta)')}</th>
               </tr>
               <tr>
+                <th onMouseEnter={termtip.bind(null, 'TT_SUMMARY_BOOST_INTERVAL', { cap: 0 })} onMouseLeave={hide}>{translate('distro')}</th>
+                <th onMouseEnter={termtip.bind(null, 'TT_SUMMARY_SHIP_BOOST_INTERVAL', { cap: 0 })} onMouseLeave={hide}>{translate('ship')}</th>
                 <th className={ cn({ 'lft': true, 'bg-warning-disabled': !canJump }) }>{translate('max')}</th>
                 <th className={ cn({ 'bg-warning-disabled': !canJump }) }>{translate('unladen')}</th>
                 <th className={ cn({ 'bg-warning-disabled': !canJump }) }>{translate('laden')}</th>
@@ -104,6 +107,8 @@ export default class ShipSummaryTable extends TranslatedComponent {
               <tr>
                 <td onMouseEnter={termtip.bind(null, speedTooltip, { cap: 0 })} onMouseLeave={hide}>{ canThrust ? <span>{int(ship.calcSpeed(4, ship.fuelCapacity, 0, false))}{u['m/s']}</span> : <span className='warning'>0 <Warning/></span> }</td>
                 <td onMouseEnter={termtip.bind(null, boostTooltip, { cap: 0 })} onMouseLeave={hide}>{ canBoost ? <span>{int(ship.calcSpeed(4, ship.fuelCapacity, 0, true))}{u['m/s']}</span> : <span className='warning'>0 <Warning/></span> }</td>
+                <td>{distBoost !== 'No Boost' ? formats.time(distBoost) : 'No Boost'}</td>
+                <td>{ship.boostInt && ship.boostInt !== 'undefined' ? formats.time(ship.boostInt) : 0 }</td>
                 <td onMouseEnter={termtip.bind(null, 'TT_SUMMARY_MAX_SINGLE_JUMP', { cap: 0 })} onMouseLeave={hide}>{ canJump ? <span>{ f2(Calc.jumpRange(ship.unladenMass + ship.standard[2].m.getMaxFuelPerJump(), ship.standard[2].m, ship.standard[2].m.getMaxFuelPerJump(), ship))}{u.LY}</span> : <span className='warning'>0 <Warning/></span> }</td>
                 <td onMouseEnter={termtip.bind(null, 'TT_SUMMARY_UNLADEN_SINGLE_JUMP', { cap: 0 })} onMouseLeave={hide}>{ canJump ? <span>{f2(Calc.jumpRange(ship.unladenMass + ship.fuelCapacity, ship.standard[2].m, ship.fuelCapacity, ship))}{u.LY}</span> : <span className='warning'>0 <Warning/></span> }</td>
                 <td onMouseEnter={termtip.bind(null, 'TT_SUMMARY_LADEN_SINGLE_JUMP', { cap: 0 })} onMouseLeave={hide}>{ canJump ? <span>{f2(Calc.jumpRange(ship.unladenMass + ship.fuelCapacity + ship.cargoCapacity, ship.standard[2].m, ship.fuelCapacity, ship))}{u.LY}</span> : <span className='warning'>0 <Warning/></span> }</td>
@@ -124,7 +129,6 @@ export default class ShipSummaryTable extends TranslatedComponent {
                 <td>{int(ship.hardness)}</td>
                 <td>{ship.crew}</td>
                 <td>{ship.masslock}</td>
-                <td>{shipBoost !== 'No Boost' ? formats.time(shipBoost) : 'No Boost'}</td>
                 <td>{formats.pct(restingHeat)}</td>
               </tr>
             </tbody>
