@@ -125,15 +125,32 @@ export default class PowerManagement extends TranslatedComponent {
           retractedElem = <td className='ptr disabled upp' colSpan='2' onClick={toggleEnabled}>{translate('disabled')}</td>;
         }
 
+        // If this is a Guardian Shield Reinforcement Package or Guardian Hull Reinforcement Package, or Guardian Module Reinforcement Package, it cannot change priority
+        console.log(slot);
+        let priorityField;
+        if (m.symbol) {
+          if (m.symbol.match(/GuardianShield/i) || m.symbol.match(/GuardianHull/i) || m.symbol.match(/GuardianModule/i)) {
+            priorityField = <td>1</td>;
+          } else {
+            priorityField = <td>
+            <span className='flip ptr btn' onClick={this._priority.bind(this, slot, -1)}>&#9658;</span>
+            {' ' + (slot.priority + 1) + ' '}
+            <span className='ptr btn' onClick={this._priority.bind(this, slot, 1)}>&#9658;</span>
+          </td>;
+          }
+        }
+        else {
+          priorityField = <td>
+          <span className='flip ptr btn' onClick={this._priority.bind(this, slot, -1)}>&#9658;</span>
+          {' ' + (slot.priority + 1) + ' '}
+          <span className='ptr btn' onClick={this._priority.bind(this, slot, 1)}>&#9658;</span>
+        </td>;
+        }
         powerRows.push(<tr key={i} className={cn('highlight', { disabled: !slot.enabled })}>
           <td className='ptr' style={{ width: '1em' }} onClick={toggleEnabled}>{m.class + m.rating}</td>
           <td className='ptr le shorten cap' onClick={toggleEnabled}>{slotName(translate, slot)}</td>
           <td className='ptr' onClick={toggleEnabled}><u>{translate(slot.type)}</u></td>
-          <td>
-            <span className='flip ptr btn' onClick={this._priority.bind(this, slot, -1)}>&#9658;</span>
-            {' ' + (slot.priority + 1) + ' '}
-            <span className='ptr btn' onClick={this._priority.bind(this, slot, 1)}>&#9658;</span>
-          </td>
+          {priorityField}
           <td className='ri ptr' style={{ width: '3.25em' }} onClick={toggleEnabled}>{pwr(m.getPowerUsage())}</td>
           <td className='ri ptr' style={{ width: '3em' }} onClick={toggleEnabled}><u>{pct(m.getPowerUsage() / ship.powerAvailable)}</u></td>
           {retractedElem}
