@@ -57,6 +57,7 @@ export default class ModificationsMenu extends TranslatedComponent {
     this.modValDidChange = false; // used to determine if component update was caused by change in modification value.
     this._handleModChange = this._handleModChange.bind(this);
 
+    // console.log(props.m.blueprint)
     this.state = {
       blueprintMenuOpened: !(props.m.blueprint && props.m.blueprint.name),
       specialMenuOpened: false
@@ -421,15 +422,28 @@ export default class ModificationsMenu extends TranslatedComponent {
     let haveBlueprint = false;
     let blueprintTt;
     let blueprintCv;
+
+    // Set the bprintSearchName value to the fdname of the blueprint for this module
+    let bprintSearchName = m.blueprint.fdname;
+    // If the fdname is Weapon_Overcharged, we need to check if it's an MC
+    if (m.blueprint.fdname === 'Weapon_Overcharged') {
+      // If the module is a MultiCannon, we need to fix the blueprint search name, else it will find the Laser Weapon_Overcharged Blueprint and not the MC Weapon_Overcharged Blueprint
+      if (m.symbol.match(/MultiCannon/i)) {
+        // console.log(Modifications.modules[m.grp].blueprints['MC_Overcharged']);
+        // console.log(m.blueprint.fdname);
+        bprintSearchName = 'MC_Overcharged';
+      }
+    }
     // TODO: Fix this to actually find the correct blueprint.
-    if (!m.blueprint || !m.blueprint.name || !m.blueprint.fdname || !Modifications.modules[m.grp].blueprints || !Modifications.modules[m.grp].blueprints[m.blueprint.fdname]) {
+    if (!m.blueprint || !m.blueprint.name || !m.blueprint.fdname || !Modifications.modules[m.grp].blueprints || !Modifications.modules[m.grp].blueprints[bprintSearchName]) {
       this.props.ship.clearModuleBlueprint(m);
       this.props.ship.clearModuleSpecial(m);
     }
-    if (m.blueprint && m.blueprint.name && Modifications.modules[m.grp].blueprints[m.blueprint.fdname].grades[m.blueprint.grade]) {
+    if (m.blueprint && m.blueprint.name && Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade]) {
       blueprintLabel = translate(m.blueprint.name) + ' ' + translate('grade') + ' ' + m.blueprint.grade;
       haveBlueprint = true;
-      blueprintTt  = blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], Modifications.modules[m.grp].blueprints[m.blueprint.fdname].grades[m.blueprint.grade].engineers, m.grp);
+      // console.log(haveBlueprint);
+      blueprintTt  = blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade].engineers, m.grp);
       blueprintCv = getPercent(m);
     }
 

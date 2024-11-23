@@ -117,7 +117,7 @@ export function shipFromLoadoutJSON(json) {
         let powerplant = _moduleFromFdName(module.Item);
         // Check the powerplant returned is valid
         if (!_isValidImportedModule(powerplant, 'powerplant'))
-        { 
+        {
           powerplant = _moduleFromFdName('Int_Missing_Powerplant');
           module.Engineering = null;
         }
@@ -130,7 +130,7 @@ export function shipFromLoadoutJSON(json) {
         let thrusters = _moduleFromFdName(module.Item);
         // Check the thrusters returned is valid
         if (!_isValidImportedModule(thrusters, 'thrusters'))
-        { 
+        {
           thrusters = _moduleFromFdName('Int_Missing_Engine');
           module.Engineering = null;
         }
@@ -143,7 +143,7 @@ export function shipFromLoadoutJSON(json) {
         let frameshiftdrive = _moduleFromFdName(module.Item);
         // Check the frameshiftdrive returned is valid
         if (!_isValidImportedModule(frameshiftdrive, 'frameshiftdrive'))
-        { 
+        {
           frameshiftdrive = _moduleFromFdName('Int_Missing_Hyperdrive');
           module.Engineering = null;
         }
@@ -156,7 +156,7 @@ export function shipFromLoadoutJSON(json) {
         let lifesupport = _moduleFromFdName(module.Item);
         // Check the lifesupport returned is valid
         if (!_isValidImportedModule(lifesupport, 'lifesupport'))
-        { 
+        {
           lifesupport = _moduleFromFdName('Int_Missing_LifeSupport');
           module.Engineering = null;
         }
@@ -169,8 +169,8 @@ export function shipFromLoadoutJSON(json) {
         let powerdistributor = _moduleFromFdName(module.Item);
         // Check the powerdistributor returned is valid
         if (!_isValidImportedModule(powerdistributor, 'powerdistributor'))
-        { 
-          powerdistributor = _moduleFromFdName('Int_Missing_PowerDistributor'); 
+        {
+          powerdistributor = _moduleFromFdName('Int_Missing_PowerDistributor');
           module.Engineering = null;
         }
         ship.use(ship.standard[4], powerdistributor, true);
@@ -182,7 +182,7 @@ export function shipFromLoadoutJSON(json) {
         let sensors = _moduleFromFdName(module.Item);
         // Check the sensors returned is valid
         if (!_isValidImportedModule(sensors, 'sensors'))
-        { 
+        {
           sensors = _moduleFromFdName('Int_Missing_Sensors');
           module.Engineering = null;
         }
@@ -195,7 +195,7 @@ export function shipFromLoadoutJSON(json) {
         let fueltank = _moduleFromFdName(module.Item);
         // Check the fueltank returned is valid
         if (!_isValidImportedModule(fueltank, 'fueltank'))
-        { 
+        {
           fueltank = _moduleFromFdName('Int_Missing_FuelTank');
         }
         ship.use(ship.standard[6], fueltank, true);
@@ -228,7 +228,7 @@ export function shipFromLoadoutJSON(json) {
         } else {
           hardpoint = _moduleFromFdName(hardpointSlot.Item);
           // Check the hardpoint module returned is valid
-          if (!_isValidImportedModule(hardpoint, 'hardpoint')){ 
+          if (!_isValidImportedModule(hardpoint, 'hardpoint')){
             // Check if it's a Utility or Hardpoint
             if (hardpointSlot.Slot.toLowerCase().search(/tiny/))
             {
@@ -293,12 +293,12 @@ export function shipFromLoadoutJSON(json) {
       let internal = _moduleFromFdName(internalJson.Item);
       // Check the internal module returned is valid
       if (!_isValidImportedModule(internal, 'internal'))
-      { 
+      {
         internal = _moduleFromFdName('Int_Missing_Module');
         ship.use(ship.internal[i], internal, true);
         ship.internal[i].enabled = internalJson.On === true;
         ship.internal[i].priority = internalJson.Priority;
-        //throw 'Unknown internal module: "' + module.Item + '"'; 
+        //throw 'Unknown internal module: "' + module.Item + '"';
       }
       else {
         ship.use(ship.internal[i], internal, true);
@@ -349,6 +349,7 @@ function _addModifications(module, modifiers, quality, blueprint, grade, special
   // Add the blueprint definition, grade and special
   if (blueprint) {
     module.blueprint = getBlueprint(blueprint, module);
+
     if (grade) {
       module.blueprint.grade = Number(grade);
     }
