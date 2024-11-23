@@ -429,8 +429,8 @@ export default class ModificationsMenu extends TranslatedComponent {
     if (m.blueprint.fdname === 'Weapon_Overcharged') {
       // If the module is a MultiCannon, we need to fix the blueprint search name, else it will find the Laser Weapon_Overcharged Blueprint and not the MC Weapon_Overcharged Blueprint
       if (m.symbol.match(/MultiCannon/i)) {
-        console.log(Modifications.modules[m.grp].blueprints['MC_Overcharged']);
-        console.log(m.blueprint.fdname);
+        // console.log(Modifications.modules[m.grp].blueprints['MC_Overcharged']);
+        // console.log(m.blueprint.fdname);
         bprintSearchName = 'MC_Overcharged';
       }
     }
@@ -442,7 +442,7 @@ export default class ModificationsMenu extends TranslatedComponent {
     if (m.blueprint && m.blueprint.name && Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade]) {
       blueprintLabel = translate(m.blueprint.name) + ' ' + translate('grade') + ' ' + m.blueprint.grade;
       haveBlueprint = true;
-      console.log(haveBlueprint);
+      // console.log(haveBlueprint);
       blueprintTt  = blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade].engineers, m.grp);
       blueprintCv = getPercent(m);
     }
