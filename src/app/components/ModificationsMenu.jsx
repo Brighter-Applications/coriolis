@@ -422,16 +422,19 @@ export default class ModificationsMenu extends TranslatedComponent {
     let haveBlueprint = false;
     let blueprintTt;
     let blueprintCv;
+    let bprintSearchName;
 
-    // Set the bprintSearchName value to the fdname of the blueprint for this module
-    let bprintSearchName = m.blueprint.fdname;
     // If the fdname is Weapon_Overcharged, we need to check if it's an MC
-    if (m.blueprint.fdname === 'Weapon_Overcharged') {
-      // If the module is a MultiCannon, we need to fix the blueprint search name, else it will find the Laser Weapon_Overcharged Blueprint and not the MC Weapon_Overcharged Blueprint
-      if (m.symbol.match(/MultiCannon/i)) {
-        // console.log(Modifications.modules[m.grp].blueprints['MC_Overcharged']);
-        // console.log(m.blueprint.fdname);
-        bprintSearchName = 'MC_Overcharged';
+    if (m.blueprint && m.blueprint.fdname) {
+      // Set the bprintSearchName value to the fdname of the blueprint for this module
+      bprintSearchName = m.blueprint.fdname;
+      if (m.blueprint.fdname === 'Weapon_Overcharged') {
+        // If the module is a MultiCannon, we need to fix the blueprint search name, else it will find the Laser Weapon_Overcharged Blueprint and not the MC Weapon_Overcharged Blueprint
+        if (m.symbol.match(/MultiCannon/i)) {
+          // console.log(Modifications.modules[m.grp].blueprints['MC_Overcharged']);
+          // console.log(m.blueprint.fdname);
+          bprintSearchName = 'MC_Overcharged';
+        }
       }
     }
     // TODO: Fix this to actually find the correct blueprint.
