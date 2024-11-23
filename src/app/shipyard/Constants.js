@@ -25,7 +25,6 @@ export const ModuleGroupToName = {
   pd: 'Power Distributor',
   s: 'Sensors',
   ft: 'Fuel Tank',
-  pas: 'Planetary Approach Suite',
 
   // Internal
   fs: 'Fuel Scoop',
@@ -60,6 +59,7 @@ export const ModuleGroupToName = {
   sua: 'Supercruise Assist',
   mlc: "Multi Limpet Controller",
   rpl: "Repair Limpet Controller",
+  pas: 'Planetary Approach Suite',
 
   // Hard Points
   bl: 'Beam Laser',
@@ -77,11 +77,15 @@ export const ModuleGroupToName = {
   nl: 'Mine Launcher',
   ml: 'Mining Laser',
   mr: 'Missile Rack',
+  amr: 'Missile Rack (Advanced)',
   axmr: 'AX Missile Rack',
+  axmre: 'AX Missile Rack (Enhanced)',
   pa: 'Plasma Accelerator',
   po: 'Point Defence',
   mc: 'Multi-cannon',
+  advmc: 'Multi-cannon (Advanced)',
   axmc: 'AX Multi-cannon',
+  axmce: 'AX Multi-cannon (Enhanced)',
   pl: 'Pulse Laser',
   rg: 'Rail Gun',
   sb: 'Shield Booster',

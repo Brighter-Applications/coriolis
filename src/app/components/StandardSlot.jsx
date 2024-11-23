@@ -93,6 +93,11 @@ export default class StandardSlot extends TranslatedComponent {
       this._modificationsSelected = false;
     }
 
+    // If this is a missing module, therefore has the 'info' field, set the warning value on the module to be true when loaded.
+    if (m.info) {
+      warning = () => true;
+    }
+
     const modificationsMarker = JSON.stringify(m);
 
     if (selected) {
@@ -124,14 +129,14 @@ export default class StandardSlot extends TranslatedComponent {
         <div className={cn('details-container', { warning: warning && warning(slot.m), disabled: m.grp !== 'bh' && !slot.enabled })}>
           <div className={'sz'}>{m.grp == 'bh' ? m.name.charAt(0) : slot.maxClass}</div>
           <div>
-            <div className={'l'}>{classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='r' onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified /></span> : null }</div>
+            <div className={'l'}>{classRating} {m.getInfo() ? translate(m.ukName) : translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='r' onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified /></span> : null }</div>
             <div className={'r'}>{formats.round(mass)}{units.T}</div>
 	    <div/>
             <div className={'cb'}>
-                { m.getMinMass() ? <div className='l'>{translate('minimum mass')}: {formats.int(m.getMinMass())}{units.T}</div> : null }
-                { m.getOptMass() ? <div className='l'>{translate('optimal mass')}: {formats.int(m.getOptMass())}{units.T}</div> : null }
-                { m.getMaxMass() ? <div className='l'>{translate('max mass')}: {formats.int(m.getMaxMass())}{units.T}</div> : null }
-                { m.getOptMul() ? <div className='l'>{translate('optimal multiplier')}: {formats.rPct(m.getOptMul())}</div> : null }
+                { m.getMinMass() ? <div className='l'>{translate('minmass')}: {formats.int(m.getMinMass())}{units.T}</div> : null }
+                { m.getOptMass() ? <div className='l'>{translate('optmass')}: {formats.int(m.getOptMass())}{units.T}</div> : null }
+                { m.getMaxMass() ? <div className='l'>{translate('maxmass')}: {formats.int(m.getMaxMass())}{units.T}</div> : null }
+                { m.getOptMul() ? <div className='l'>{translate('optmul')}: {formats.rPct(m.getOptMul())}</div> : null }
                 { m.getRange() ? <div className='l'>{translate('range', m.grp)}: {formats.f2(m.getRange())}{units.km}</div> : null }
                 { m.time ? <div className='l'>{translate('time')}: {formats.time(m.time)}</div> : null }
                 { m.getThermalEfficiency() ? <div className='l'>{translate('efficiency')}: {formats.f2(m.getThermalEfficiency())}</div> : null }
@@ -144,7 +149,8 @@ export default class StandardSlot extends TranslatedComponent {
                 { showModuleResistances && m.getKineticResistance() ? <div className='l'>{translate('kinres')}: {formats.pct(m.getKineticResistance())}</div> : null }
                 { showModuleResistances && m.getThermalResistance() ? <div className='l'>{translate('thermres')}: {formats.pct(m.getThermalResistance())}</div> : null }
                 { m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null }
-	        { validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button  tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
+                { m.getInfo() ? <div className='l'>{translate(m.getInfo())}</div> : null }
+	        { m.getInfo() ? <div className='r'></div> : validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button  tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
             </div>
           </div>
         </div>

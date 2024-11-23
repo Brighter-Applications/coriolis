@@ -7,6 +7,22 @@ import { Modifications } from 'coriolis-data/dist';
 import { getBlueprint, setQualityCB } from './BlueprintFunctions';
 
 /**
+ * Check if an imported module is valid
+ * @param {Object} module the module to check
+ * @param {Object} moduleType the type of module to check
+ * @return {boolean} true if the module is valid
+ */
+function _isValidImportedModule(module, moduleType) {
+  // First of all, has the _moduleFromFdName function returned 'null'?
+  if (!module){
+    return false
+  }
+  else {
+    return true
+  }
+}
+
+/**
  * Obtain a module given its FD Name
  * @param {string} fdname the FD Name of the module
  * @return {Module} the module
@@ -98,49 +114,90 @@ export function shipFromLoadoutJSON(json) {
         if (module.Engineering) _addModifications(ship.bulkheads.m, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'powerplant':
-        const powerplant = _moduleFromFdName(module.Item);
+        let powerplant = _moduleFromFdName(module.Item);
+        // Check the powerplant returned is valid
+        if (!_isValidImportedModule(powerplant, 'powerplant'))
+        {
+          powerplant = _moduleFromFdName('Int_Missing_Powerplant');
+          module.Engineering = null;
+        }
         ship.use(ship.standard[0], powerplant, true);
         ship.standard[0].enabled = module.On;
         ship.standard[0].priority = module.Priority;
         if (module.Engineering) _addModifications(powerplant, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'mainengines':
-        const thrusters = _moduleFromFdName(module.Item);
+        let thrusters = _moduleFromFdName(module.Item);
+        // Check the thrusters returned is valid
+        if (!_isValidImportedModule(thrusters, 'thrusters'))
+        {
+          thrusters = _moduleFromFdName('Int_Missing_Engine');
+          module.Engineering = null;
+        }
         ship.use(ship.standard[1], thrusters, true);
         ship.standard[1].enabled = module.On;
         ship.standard[1].priority = module.Priority;
         if (module.Engineering) _addModifications(thrusters, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'frameshiftdrive':
-        const frameshiftdrive = _moduleFromFdName(module.Item);
+        let frameshiftdrive = _moduleFromFdName(module.Item);
+        // Check the frameshiftdrive returned is valid
+        if (!_isValidImportedModule(frameshiftdrive, 'frameshiftdrive'))
+        {
+          frameshiftdrive = _moduleFromFdName('Int_Missing_Hyperdrive');
+          module.Engineering = null;
+        }
         ship.use(ship.standard[2], frameshiftdrive, true);
         ship.standard[2].enabled = module.On;
         ship.standard[2].priority = module.Priority;
         if (module.Engineering)  _addModifications(frameshiftdrive, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'lifesupport':
-        const lifesupport = _moduleFromFdName(module.Item);
+        let lifesupport = _moduleFromFdName(module.Item);
+        // Check the lifesupport returned is valid
+        if (!_isValidImportedModule(lifesupport, 'lifesupport'))
+        {
+          lifesupport = _moduleFromFdName('Int_Missing_LifeSupport');
+          module.Engineering = null;
+        }
         ship.use(ship.standard[3], lifesupport, true);
         ship.standard[3].enabled = module.On === true;
         ship.standard[3].priority = module.Priority;
         if (module.Engineering) _addModifications(lifesupport, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'powerdistributor':
-        const powerdistributor = _moduleFromFdName(module.Item);
+        let powerdistributor = _moduleFromFdName(module.Item);
+        // Check the powerdistributor returned is valid
+        if (!_isValidImportedModule(powerdistributor, 'powerdistributor'))
+        {
+          powerdistributor = _moduleFromFdName('Int_Missing_PowerDistributor');
+          module.Engineering = null;
+        }
         ship.use(ship.standard[4], powerdistributor, true);
         ship.standard[4].enabled = module.On;
         ship.standard[4].priority = module.Priority;
         if (module.Engineering) _addModifications(powerdistributor, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'radar':
-        const sensors = _moduleFromFdName(module.Item);
+        let sensors = _moduleFromFdName(module.Item);
+        // Check the sensors returned is valid
+        if (!_isValidImportedModule(sensors, 'sensors'))
+        {
+          sensors = _moduleFromFdName('Int_Missing_Sensors');
+          module.Engineering = null;
+        }
         ship.use(ship.standard[5], sensors, true);
         ship.standard[5].enabled = module.On;
         ship.standard[5].priority = module.Priority;
         if (module.Engineering) _addModifications(sensors, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'fueltank':
-        const fueltank = _moduleFromFdName(module.Item);
+        let fueltank = _moduleFromFdName(module.Item);
+        // Check the fueltank returned is valid
+        if (!_isValidImportedModule(fueltank, 'fueltank'))
+        {
+          fueltank = _moduleFromFdName('Int_Missing_FuelTank');
+        }
         ship.use(ship.standard[6], fueltank, true);
         ship.standard[6].enabled = true;
         ship.standard[6].priority = 0;
@@ -170,10 +227,27 @@ export function shipFromLoadoutJSON(json) {
           // This can happen with old imports that don't contain new hardpoints
         } else {
           hardpoint = _moduleFromFdName(hardpointSlot.Item);
-          ship.use(ship.hardpoints[hardpointArrayNum], hardpoint, true);
-          ship.hardpoints[hardpointArrayNum].enabled = hardpointSlot.On;
-          ship.hardpoints[hardpointArrayNum].priority = hardpointSlot.Priority;
-          modsToAdd.push({ coriolisMod: hardpoint, json: hardpointSlot });
+          // Check the hardpoint module returned is valid
+          if (!_isValidImportedModule(hardpoint, 'hardpoint')){
+            // Check if it's a Utility or Hardpoint
+            if (hardpointSlot.Slot.toLowerCase().search(/tiny/))
+            {
+              // Use the missing_hardpoint module 'Missing Hardpoint' which will inform the user that the module is missing
+              hardpoint = _moduleFromFdName('Hpt_Missing_Hardpoint');
+            }
+            else {
+              // Use the missing_hardpoint module 'Missing Utility' which will inform the user that the module is missing
+              hardpoint = _moduleFromFdName('Hpt_Missing_Utility');
+            }
+            ship.use(ship.hardpoints[hardpointArrayNum], hardpoint, true);
+            ship.hardpoints[hardpointArrayNum].enabled = hardpointSlot.On;
+            ship.hardpoints[hardpointArrayNum].priority = hardpointSlot.Priority;
+          } else {
+            ship.use(ship.hardpoints[hardpointArrayNum], hardpoint, true);
+            ship.hardpoints[hardpointArrayNum].enabled = hardpointSlot.On;
+            ship.hardpoints[hardpointArrayNum].priority = hardpointSlot.Priority;
+            modsToAdd.push({ coriolisMod: hardpoint, json: hardpointSlot });
+          }
         }
         hardpointArrayNum++;
       }
@@ -187,13 +261,17 @@ export function shipFromLoadoutJSON(json) {
       continue;
     }
     const isMilitary = isNaN(shipTemplate.slots.internal[i]) ? shipTemplate.slots.internal[i].name == 'Military' : false;
+    const isPlanetary = isNaN(shipTemplate.slots.internal[i]) ? shipTemplate.slots.internal[i].name == 'PlanetaryApproachSuite' : false;
 
-    // The internal slot might be a standard or a military slot.  Military slots have a different naming system
+    // The internal slot might be a standard or a military slot, or a planetary slot.  Military and Planetary slots have a different naming system
     let internalSlot = null;
     if (isMilitary) {
       const internalName = 'Military0' + militarySlotNum;
       internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
       militarySlotNum++;
+    } else if (isPlanetary) {
+      const internalName = 'PlanetaryApproachSuite';
+      internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
     } else {
       // Slot numbers are not contiguous so handle skips.
       for (; internalSlot === null && internalSlotNum < 99; internalSlotNum++) {
@@ -212,11 +290,22 @@ export function shipFromLoadoutJSON(json) {
       // This can happen with old imports that don't contain new slots
     } else {
       const internalJson = internalSlot;
-      const internal = _moduleFromFdName(internalJson.Item);
-      ship.use(ship.internal[i], internal, true);
-      ship.internal[i].enabled = internalJson.On === true;
-      ship.internal[i].priority = internalJson.Priority;
-      modsToAdd.push({ coriolisMod: internal, json: internalSlot });
+      let internal = _moduleFromFdName(internalJson.Item);
+      // Check the internal module returned is valid
+      if (!_isValidImportedModule(internal, 'internal'))
+      {
+        internal = _moduleFromFdName('Int_Missing_Module');
+        ship.use(ship.internal[i], internal, true);
+        ship.internal[i].enabled = internalJson.On === true;
+        ship.internal[i].priority = internalJson.Priority;
+        //throw 'Unknown internal module: "' + module.Item + '"';
+      }
+      else {
+        ship.use(ship.internal[i], internal, true);
+        ship.internal[i].enabled = internalJson.On === true;
+        ship.internal[i].priority = internalJson.Priority;
+        modsToAdd.push({ coriolisMod: internal, json: internalSlot });
+      }
     }
   }
 
@@ -260,6 +349,7 @@ function _addModifications(module, modifiers, quality, blueprint, grade, special
   // Add the blueprint definition, grade and special
   if (blueprint) {
     module.blueprint = getBlueprint(blueprint, module);
+
     if (grade) {
       module.blueprint.grade = Number(grade);
     }

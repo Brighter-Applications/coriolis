@@ -700,7 +700,9 @@ export default class OutfittingPage extends Page {
    * Generates the shopping list
    */
   _genShoppingList() {
-    this.context.showModal(<ModalShoppingList ship={this.state.ship} />);
+    this.context.showModal(<ModalShoppingList
+      ship={this.state.ship}
+      buildName={this.state.buildName} />);
   }
 
   /**

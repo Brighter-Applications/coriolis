@@ -440,6 +440,15 @@ export default class Module {
   }
 
   /**
+   * Get the info of this module
+   * @param {Boolean} [modified=false] Whether to take modifications into account
+   * @return {String} the info of this module
+   */
+  getInfo(modified = false) {
+    return (modified && this.getModValue('info')) || this.info;
+  }
+
+  /**
    * Get the mass of this module
    * @param {Boolean} [modified=true] Whether to take modifications into account
    * @return {Number} the mass of this module

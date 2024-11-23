@@ -99,6 +99,7 @@ export default class Slot extends TranslatedComponent {
     let translate = language.translate;
     let { ship, m, enabled, dropClass, dragOver, onOpen, onChange, selected, eligible, onSelect, warning, availableModules } = this.props;
     let slotDetails, modificationsMarker, menu;
+    let missing = false;
 
     if (!selected) {
       // If not selected then sure that modifications flag is unset
@@ -108,6 +109,11 @@ export default class Slot extends TranslatedComponent {
     if (m) {
       slotDetails = this._getSlotDetails(m, enabled, translate, language.formats, language.units);  // Must be implemented by sub classes
       modificationsMarker = JSON.stringify(m);
+      if(typeof m.grp !== 'undefined' || m.grp !== null) {
+        if(m.grp == "mh" || m.grp == "mm") {
+          missing = true;
+        }
+      }
     } else {
       slotDetails = <div className={'empty'}>{translate(eligible ? 'emptyrestricted' : 'empty')}</div>;
       modificationsMarker = '';
@@ -138,13 +144,16 @@ export default class Slot extends TranslatedComponent {
     }
 
     // TODO: implement touch dragging
-
+    
     return (
       <div className={cn('slot', dropClass, { selected })} onClick={onOpen} onKeyDown={this._keyDown} onContextMenu={this._contextMenu} onDragOver={dragOver} tabIndex="0" ref={slotDiv => this.slotDiv = slotDiv}>
-        <div className='details-container'>
+        {
+          // If missing module/hardpoint, set the div container to warning status.
+        }
+        <div className={ missing === true ? 'details-container warning' : 'details-container'}>
           <div className='sz'>{this._getMaxClassLabel(translate)}</div>
             {slotDetails}
-  	  </div>
+  	    </div>
         {menu}
       </div>
     );

@@ -140,7 +140,7 @@ export default class Ship {
    */
   canBoost(cargo, fuel) {
     return this.canThrust(cargo, fuel) &&                           // Thrusters operational
-        this.standard[4].m.getEnginesCapacity() > this.boostEnergy; // PD capacitor is sufficient for boost
+        this.standard[4].m.getEnginesCapacity() >= this.boostEnergy; // PD capacitor is sufficient for boost
   }
 
   /**

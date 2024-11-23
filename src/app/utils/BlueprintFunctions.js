@@ -307,10 +307,22 @@ export function isChangeValueBeneficial(feature, value) {
  * @returns {Object}         The matching blueprint
  */
 export function getBlueprint(name, module) {
+  // Special case for multi-cannons. Conflicting 'Weapon_Overcharged' Blueprints exist due to FD's naming conventions. If this blueprint is for a multi-cannon, we need to use the correct blueprint.
+  if (name === 'weapon_overcharged') {
+    if (module.symbol.match(/MultiCannon/i)) {
+      name = 'mc_overcharged';
+    }
+  }
+  else if (name === 'Weapon_Overcharged') {
+    if (module.symbol.match(/MultiCannon/i)) {
+      name = 'MC_Overcharged';
+    }
+  }
   // Start with a copy of the blueprint
   const findMod = val => Object.keys(Modifications.blueprints).find(elem => elem.toString().toLowerCase().search(val.toString().toLowerCase().replace(/(OutfittingFieldType_|persecond)/igm, '')) >= 0);
   const found = Modifications.blueprints[findMod(name)];
   if (!found || !found.fdname) {
+    console.error('Blueprint not found:', name);
     return {};
   }
   const blueprint = JSON.parse(JSON.stringify(found));
