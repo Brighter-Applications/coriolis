@@ -33,24 +33,27 @@ export default class AboutPage extends Page {
         </h1>
 
         <p>
-          This is a clone of the Coriolis project, whose original author is
-          currently unable to maintain it. This clone is maintained by the{' '}
+          This is now the only active version of the Coriolis project. The original author has handed over the maintenance of the project to the {' '}
           <a href="http://edcd.github.io/">EDCD community</a>.
         </p>
+        <h3>Expectations</h3>
         <p>
-          To recover your builds, go to{' '}
-          <a href="https://coriolis.io/" target="_blank">
-            https://coriolis.io/
-          </a>
-          , backup your builds (Settings / Backup), copy the text, return here
-          and import (Settings / Import).
+          Although every attempt is made to update the data as soon as possible, following the release of new modules and ships, there may be a delay, of up-to a few days, before the data is available. Wherever possible, the current maintainers aim to keep this delay to a minimum. Please be aware that the project maintainers are volunteers and have real lives to attend to, so please be patient. If you would like to help with the maintenance of the project, please see the link to the EDCD Discord Server below, where you can get involved.
         </p>
         <p>
-          The Coriolis project was inspired by{' '}
-          <a href="http://www.edshipyard.com/" target="_blank">
-            E:D Shipyard
-          </a>{' '}
-          and, of course,{' '}
+          There are, some missing modules from the time where the project was essentially not being maintained. These modules are gradually being added to the Coriolis database as and when the maintainers have the time to do so.
+        </p>
+        <p>
+          Please check the {' '} <a href="https://github.com/EDCD/coriolis/issues/" target="_blank" >Github Issues List</a> for any specific modules you cannot find and see if there is an open request for them. If not, please feel free to open a new issue, however, please note that there is an existing issue open for the addition of pre-engineered modules, so please do not open a new issue for these.
+        </p>
+        <h3>Donations</h3>
+        <p>
+          If you would like to donate to the project, in order to help with the costs of hosting and maintainence, please see the link to the {' '}
+          <a href="https://github.com/Brighter-Applications/coriolis" target="_blank">Current Maintainers version of the Git Repository</a> and use the 'Sponsor' button at the top of the page.
+        </p>
+        <h3>History</h3>
+        <p>
+          The Coriolis project was inspired by 'E:D Shipyard' (Now Defunct) and, of course,{' '}
           <a href="http://www.elitedangerous.com" target="_blank">
             Elite Dangerous
           </a>
