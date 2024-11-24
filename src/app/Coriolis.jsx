@@ -123,7 +123,15 @@ export default class Coriolis extends React.Component {
         this._showModal(<ModalImport importString={data}/>);
       }
     } catch (err) {
-      this._onError('Failed to import ship', r.path, 0, 0, err);
+      const fullUrl = window.location.href;
+
+      if (fullUrl.length >= 2083) {
+        err = 'URL Length = ' + fullUrl.length;
+        this._onError('Failed to import ship - Potential URL Length issue', r.path, 0, 0, err);
+      }
+      else {
+        this._onError('Failed to import ship - Unknown Reason', r.path, 0, 0, err);
+      }
     }
   }
 
