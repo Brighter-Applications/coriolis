@@ -927,8 +927,9 @@ export default class Module {
     const burst = this.get('burst', modified) || 1;
     const burstRoF = this.get('burstrof', modified) || 1;
     const intRoF = this.get('rof', modified);
+    const charge = this.get('charge', modified) || 0;
 
-    return burst / (((burst - 1) / burstRoF) + 1 / intRoF);
+    return burst / (((burst - 1) / burstRoF) + 1 / intRoF + charge);
   }
 
   /**
