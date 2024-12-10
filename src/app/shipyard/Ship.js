@@ -1210,12 +1210,11 @@ export default class Ship {
       .value();
 
     // Update global stats
-    this.unladenMass = unladenMass;
+    this.unladenMass = unladenMass + fuelCapacity;
     this.cargoCapacity = cargoCapacity;
     this.fuelCapacity = fuelCapacity;
     this.passengerCapacity = passengerCapacity;
     this.ladenMass = unladenMass + fuelCapacity + cargoCapacity;
-
     return this;
   }
 
