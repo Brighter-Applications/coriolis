@@ -126,7 +126,6 @@ export default class PowerManagement extends TranslatedComponent {
         }
 
         // If this is a Guardian Shield Reinforcement Package or Guardian Hull Reinforcement Package, or Guardian Module Reinforcement Package, it cannot change priority
-        console.log(slot);
         let priorityField;
         if (m.symbol) {
           if (m.symbol.match(/GuardianShield/i) || m.symbol.match(/GuardianHull/i) || m.symbol.match(/GuardianModule/i)) {
