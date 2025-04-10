@@ -15,6 +15,7 @@ export const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
   'CobraMkIII': 'cobra_mk_iii',
   'CobraMkIV': 'cobra_mk_iv',
   'CobraMkV': 'cobramkv',
+  'Corsair': 'imperial_corsair',
   'Cutter': 'imperial_cutter',
   'DiamondBackXL': 'diamondback_explorer',
   'DiamondBack': 'diamondback',
