@@ -17,6 +17,7 @@ const GRPCAT = {
   'bsg': 'shields',
   'psg': 'shields',
   'scb': 'shields',
+  'cr': 'cargo racks',
   'cc': 'limpet controllers',
   'fx': 'limpet controllers',
   'hb': 'limpet controllers',
@@ -324,6 +325,10 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       // If m.grp is mh or mm, or m.symbol contains 'Missing' skip it
       if (m.grp == 'mh' || m.grp == 'mm' || (typeof(m.symbol) !== 'undefined' && m.symbol.includes("Missing"))) {
         // If this is a missing module, skip it
+        continue;
+      }
+      // The Panther MkII cargo racks are only available for the Panther Clipper MkII
+      if (m.grp === 'cr' && (m.id === '5L' || m.id === '5M') && ship.id !== 'panthermkii') {
         continue;
       }
       let mount = null;
