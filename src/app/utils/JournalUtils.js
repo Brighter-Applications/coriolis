@@ -254,36 +254,40 @@ export function shipFromLoadoutJSON(json) {
     }
   }
 
-  let internalSlotNum = 0;
+  let internalSlotNum = 1;
   let militarySlotNum = 1;
+  let cargoSlotNum = 1;
   for (let i in shipTemplate.slots.internal) {
     if (!shipTemplate.slots.internal.hasOwnProperty(i)) {
       continue;
     }
     const isMilitary = isNaN(shipTemplate.slots.internal[i]) ? shipTemplate.slots.internal[i].name == 'Military' : false;
     const isPlanetary = isNaN(shipTemplate.slots.internal[i]) ? shipTemplate.slots.internal[i].name == 'PlanetaryApproachSuite' : false;
+    const isCargo = isNaN(shipTemplate.slots.internal[i]) ? shipTemplate.slots.internal[i].name == 'Cargo' : false;
 
     // The internal slot might be a standard or a military slot, or a planetary slot.  Military and Planetary slots have a different naming system
     let internalSlot = null;
     if (isMilitary) {
-      const internalName = 'Military0' + militarySlotNum;
-      internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
-      militarySlotNum++;
+        const internalName = 'Military0' + militarySlotNum;
+        internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
+        militarySlotNum++;
     } else if (isPlanetary) {
-      const internalName = 'PlanetaryApproachSuite';
-      internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
+        const internalName = 'PlanetaryApproachSuite';
+        internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
+    } else if (isCargo) {
+        const internalName = 'Cargo0' + cargoSlotNum;
+        internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
+        cargoSlotNum++;
     } else {
-      // Slot numbers are not contiguous so handle skips.
-      for (; internalSlot === null && internalSlotNum < 99; internalSlotNum++) {
-        // Slot sizes have no relationship to the actual size, either, so check all possibilities
-        for (let slotsize = 0; slotsize < 9; slotsize++) {
-          const internalName = 'Slot' + (internalSlotNum <= 9 ? '0' : '') + internalSlotNum + '_Size' + slotsize;
-          if (json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase())) {
-            internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
-            break;
-          }
+        console.log('Internal slot: Slot' + internalSlotNum + '_Size' + shipTemplate.slots.internal[i] + ' i: ' + i);
+        let internalName = 'Slot';
+        if (internalSlotNum < 10) {
+          internalName += '0' + internalSlotNum + '_Size' + shipTemplate.slots.internal[i];
+        } else {
+          internalName += internalSlotNum + '_Size' + shipTemplate.slots.internal[i];
         }
-      }
+        internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
+        internalSlotNum++;
     }
 
     if (!internalSlot) {
