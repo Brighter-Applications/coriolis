@@ -120,6 +120,7 @@ export default class StandardSlot extends TranslatedComponent {
           warning={warning}
           diffDetails={diffDetails.bind(ship, this.context.language)}
           slotDiv = {this.slotDiv}
+          activeSlotId={slot.id}
         />;
       }
     }

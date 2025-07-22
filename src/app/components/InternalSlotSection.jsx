@@ -229,6 +229,7 @@ export default class InternalSlotSection extends SlotSection {
 
       slots.push(<InternalSlot
         key={i}
+        id={s.id}
         maxClass={s.maxClass}
         availableModules={() => availableModules.getInts(ship, s.maxClass, s.eligible)}
         onOpen={this._openMenu.bind(this,s)}

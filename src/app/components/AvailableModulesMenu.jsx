@@ -328,8 +328,21 @@ export default class AvailableModulesMenu extends TranslatedComponent {
         continue;
       }
       // The Panther MkII cargo racks are only available for the Panther Clipper MkII
-      if (m.grp === 'cr' && (m.id === '5L' || m.id === '5M') && ship.id !== 'panthermkii') {
-        continue;
+      if (m.grp === 'cr' && (m.id === '5L' || m.id === '5M')) {
+        // If the ship is not the Panther MkII, skip this module entirely
+        if (ship.id !== 'panthermkii') {
+          continue;
+        }
+
+
+        // Module 5L is a Size 7 Large Cargo Rack specific to the Panther MkII but will work in either Slot01_Size8 or Slot03_Size7
+        if (m.id === '5L' && this.props.activeSlotId !== 'Slot01_Size8' && this.props.activeSlotId !== 'Slot03_Size7') {
+          continue;
+        }
+        // Module 5M is a Size 8 Large Cargo Rack specific to the Panther MkII and will only work in Slot01_Size8
+        if (m.id === '5M' && this.props.activeSlotId !== 'Slot01_Size8') {
+          continue;
+        }
       }
       let mount = null;
       let disabled = false;
