@@ -139,12 +139,13 @@ export default class Slot extends TranslatedComponent {
           warning={warning}
           diffDetails={diffDetails.bind(ship, this.context.language)}
           slotDiv = {this.slotDiv}
+          activeSlotId={this.props.id}
         />;
       }
     }
 
     // TODO: implement touch dragging
-    
+
     return (
       <div className={cn('slot', dropClass, { selected })} onClick={onOpen} onKeyDown={this._keyDown} onContextMenu={this._contextMenu} onDragOver={dragOver} tabIndex="0" ref={slotDiv => this.slotDiv = slotDiv}>
         {
