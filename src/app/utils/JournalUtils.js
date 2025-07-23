@@ -258,7 +258,12 @@ export function shipFromLoadoutJSON(json) {
     }
   }
 
-  let internalSlotNum = 1;
+  // If the ship is a T9, we have to start the internalSlotNum at 0
+  if (shipModel === 'type_9_heavy') {
+    internalSlotNum = 0;
+  } else {
+    internalSlotNum = 1;
+  }
   let militarySlotNum = 1;
   let cargoSlotNum = 1;
   for (let i in shipTemplate.slots.internal) {
@@ -287,9 +292,14 @@ export function shipFromLoadoutJSON(json) {
         if (internalSlotNum < 10) {
           internalName += '0' + internalSlotNum + '_Size' + shipTemplate.slots.internal[i];
         } else {
-            // For some reason, the 11th and 12th internal slots on the Anaconda are skipped and becomes slot 13
-          if (internalSlotNum === 11 && shipModel === 'anaconda') {
+            // For some reason, some ships skip internal slot indexes, so we need to check for them
+            // Anaconda skips 12 and 13, Dropship skips 7 and 8, T9 skips 9 and 10, T10 skips 9 and 10
+          if ((internalSlotNum === 11 && shipModel === 'anaconda') || (internalSlotNum === 7 && shipModel === 'federation_dropship') || (internalSlotNum === 9 && shipModel === 'type_9_heavy') || (internalSlotNum === 9 && shipModel === 'type_10_defender')) {
             internalSlotNum++;
+            internalSlotNum++;
+          }
+          // Vulture skips 4
+          else if (internalSlotNum === 4 && shipModel === 'vulture') {
             internalSlotNum++;
           }
           internalName += internalSlotNum + '_Size' + shipTemplate.slots.internal[i];
