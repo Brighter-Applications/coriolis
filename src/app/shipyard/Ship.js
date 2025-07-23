@@ -103,14 +103,26 @@ export default class Ship {
         slotCounter.get(currentSlotType).push(slot);
 
         if (typeof slot == "object") {
-          group.push({
-            id: `Slot${String(slotCounter.get(currentSlotType).length).padStart(2, '0')}_Size${slot.class}`,
-            m: null,
-            incCost: true,
-            slotIndex: slotCounter.get(currentSlotType).length,
-            maxClass: slot.class,
-            eligible: slot.eligible,
-          });
+          if (slot.name) {
+            group.push({
+              id: `Slot${String(slotCounter.get(currentSlotType).length).padStart(2, '0')}_Size${slot.class}`,
+              m: null,
+              name: slot.name,
+              incCost: true,
+              slotIndex: slotCounter.get(currentSlotType).length,
+              maxClass: slot.class,
+              eligible: slot.eligible,
+            });
+          } else {
+            group.push({
+              id: `Slot${String(slotCounter.get(currentSlotType).length).padStart(2, '0')}_Size${slot.class}`,
+              m: null,
+              incCost: true,
+              slotIndex: slotCounter.get(currentSlotType).length,
+              maxClass: slot.class,
+              eligible: slot.eligible,
+            });
+          }
         } else {
           group.push({
             id: `slot${String(slotCounter.get(currentSlotType).length).padStart(2, '0')}_Size${slot}`,
