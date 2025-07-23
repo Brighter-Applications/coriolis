@@ -212,6 +212,10 @@ export function shipFromLoadoutJSON(json) {
       let hardpointArrayNum = 0;
       for (let i in shipTemplate.slots.hardpoints) {
         if (shipTemplate.slots.hardpoints[i] === hardpointClassNum) {
+          // If the ship is the T8 and the hardpoint is smallHardpoint3, we need to skip it
+          if (shipModel === 'type_8_transport' && hardpointClassNum === 1 && hardpointSlotNum === 2) {
+            hardpointSlotNum++;
+          }
           // Another slot of the same class
           hardpointSlotNum++;
         } else {
@@ -279,11 +283,15 @@ export function shipFromLoadoutJSON(json) {
         internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
         cargoSlotNum++;
     } else {
-        console.log('Internal slot: Slot' + internalSlotNum + '_Size' + shipTemplate.slots.internal[i] + ' i: ' + i);
         let internalName = 'Slot';
         if (internalSlotNum < 10) {
           internalName += '0' + internalSlotNum + '_Size' + shipTemplate.slots.internal[i];
         } else {
+            // For some reason, the 11th and 12th internal slots on the Anaconda are skipped and becomes slot 13
+          if (internalSlotNum === 11 && shipModel === 'anaconda') {
+            internalSlotNum++;
+            internalSlotNum++;
+          }
           internalName += internalSlotNum + '_Size' + shipTemplate.slots.internal[i];
         }
         internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
