@@ -258,11 +258,10 @@ export function shipFromLoadoutJSON(json) {
     }
   }
 
+  let internalSlotNum = 1;
   // If the ship is a T9, we have to start the internalSlotNum at 0
   if (shipModel === 'type_9_heavy') {
     internalSlotNum = 0;
-  } else {
-    internalSlotNum = 1;
   }
   let militarySlotNum = 1;
   let cargoSlotNum = 1;
