@@ -216,7 +216,7 @@ export default class SlotSection extends TranslatedComponent {
         const targetEnabled = originSlot.enabled;
         const targetPriority = originSlot.priority;
         // We want to move the module in to the target slot, and swap back any module that was originally in the target slot
-        if (targetSlot && m && canMount(this.props.ship, targetSlot, m.grp, m.class)) {
+        if (targetSlot && m && canMount(this.props.ship, targetSlot, m.grp, m.class, m)) {
           // Swap modules if possible
           if (targetSlot.m && canMount(this.props.ship, originSlot, targetSlot.m.grp, targetSlot.m.class)) {
             this.props.ship.use(originSlot, targetSlot.m, true);
