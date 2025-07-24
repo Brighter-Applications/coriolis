@@ -47,19 +47,28 @@ export default class ModificationsMenu extends TranslatedComponent {
     this._rollWorst = this._rollWorst.bind(this);
     this._reset = this._reset.bind(this);
     this._keyDown = this._keyDown.bind(this);
-    this.modItems = [];// Array to hold various element refs (<li>, <div>, <ul>, etc.)
+    this.modItems = [];
     this.firstModId = null;
-    this.firstBPLabel = null;// First item in mod menu
+    this.firstBPLabel = null;
     this.lastModId = null;
     this.selectedModId = null;
     this.selectedSpecialId = null;
-    this.lastNeId = null;// Last number editor id. Used to set focus to last number editor when shift-tab pressed on first element in mod menu.
-    this.modValDidChange = false; // used to determine if component update was caused by change in modification value.
+    this.lastNeId = null;
+    this.modValDidChange = false;
     this._handleModChange = this._handleModChange.bind(this);
 
-    // console.log(props.m.blueprint)
+    // For pre-engineered modules, ensure they have a blueprint object for UI purposes
+    // Do this ONCE in the constructor, not in render
+    if (props.m.preEngineered && props.m.preEngineered.blueprints && (!props.m.blueprint || !props.m.blueprint.name)) {
+      props.m.blueprint = {};
+      props.m.blueprint.fdname = _.split(props.m.preEngineered.blueprints, ',')[0].trim();
+      props.m.blueprint.grade = 5;
+      props.m.blueprint.grades = Modifications.blueprints[props.m.blueprint.fdname].grades;
+      props.m.blueprint.name = Modifications.blueprints[props.m.blueprint.fdname].name;
+    }
+
     this.state = {
-      blueprintMenuOpened: !(props.m.blueprint && props.m.blueprint.name),
+      blueprintMenuOpened: false,
       specialMenuOpened: false
     };
   }
@@ -247,6 +256,11 @@ export default class ModificationsMenu extends TranslatedComponent {
   _blueprintSelected(fdname, grade) {
     this.context.tooltip(null);
     const { m, ship } = this.props;
+
+    if (m.preEngineered && !m.preEngineered.reengineerable) {
+      return; // Prevent Re-engineering of pre-engineered modules
+    }
+
     const blueprint = getBlueprint(fdname, m);
     blueprint.grade = grade;
     ship.setModuleBlueprint(m, blueprint);
@@ -271,6 +285,10 @@ export default class ModificationsMenu extends TranslatedComponent {
   _specialSelected(special) {
     this.context.tooltip(null);
     const { m, ship } = this.props;
+    if (m.preEngineered && !m.preEngineered.canApplyExperimental) {
+      console.log('Cannot apply experimental effects to pre-engineered modules');
+      return; // Prevent applying experimental effects
+    }
 
     if (special === null) {
       ship.clearModuleSpecial(m);
@@ -337,10 +355,19 @@ export default class ModificationsMenu extends TranslatedComponent {
    */
   _reset() {
     const { m, ship } = this.props;
-    ship.clearModifications(m);
-    ship.clearModuleBlueprint(m);
-    this.selectedModId = null;
-    this.selectedSpecialId = null;
+
+    if (m.preEngineered && !m.preEngineered.reengineerable) {
+      // For pre-engineered modules that cannot be re-engineered,
+      // only clear the special effect.
+      ship.clearModuleSpecial(m);
+    } else {
+      // For standard modules, clear everything.
+      ship.clearModifications(m);
+      ship.clearModuleBlueprint(m);
+      this.selectedModId = null;
+      this.selectedSpecialId = null;
+    }
+
     this.props.onChange();
   }
 
@@ -357,11 +384,15 @@ export default class ModificationsMenu extends TranslatedComponent {
    * after it first mounts
    */
   componentDidMount() {
-    let firstEleCn = this.modItems['modMainDiv'].children.length > 0 ? this.modItems['modMainDiv'].children[0].className : null;
-    if (firstEleCn.indexOf('select-group cap') >= 0) {
-      this.modItems['modMainDiv'].children[1].firstElementChild.focus();
-    } else {
-      this.modItems['modMainDiv'].firstElementChild.focus();
+    if (this.modItems['modMainDiv'] && this.modItems['modMainDiv'].children.length > 0) {
+      const firstElement = this.modItems['modMainDiv'].children[0];
+      const firstEleCn = firstElement && firstElement.className ? firstElement.className : '';
+
+      if (firstEleCn.indexOf('select-group cap') >= 0) {
+        this.modItems['modMainDiv'].children[1].firstElementChild.focus();
+      } else {
+        this.modItems['modMainDiv'].firstElementChild.focus();
+      }
     }
   }
 
@@ -372,7 +403,7 @@ export default class ModificationsMenu extends TranslatedComponent {
    */
   componentDidUpdate() {
     if (!this.modValDidChange) {
-      if (this.modItems['modMainDiv'].children.length > 0) {
+      if (this.modItems['modMainDiv'] && this.modItems['modMainDiv'].children.length > 0) {
         if (this.modItems[this.selectedModId]) {
           this.modItems[this.selectedModId].focus();
           return;
@@ -380,10 +411,13 @@ export default class ModificationsMenu extends TranslatedComponent {
           this.modItems[this.selectedSpecialId].focus();
           return;
         }
-        let firstEleCn = this.modItems['modMainDiv'].children[0].className;
+
+        const firstElement = this.modItems['modMainDiv'].children[0];
+        const firstEleCn = firstElement && firstElement.className ? firstElement.className : '';
+
         if (firstEleCn.indexOf('button-inline-menu') >= 0) {
           this.modItems['modMainDiv'].firstElementChild.focus();
-        } else if (firstEleCn.indexOf('select-group cap') >= 0)  {
+        } else if (firstEleCn.indexOf('select-group cap') >= 0) {
           this.modItems['modMainDiv'].children[1].firstElementChild.focus();
         }
       }
@@ -424,29 +458,32 @@ export default class ModificationsMenu extends TranslatedComponent {
     let blueprintCv;
     let bprintSearchName;
 
+    // REMOVE the blueprint object creation from render - this was destroying saved experimentals
+    // The blueprint object is now created once in the constructor
+
     // If the fdname is Weapon_Overcharged, we need to check if it's an MC
     if (m.blueprint && m.blueprint.fdname) {
       // Set the bprintSearchName value to the fdname of the blueprint for this module
       bprintSearchName = m.blueprint.fdname;
       if (m.blueprint.fdname === 'Weapon_Overcharged') {
-        // If the module is a MultiCannon, we need to fix the blueprint search name, else it will find the Laser Weapon_Overcharged Blueprint and not the MC Weapon_Overcharged Blueprint
+        // If the module is a MultiCannon, we need to fix the blueprint search name
         if (m.symbol.match(/MultiCannon/i)) {
-          // console.log(Modifications.modules[m.grp].blueprints['MC_Overcharged']);
-          // console.log(m.blueprint.fdname);
           bprintSearchName = 'MC_Overcharged';
         }
       }
     }
-    // TODO: Fix this to actually find the correct blueprint.
-    if (!m.blueprint || !m.blueprint.name || !m.blueprint.fdname || !Modifications.modules[m.grp].blueprints || !Modifications.modules[m.grp].blueprints[bprintSearchName]) {
+
+    // Only clear blueprint for non-pre-engineered modules
+    if (!m.preEngineered && (!m.blueprint || !m.blueprint.name || !m.blueprint.fdname || !Modifications.modules[m.grp].blueprints || !Modifications.modules[m.grp].blueprints[bprintSearchName])) {
       this.props.ship.clearModuleBlueprint(m);
       this.props.ship.clearModuleSpecial(m);
     }
-    if (m.blueprint && m.blueprint.name && Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade]) {
+
+    if (m.blueprint && m.blueprint.name && Modifications.modules[m.grp].blueprints[bprintSearchName] && Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade]) {
+      // If the module has a blueprint, set the label and tooltip
       blueprintLabel = translate(m.blueprint.name) + ' ' + translate('grade') + ' ' + m.blueprint.grade;
       haveBlueprint = true;
-      // console.log(haveBlueprint);
-      blueprintTt  = blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade].engineers, m.grp);
+      blueprintTt = blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade].engineers, m.grp);
       blueprintCv = getPercent(m);
     }
 
@@ -460,21 +497,21 @@ export default class ModificationsMenu extends TranslatedComponent {
     }
 
     const specials = this._renderSpecials(this.props, this.context);
-    /**
-     * pnellesen - 05/28/2018 - added additional checks for specials.length below to ensure menus
-     * display correctly in cases where there are no specials (ex: AFMUs.)
-     */
-    const showBlueprintsMenu = blueprintMenuOpened;
-    const showSpecial = haveBlueprint && specials.length && !blueprintMenuOpened;
+
+    // Special logic for pre-engineered modules - they skip blueprint selection and go straight to experimentals
+    const showBlueprintsMenu = blueprintMenuOpened && !m.preEngineered;
+    const showSpecial = haveBlueprint && specials.length && (!blueprintMenuOpened || m.preEngineered);
     const showSpecialsMenu = specialMenuOpened && specials.length;
-    const showRolls = haveBlueprint && !blueprintMenuOpened && (!specialMenuOpened || !specials.length);
+    const showRolls = haveBlueprint && !blueprintMenuOpened && (!specialMenuOpened || !specials.length) && !m.preEngineered;
     const showReset = !blueprintMenuOpened && (!specialMenuOpened || !specials.length) && haveBlueprint;
-    const showMods = !blueprintMenuOpened && (!specialMenuOpened || !specials.length) && haveBlueprint;
+    const showMods = !blueprintMenuOpened && (!specialMenuOpened || !specials.length) && haveBlueprint && !m.preEngineered;
+
     if (haveBlueprint) {
       this.firstBPLabel = blueprintLabel;
     } else {
       this.firstBPLabel = 'selectBP';
     }
+
     return (
       <div
         className={cn('select', this.props.className)}
@@ -482,15 +519,14 @@ export default class ModificationsMenu extends TranslatedComponent {
         onContextMenu={stopCtxPropagation}
         ref={modItem => this.modItems['modMainDiv'] = modItem}
       >
-        { showBlueprintsMenu | showSpecialsMenu ? '' : haveBlueprint ?
+        { showBlueprintsMenu | showSpecialsMenu ? '' : haveBlueprint && !m.preEngineered ?
           <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: blueprintMenuOpened })} style={{ cursor: 'pointer' }} onMouseOver={termtip.bind(null, blueprintTt)} onMouseOut={tooltip.bind(null, null)} onClick={_toggleBlueprintsMenu} onKeyDown={ this._keyDown } ref={modItems => this.modItems[this.firstBPLabel] = modItems}>{blueprintLabel}</div> :
-          <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: blueprintMenuOpened })} style={{ cursor: 'pointer' }} onClick={_toggleBlueprintsMenu} onKeyDown={ this._keyDown } ref={modItems => this.modItems[this.firstBPLabel] = modItems}>{translate('PHRASE_SELECT_BLUEPRINT')}</div> }
+          !m.preEngineered ? <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: blueprintMenuOpened })} style={{ cursor: 'pointer' }} onClick={_toggleBlueprintsMenu} onKeyDown={ this._keyDown } ref={modItems => this.modItems[this.firstBPLabel] = modItems}>{translate('PHRASE_SELECT_BLUEPRINT')}</div> : null }
         { showBlueprintsMenu ? this._renderBlueprints(this.props, this.context) : null }
         { showSpecial & !showSpecialsMenu ? <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: specialMenuOpened })} style={{ cursor: 'pointer' }} onMouseOver={specialTt ? termtip.bind(null, specialTt) : null} onMouseOut={specialTt ? tooltip.bind(null, null) : null}  onClick={_toggleSpecialsMenu} onKeyDown={ this._keyDown }>{specialLabel}</div> : null }
         { showSpecialsMenu ? specials : null }
         { showReset ? <div tabIndex="0" className={'section-menu button-inline-menu warning'} style={{ cursor: 'pointer' }} onClick={_reset} onKeyDown={ this._keyDown } onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_RESET')} onMouseOut={tooltip.bind(null, null)}> { translate('reset') } </div> : null }
         { showRolls ?
-
           <table style={{ width: '100%', backgroundColor: 'transparent' }}>
             <tbody>
               { showRolls ?
