@@ -1425,9 +1425,13 @@ export default class Ship {
    * @return {this} The ship instance (for chaining operations)
    */
   updatePowerGenerated() {
-    this.powerAvailable = this.standard[0].m.getPowerGeneration();
+    if (this.standard[0] && this.standard[0].m) {
+      this.powerAvailable = this.standard[0].m.getPowerGeneration();
+    } else {
+      this.powerAvailable = 0;
+    }
     return this;
-  };
+  }
 
   /**
    * Update power calculations when amount consumed changes
