@@ -145,6 +145,20 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   };
 
   /**
+   * Select handler that warns about CG modules
+   * @param  {Function} onSelect      The original select function
+   * @param  {Object} module          The module being selected
+   */
+  _selectModule(onSelect, module) {
+    if (module.preEngineered && module.preEngineered.availability === 'CG') {
+      if (!window.confirm(this.context.language.translate('This module was a reward for a past community goal. It cannot be purchased in game separately. You should only use this module, if you have it in game. Are you sure you want to add it to your build?'))) {
+        return;
+      }
+    }
+    onSelect(module);
+  }
+
+  /**
    * Constructor
    * @param  {Object} props   React Component properties
    * @param  {Object} context React Component context
@@ -381,7 +395,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
         this.lastSlotId = sortedModules[i].id;
 
         let showDiff = this._showDiff.bind(this, mountedModule, m);
-        let select = onSelect.bind(null, m);
+        let select = this._selectModule.bind(this, onSelect, m);
 
         eventHandlers = {
           onMouseEnter: this._over.bind(this, showDiff),
