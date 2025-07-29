@@ -6,7 +6,7 @@ import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { canMount } from '../utils/SlotFunctions';
 
 /**
- * Internal slot section
+ * Internal slots section
  */
 export default class InternalSlotSection extends SlotSection {
 
@@ -274,5 +274,4 @@ export default class InternalSlotSection extends SlotSection {
       </ul>
     </div>;
   }
-
 }

@@ -754,12 +754,8 @@ export default class Ship {
             // This is a pre-engineered module with no saved blueprint, so create the default blueprint structure
             module.blueprint = {};
             module.blueprint.fdname = _.split(module.preEngineered.blueprints, ',')[0].trim();
-            // Pre-engineered modules are always Grade 5, except for heatsinks, Abrasion Blasters and MC's which are grade 1
-            if (module.symbol === "Hpt_HeatSinkLauncher_Turret_Tiny" || module.symbol === "Hpt_Mining_AbrBlstr_Fixed_Small" || module.symbol === "Hpt_MultiCannon_Fixed_Medium") {
-              module.blueprint.grade = 1; // Heatsinks and Abrasion Blasters and MC's are always Grade 1
-            } else {
-              module.blueprint.grade = 5;
-            }
+            // Pre-engineered modules can be different grades
+            module.blueprint.grade = module.preEngineered.grade;
             module.blueprint.grades = Modifications.blueprints[module.blueprint.fdname].grades;
             module.blueprint.name = Modifications.blueprints[module.blueprint.fdname].name;
 
@@ -856,12 +852,8 @@ export default class Ship {
             // This is a pre-engineered module with no saved blueprint, so create the default blueprint structure
             module.blueprint = {};
             module.blueprint.fdname = _.split(module.preEngineered.blueprints, ',')[0].trim();
-            // Pre-engineered modules are always Grade 5, except for heatsinks, Abrasion Blasters and MC's which are grade 1
-            if (module.symbol === "Hpt_HeatSinkLauncher_Turret_Tiny" || module.symbol === "Hpt_Mining_AbrBlstr_Fixed_Small" || module.symbol === "Hpt_MultiCannon_Fixed_Medium") {
-              module.blueprint.grade = 1;
-            } else {
-              module.blueprint.grade = 5;
-            }
+            // Pre-engineered modules can be different grades
+            module.blueprint.grade = module.preEngineered.grade;
             module.blueprint.grades = Modifications.blueprints[module.blueprint.fdname].grades;
             module.blueprint.name = Modifications.blueprints[module.blueprint.fdname].name;
 
@@ -878,11 +870,7 @@ export default class Ship {
             for (const blueprintName of blueprintNames) {
               const blueprint = getBlueprint(blueprintName.trim(), module);
               if (blueprint) {
-                if (module.symbol === 'Hpt_HeatSinkLauncher_Turret_Tiny' || module.symbol === 'Hpt_Mining_AbrBlstr_Fixed_Small' || module.symbol === 'Hpt_MultiCannon_Fixed_Medium') {
-                  blueprint.grade = 1; // Heatsinks, Abrasion Blasters and MC's are always Grade 1
-                } else {
-                  blueprint.grade = 5; // Pre-engineered are always Grade 5
-                }
+                blueprint.grade = module.preEngineered.grade;
                 setQualityCB(blueprint, 1, (featureName, value) => {
                   // Add modifications cumulatively for pre-engineered modules
                   const currentMod = module.getModValue(featureName, true) || 0;
@@ -943,12 +931,8 @@ export default class Ship {
             // This is a pre-engineered module with no saved blueprint, so create the default blueprint structure
             module.blueprint = {};
             module.blueprint.fdname = _.split(module.preEngineered.blueprints, ',')[0].trim();
-            // Pre-engineered modules are always Grade 5, except for heatsinks, Abrasion Blasters and MC's which are grade 1
-            if (module.symbol === "Hpt_HeatSinkLauncher_Turret_Tiny" || module.symbol === "Hpt_Mining_AbrBlstr_Fixed_Small" || module.symbol === "Hpt_MultiCannon_Fixed_Medium") {
-              module.blueprint.grade = 1;
-            } else {
-              module.blueprint.grade = 5;
-            }
+            // Pre-engineered modules can be different grades
+            module.blueprint.grade = module.preEngineered.grade;
             module.blueprint.grades = Modifications.blueprints[module.blueprint.fdname].grades;
             module.blueprint.name = Modifications.blueprints[module.blueprint.fdname].name;
             // console.log('Created blueprint structure:', module.blueprint);
