@@ -737,7 +737,12 @@ export default class Ship {
               for (const blueprintName of blueprintNames) {
                 const blueprint = getBlueprint(blueprintName.trim(), module);
                 if (blueprint) {
-                  blueprint.grade = 5; // Pre-engineered are always Grade 5
+                  // Pre-engineered modules are always grade 5, except for heatsinks, Abrasion Blasters and MC's, which are grade 1
+                  if (module.symbol === 'Hpt_HeatSinkLauncher_Turret_Tiny' || module.symbol === 'Hpt_Mining_AbrBlstr_Fixed_Small' || module.symbol === 'Hpt_MultiCannon_Fixed_Medium') {
+                    blueprint.grade = 1; // Heatsinks and Abrasion Blasters and MC's are always Grade 1
+                  } else {
+                    blueprint.grade = 5; // Pre-engineered are always Grade 5
+                  }
                   setQualityCB(blueprint, 1, (featureName, value) => {
                     // Add modifications cumulatively for pre-engineered modules
                     const currentMod = module.getModValue(featureName, true) || 0;
@@ -914,7 +919,12 @@ export default class Ship {
               for (const blueprintName of blueprintNames) {
                 const blueprint = getBlueprint(blueprintName.trim(), module);
                 if (blueprint) {
-                  blueprint.grade = 5; // Pre-engineered are always Grade 5
+                  // Pre-engineered modules are always grade 5, except for heatsinks, Abrasion Blasters and MC's which are grade 1
+                  if (module.symbol === 'Hpt_HeatSinkLauncher_Turret_Tiny' || module.symbol === 'Hpt_Mining_AbrBlstr_Fixed_Small' || module.symbol === 'Hpt_MultiCannon_Fixed_Medium') {
+                    blueprint.grade = 1; // Heatsinks, Abrasion Blasters and MC's are always Grade 1
+                  } else {
+                    blueprint.grade = 5; // Pre-engineered are always Grade 5
+                  }
                   setQualityCB(blueprint, 1, (featureName, value) => {
                     // Add modifications cumulatively for pre-engineered modules
                     const currentMod = module.getModValue(featureName, true) || 0;
