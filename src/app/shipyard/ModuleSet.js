@@ -101,6 +101,10 @@ export default class ModuleSet {
       if (eligible && !eligible[key]) {
         continue;
       }
+      // 'crl' (Large Cargo Racks) can only be mounted in special 'Cargo' slots
+      if (key === 'crl' && !eligible) {
+        continue;
+      }
       if (key == 'pcq' && !(ship.luxuryCabins && ship.luxuryCabins  === true)) {
         continue;
       }

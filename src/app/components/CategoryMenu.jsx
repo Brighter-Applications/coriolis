@@ -7,7 +7,6 @@ import { stopCtxPropagation } from '../utils/UtilityFunctions';
  * An overlay menu that shows module categories for a slot
  */
 export default class CategoryMenu extends TranslatedComponent {
-
   /**
    * Render the list of categories
    * @return {React.Component} List
@@ -17,9 +16,10 @@ export default class CategoryMenu extends TranslatedComponent {
     const { categories, onSelect, onClose } = this.props;
 
     return (
-      <div className={cn('select', this.props.className)}
-           onClick={(e) => e.stopPropagation()}
-           onContextMenu={stopCtxPropagation}
+      <div
+        className={cn('select', this.props.className)}
+        onClick={(e) => e.stopPropagation()}
+        onContextMenu={stopCtxPropagation}
       >
         <div className='select-header cap'>{translate('select category')}</div>
         <div className='select-list-container'>
