@@ -180,6 +180,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   };
 
   /**
+   * Select handler that warns about CG modules
    * @param  {Function} onSelect      The original select function
    * @param  {Object} module          The module being selected
    */
