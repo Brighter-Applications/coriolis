@@ -185,10 +185,11 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    * @param  {Object} module          The module being selected
    */
   _selectModule(onSelect, module) {
-    if (module.preEngineered && module.preEngineered.availability === 'CG' && Persist.promptCG()) {
+    if (module && module.preEngineered && module.preEngineered.availability === 'CG' && Persist.promptCG()) {
       this.context.showModal(<ModalConfirmCG onSelect={onSelect} module={module} />);
+    } else {
+      onSelect(module);
     }
-    onSelect(module);
   }
 
   /**
