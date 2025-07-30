@@ -2,7 +2,7 @@ import React from 'react';
 import cn from 'classnames';
 import Slot from './Slot';
 import Persist from '../stores/Persist';
-import { ListModifications, Modified } from './SvgIcons';
+import { ListModifications, Modified, CommunityGoalSmall, TechBrokerSmall } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { getBlueprint, blueprintTooltip } from '../utils/BlueprintFunctions';
@@ -62,12 +62,26 @@ export default class InternalSlot extends Slot {
         }
       }
 
+      let cgmod = null;
+      let spacer = ' ';
+      let cgttip = '';
+      if (m.preEngineered && m.preEngineered.availability === 'CG') {
+        cgmod = <CommunityGoalSmall className={'community'}/>;
+        cgttip = 'CG module';
+      }else if (m.preEngineered && typeof(m.preEngineered.availability) === 'undefined') {
+        cgmod = <TechBrokerSmall className={'technomargin'}/>;
+        cgttip = 'Tech Broker module';
+      }
+
       const className = cn('details', enabled ? '' : 'disabled');
       let mass = m.getMass() || m.cargo || m.fuel || 0;
 
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
         <div className={'cb'}>
-          <div className={'l'}>{classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified /></span> : ''}</div>
+          <div className={'l'}>
+            {cgmod ? <span onMouseOver={termtip.bind(null, cgttip)}
+                                               onMouseOut={tooltip.bind(null, null)}>{cgmod}</span> : ''}
+                                               {classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified /></span> : ''}</div>
           <div className={'r'}>{formats.round(mass)}{u.T}</div>
         </div>
         <div className={'cb'}>

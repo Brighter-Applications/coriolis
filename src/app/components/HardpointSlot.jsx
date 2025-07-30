@@ -11,7 +11,9 @@ import {
   MountGimballed,
   MountTurret,
   ListModifications,
-  Modified
+  Modified,
+  CommunityGoalSmall,
+  TechBrokerSmall
 } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
@@ -89,10 +91,22 @@ export default class HardpointSlot extends Slot {
         }
       }
 
+      let cgmod = null;
+      let cgttip = '';
+      if (m.preEngineered && m.preEngineered.availability === 'CG') {
+        cgmod = <CommunityGoalSmall className={'community'}/>;
+        cgttip = 'CG module';
+      }else if (m.preEngineered && typeof(m.preEngineered.availability) === 'undefined') {
+        cgmod = <TechBrokerSmall className={'technomargin'}/>;
+        cgttip = 'Tech Broker module';
+      }
+
       const className = cn('details', enabled ? '' : 'disabled');
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
         <div className={'cb'}>
           <div className={'l'}>
+            {cgmod ? <span onMouseOver={termtip.bind(null, cgttip)}
+                                               onMouseOut={tooltip.bind(null, null)}>{cgmod}</span> : ''}
             {m.mount && m.mount == 'F' ? <span onMouseOver={termtip.bind(null, 'fixed')}
                                                onMouseOut={tooltip.bind(null, null)}><MountFixed/></span> : ''}
             {m.mount && m.mount == 'G' ? <span onMouseOver={termtip.bind(null, 'gimballed')}
