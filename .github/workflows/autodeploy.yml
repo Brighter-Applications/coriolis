@@ -99,4 +99,5 @@ jobs:
       - name: Move the build to the web server
         shell: bash
         run: |
-          if [ ${{ env.BRANCH_NAME }} == "beta" ]; then rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' .coriolis/build/* /var/www/beta.coriolis.io/; else rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' .coriolis/build/* /var/www/coriolis.io/; fi
+          if [ ${{ env.BRANCH_NAME }} == "beta" ]; then rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/beta.coriolis.io/; else rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/coriolis.io/; fi
+
