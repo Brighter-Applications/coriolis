@@ -16,7 +16,7 @@ if (!agent) {
  * @param  {function} success   Success callback
  * @param  {function} error     Failure/Error callback
  */
-export default function shorternUrl(url, success, error) {
+export default function shortenUrl(url, success, error) {
   hollowShorten(url, success, error);
 }
 
@@ -76,7 +76,7 @@ function shortenUrlEddp(url, success, error) {
 
 const SHORTEN_API_HOLLOW = 'https://s.hollowpoint.rocks/shorten/';
 /**
- * Shorten a URL using Orbis's URL shortener API
+ * Shorten a URL using Hollow's URL shortener API
  * @param  {string} url        The URL to shorten
  * @param  {function} success   Success callback
  * @param  {function} error     Failure/Error callback
