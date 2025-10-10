@@ -120,7 +120,10 @@ export default class Slot extends TranslatedComponent {
     }
 
     if (selected) {
-      if (this._modificationsSelected) {
+      if (this.props.menu && !this._modificationsSelected) {
+        // A menu has been provided by a parent component (e.g. CategoryMenu from InternalSlotSection), so use it.
+        menu = this.props.menu;
+      } else if (this._modificationsSelected) {
         menu = <ModificationsMenu
           className={this._getClassNames()}
           onChange={onChange}
@@ -139,12 +142,13 @@ export default class Slot extends TranslatedComponent {
           warning={warning}
           diffDetails={diffDetails.bind(ship, this.context.language)}
           slotDiv = {this.slotDiv}
+          activeSlotId={this.props.id}
         />;
       }
     }
 
     // TODO: implement touch dragging
-    
+
     return (
       <div className={cn('slot', dropClass, { selected })} onClick={onOpen} onKeyDown={this._keyDown} onContextMenu={this._contextMenu} onDragOver={dragOver} tabIndex="0" ref={slotDiv => this.slotDiv = slotDiv}>
         {

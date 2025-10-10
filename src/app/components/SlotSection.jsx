@@ -158,7 +158,7 @@ export default class SlotSection extends TranslatedComponent {
       // Show correct icon
       const effect = this.state.copy ? 'copy' : 'move';
       if (!browser || (browser.name !== 'edge' && browser.name !== 'ie')) {
-        e.dataTransfer.dropEffect = os != targetSlot && canMount(this.props.ship, targetSlot, os.m.grp, os.m.class) ? effect : 'none';
+        e.dataTransfer.dropEffect = os != targetSlot && canMount(this.props.ship, targetSlot, os.m.grp, os.m.class, os.m) ? effect : 'none';
       }
       this.setState({ targetSlot });
     } else {
@@ -192,7 +192,7 @@ export default class SlotSection extends TranslatedComponent {
     if (targetSlot && originSlot != targetSlot) {
       if (copy) {
         // We want to copy the module in to the target slot
-        if (targetSlot && canMount(this.props.ship, targetSlot, m.grp, m.class)) {
+        if (targetSlot && canMount(this.props.ship, targetSlot, m.grp, m.class, m)) {
           const mCopy = m.clone();
           this.props.ship.use(targetSlot, mCopy, false);
           let experimentalNum = this.props.ship.hardpoints
@@ -216,9 +216,9 @@ export default class SlotSection extends TranslatedComponent {
         const targetEnabled = originSlot.enabled;
         const targetPriority = originSlot.priority;
         // We want to move the module in to the target slot, and swap back any module that was originally in the target slot
-        if (targetSlot && m && canMount(this.props.ship, targetSlot, m.grp, m.class)) {
+        if (targetSlot && m && canMount(this.props.ship, targetSlot, m.grp, m.class, m)) {
           // Swap modules if possible
-          if (targetSlot.m && canMount(this.props.ship, originSlot, targetSlot.m.grp, targetSlot.m.class)) {
+          if (targetSlot.m && canMount(this.props.ship, originSlot, targetSlot.m.grp, targetSlot.m.class, targetSlot.m)) {
             this.props.ship.use(originSlot, targetSlot.m, true);
             this.props.ship.use(targetSlot, m);
             // Swap power

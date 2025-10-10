@@ -4,9 +4,11 @@ import InternalSlot from './InternalSlot';
 import * as ModuleUtils from '../shipyard/ModuleUtils';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { canMount } from '../utils/SlotFunctions';
+import AvailableModulesMenu from './AvailableModulesMenu';
+import CategoryMenu from './CategoryMenu';
 
 /**
- * Internal slot section
+ * Internal slots section
  */
 export default class InternalSlotSection extends SlotSection {
 
@@ -30,6 +32,91 @@ export default class InternalSlotSection extends SlotSection {
     this.selectedRefId = null;
     this.firstRefId = 'emptyall';
     this.lastRefId = this.sectionRefArr['pcq'] ? 'pcq' : 'pcm';
+    this.state = {
+      selectedCategory: null,
+      originSlot: null,
+      targetSlot: null
+    };
+    this._onCategorySelect = this._onCategorySelect.bind(this);
+  }
+
+  /**
+   * Open a menu for a slot and reset the selected category
+   * @param  {Object} slot    The slot object
+   * @param  {Object} event   The event
+   */
+  _openMenu(slot, event) {
+    // Stop the event from propagating further. This is the key to preventing
+    // the "click-through" race condition that was causing the CategoryMenu
+    // to be skipped.
+    event.stopPropagation();
+    event.persist();
+
+    if (this.props.currentMenu === slot) {
+      // If the menu for this slot is already open, just close it.
+      super._openMenu(slot, event);
+    } else {
+      // If opening a new menu, first reset the category state,
+      // then open the menu in the setState callback to ensure correct order.
+      this.setState({ selectedCategory: null }, () => {
+        super._openMenu(slot, event);
+      });
+    }
+  }
+
+  /**
+   * Set the selected category
+// ...existing code...
+   * @return {React.Component} The menu component
+   */
+  _getMenu(slot, onSelect, warningFunc, availableModules) {
+    const { ship } = this.props;
+    const { selectedCategory } = this.state;
+    // getInts returns an object of module groups
+    const availableModuleGroups = availableModules.getInts(ship, slot.maxClass, slot.eligible);
+
+    if (slot.m === null && selectedCategory === null) {
+      // Slot is empty and no category is selected: show CategoryMenu
+      const categoriesForSlot = ModuleUtils.getIntCategoriesForSlot(slot);
+      return <CategoryMenu
+        className='internal'
+        categories={categoriesForSlot}
+        onSelect={this._onCategorySelect.bind(this, onSelect)}
+        onClose={this._close}
+      />;
+    } else {
+      // A category has been selected, or the slot is populated.
+      // Pass the full list of modules and the selected category to the menu.
+      return <AvailableModulesMenu
+        ship={ship}
+        slot={slot}
+        m={slot.m}
+        modules={availableModuleGroups}
+        onSelect={onSelect}
+        warning={warningFunc}
+        onClose={this._close}
+        selectedCategory={selectedCategory}
+      />;
+    }
+  }
+
+  /**
+   * Set the selected category
+   * @param {string} category The selected category
+   */
+  _onCategorySelect(onSelect, category) {
+    console.log(`Category selected: ${category}`);
+    this.setState({ selectedCategory: category });
+  }
+
+  /**
+   * Select a module for a slot and reset the selected category
+   * @param  {Object} slot    The slot object
+   * @param  {Object} module  The module object to fit
+   * @param  {Object} event   The event
+   */
+  _selectModule(slot, module, event) {
+    super._selectModule(slot, module, event);
   }
 
   /**
@@ -226,17 +313,24 @@ export default class InternalSlotSection extends SlotSection {
 
     for (let i = 0, l = internal.length; i < l; i++) {
       let s = internal[i];
+      let menu;
+      if (currentMenu === s) {
+        // Pass the availableModules object to _getMenu
+        menu = this._getMenu(s, this._selectModule.bind(this, s), null, availableModules);
+      }
 
       slots.push(<InternalSlot
         key={i}
+        id={s.id}
         maxClass={s.maxClass}
         availableModules={() => availableModules.getInts(ship, s.maxClass, s.eligible)}
         onOpen={this._openMenu.bind(this,s)}
-	onChange={this.props.onChange}
+        onChange={this.props.onChange}
         onSelect={this._selectModule.bind(this, s)}
         selected={currentMenu == s}
         eligible={s.eligible}
         m={s.m}
+        menu={menu}
         drag={this._drag.bind(this, s)}
         dragOver={this._dragOverSlot.bind(this, s)}
         drop={this._drop}
@@ -273,5 +367,4 @@ export default class InternalSlotSection extends SlotSection {
       </ul>
     </div>;
   }
-
 }

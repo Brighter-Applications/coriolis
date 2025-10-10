@@ -76,6 +76,7 @@ export default class UtilitySlotSection extends SlotSection {
       if (h.maxClass === 0) {
         slots.push(<HardpointSlot
           key={i}
+          id={h.id}
           maxClass={h.maxClass}
           availableModules={() => availableModules.getHps(h.maxClass)}
           onOpen={this._openMenu.bind(this,h)}
