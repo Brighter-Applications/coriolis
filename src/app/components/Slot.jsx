@@ -6,6 +6,7 @@ import AvailableModulesMenu from './AvailableModulesMenu';
 import ModificationsMenu from './ModificationsMenu';
 import { diffDetails } from '../utils/SlotFunctions';
 import { wrapCtxMenu } from '../utils/UtilityFunctions';
+import { CSSTransition } from 'react-transition-group';
 
 /**
  * Abstract Slot
@@ -36,6 +37,7 @@ export default class Slot extends TranslatedComponent {
     super(props);
 
     this._modificationsSelected = false;
+    this.state = { menuHeight: 'auto' }; // Add state for menu height
 
     this._contextMenu = wrapCtxMenu(this._contextMenu.bind(this));
     this._getMaxClassLabel = this._getMaxClassLabel.bind(this);
@@ -157,8 +159,35 @@ export default class Slot extends TranslatedComponent {
         <div className={ missing === true ? 'details-container warning' : 'details-container'}>
           <div className='sz'>{this._getMaxClassLabel(translate)}</div>
             {slotDetails}
-  	    </div>
-        {menu}
+          </div>
+        <CSSTransition
+          in={!!menu}
+          classNames="slide"
+          timeout={700}
+          mountOnEnter
+          unmountOnExit
+          addEndListener={(node, done) => {
+            node.addEventListener('transitionend', done, false);
+          }}
+          onEnter={node => {
+            // Capture the height when the menu enters
+            this.setState({ menuHeight: `${node.scrollHeight}px` });
+          }}
+          onEntering={node => {
+            // Animate to the captured height
+            node.style.maxHeight = this.state.menuHeight;
+          }}
+          onExit={node => {
+            // Start the exit animation from the captured height
+            node.style.maxHeight = this.state.menuHeight;
+          }}
+          onExiting={node => {
+            // Animate to zero
+            node.style.maxHeight = '0px';
+          }}
+        >
+          {menu || <div/>}
+        </CSSTransition>
       </div>
     );
   }
