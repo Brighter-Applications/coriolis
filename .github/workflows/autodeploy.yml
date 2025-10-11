@@ -7,6 +7,7 @@ on:
   push:
     branches:
       - beta
+      - beta-legacy
       - live
 # Figure out the target branch name
 env:
@@ -75,6 +76,7 @@ jobs:
       run: |
         /usr/local/bin/stop-start-builder.sh stop
   deploy:
+    if: github.ref_name != 'beta-legacy'
     runs-on: [self-hosted, Linux, X64, aws, brapps, web]
     needs: build
     steps:
@@ -100,4 +102,31 @@ jobs:
         shell: bash
         run: |
           if [ ${{ env.BRANCH_NAME }} == "beta" ]; then rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/beta.coriolis.io/; else rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/coriolis.io/; fi
+  deploy-legacy:
+    if: github.ref_name == 'beta-legacy'
+    runs-on: [self-hosted, Linux, X64, ubuntu2404, webapp]
+    needs: build
+    steps:
+      - name: Authorize GCP
+        uses: google-github-actions/auth@v2
+        with:
+          credentials_json: ${{ secrets.CORIOLIS_GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>=363.0.0'
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+      - name: Download and unzip the build
+        shell: bash
+        run: |
+          rm -Rf ./*
+          EXTENSION="${TARGET_ZIP##*.}"
+          FILENAME="${TARGET_ZIP%.*}"
+          LATEST_FILENAME="${FILENAME}_latest.${EXTENSION}"
+          gsutil cp gs://${{ secrets.CORIOLIS_GCP_TARGET_BUCKET }}/${{ env.BUCKET_FOLDER }}/${LATEST_FILENAME} ${LATEST_FILENAME}
+          unzip ./${LATEST_FILENAME}
+      - name: Move the build to the web server
+        shell: bash
+        run: |
+          if [ ${{ env.BRANCH_NAME }} == "beta-legacy" ]; then rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/beta.coriolis.io/; fi
 
