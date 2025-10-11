@@ -59,6 +59,7 @@ export function totalJumpRange(mass, fsd, fuel, ship) {
  * @return {number} Approximate shield strengh in MJ
  */
 export function shieldStrength(mass, baseShield, sg, multiplier) {
+  if (!sg) { return 0; }
   // sg might be a module or a template; handle either here
   let minMass = sg instanceof Module ? sg.getMinMass() : sg.minmass;
   let optMass = sg instanceof Module ? sg.getOptMass() : sg.optmass;
@@ -84,6 +85,7 @@ export function shieldStrength(mass, baseShield, sg, multiplier) {
  * @return {array}             Speed by pips
  */
 export function speed(mass, baseSpeed, thrusters, engpip) {
+  if (!thrusters) { return [0, 0, 0, 0, 0]; }
   // thrusters might be a module or a template; handle either here
   const minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
   const optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
@@ -116,6 +118,7 @@ export function calcPipSpeed(baseSpeed, topSpeed) {
  * @return {array}             Pitch by pips
  */
 export function pitch(mass, basePitch, thrusters, engpip) {
+  if (!thrusters) { return [0, 0, 0, 0, 0]; }
   // thrusters might be a module or a template; handle either here
   let minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
   let optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
@@ -136,6 +139,7 @@ export function pitch(mass, basePitch, thrusters, engpip) {
  * @return {array}             Yaw by pips
  */
 export function yaw(mass, baseYaw, thrusters, engpip) {
+  if (!thrusters) { return [0, 0, 0, 0, 0]; }
   // thrusters might be a module or a template; handle either here
   let minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
   let optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
@@ -156,6 +160,7 @@ export function yaw(mass, baseYaw, thrusters, engpip) {
  * @return {array}             Roll by pips
  */
 export function roll(mass, baseRoll, thrusters, engpip) {
+  if (!thrusters) { return [0, 0, 0, 0, 0]; }
   // thrusters might be a module or a template; handle either here
   let minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
   let optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
@@ -230,6 +235,7 @@ function calcValue(minMass, optMass, maxMass, minMul, optMul, maxMul, mass, base
  * @returns {number}              the resultant speed
  */
 export function calcSpeed(mass, baseSpeed, thrusters, engpip, eng, boostFactor, boost) {
+  if (!thrusters) { return 0; }
   // thrusters might be a module or a template; handle either here
   const minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
   const optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
@@ -258,6 +264,7 @@ export function calcSpeed(mass, baseSpeed, thrusters, engpip, eng, boostFactor, 
  * @returns {number}              the resultant pitch
  */
 export function calcPitch(mass, basePitch, thrusters, engpip, eng, boostFactor, boost) {
+  if (!thrusters) { return 0; }
   // thrusters might be a module or a template; handle either here
   let minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
   let optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
@@ -286,6 +293,7 @@ export function calcPitch(mass, basePitch, thrusters, engpip, eng, boostFactor, 
  * @returns {number}              the resultant roll
  */
 export function calcRoll(mass, baseRoll, thrusters, engpip, eng, boostFactor, boost) {
+  if (!thrusters) { return 0; }
   // thrusters might be a module or a template; handle either here
   let minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
   let optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
@@ -314,6 +322,7 @@ export function calcRoll(mass, baseRoll, thrusters, engpip, eng, boostFactor, bo
  * @returns {number}              the resultant yaw
  */
 export function calcYaw(mass, baseYaw, thrusters, engpip, eng, boostFactor, boost) {
+  if (!thrusters) { return 0; }
   // thrusters might be a module or a template; handle either here
   let minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
   let optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
@@ -384,7 +393,7 @@ export function shieldMetrics(ship, sys) {
     // Our initial regeneration comes from the SYS capacitor store, which is replenished as it goes
     // 0.6 is a magic number from FD: each 0.6 MW of energy from the power distributor recharges 1 MJ/s of regeneration
     let capacitorDrain = (shieldGenerator.getBrokenRegenerationRate() * shieldGenerator.getDistDraw()) - sysRechargeRate;
-    
+
     let capacitorLifetime = powerDistributor.getSystemsCapacity() / capacitorDrain;
 
     let recover = 16;

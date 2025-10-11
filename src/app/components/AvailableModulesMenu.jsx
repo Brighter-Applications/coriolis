@@ -4,8 +4,10 @@ import * as ModuleUtils from '../shipyard/ModuleUtils';
 import TranslatedComponent from './TranslatedComponent';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import cn from 'classnames';
-import { CoriolisLogo, MountFixed, MountGimballed, MountTurret } from './SvgIcons';
+import { CommunityGoalSmall, TechBrokerSmall, CoriolisLogo, MountFixed, MountGimballed, MountTurret } from './SvgIcons';
 import FuzzySearch from 'react-fuzzy';
+import ModalConfirmCG from './ModalConfirmCG';
+import Persist from '../stores/Persist';
 
 const PRESS_THRESHOLD = 500; // mouse/touch down threshold
 
@@ -17,6 +19,8 @@ const GRPCAT = {
   'bsg': 'shields',
   'psg': 'shields',
   'scb': 'shields',
+  'cr': 'cargo racks',
+  'crl': 'cargo racks',
   'cc': 'limpet controllers',
   'fx': 'limpet controllers',
   'hb': 'limpet controllers',
@@ -96,7 +100,7 @@ const GRPCAT = {
 const CATEGORIES = {
   // Internals
   'am': ['am'],
-  'cr': ['cr'],
+  'cr': ['cr', 'crl'],
   'fi': ['fi'],
   'fuel': ['ft', 'fs'],
   'hangars': ['fh', 'pv'],
@@ -126,6 +130,38 @@ const CATEGORIES = {
   'mining': ['ml', 'scl', 'pwa', 'sdm', 'abl'],
 };
 
+const INTCAT = {
+  'auto field-maintenance unit': ['am'] ,
+  'cargo racks': ['cr', 'crl'],
+  'fsd interdictor': ['fi'],
+  'fuel': ['ft', 'fs'],
+  'hangars': ['fh', 'pv'],
+  'limpet controllers': ['cc', 'fx', 'hb', 'pc', 'rpl', 'mlc'],
+  'passenger cabins': ['pce', 'pci', 'pcm', 'pcq'],
+  'refineries': ['rf'],
+  'shields': ['sg', 'bsg', 'psg', 'scb'],
+  'structural reinforcement': ['hr', 'mrp'],
+  // Assists
+  'flight assists': ['dc', 'sua'],
+  // Scanners
+  'scanners': ['ss'],
+  // Experimental
+  'experimental': ['rcpl', 'dtl', 'mahr', 'rsl'],
+  // Stabilizers
+  'weapon stabilizers': ['ews'],
+  // Guardian
+  'guardian': ['gsrp', 'gfsb', 'ghrp', 'gmrp'],
+}
+
+const HPTCAT = {
+  'lasers': ['pl', 'ul', 'bl'],
+  'projectiles': ['mc', 'advmc', 'c', 'fc', 'pa', 'rg'],
+  'ordnance': ['mr', 'amr', 'tp', 'nl'],
+  'mining': ['ml', 'scl', 'sdm', 'abl'],
+  'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp','rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'],
+  'guardian': ['gpc', 'ggc', 'gsc'],
+}
+
 /**
  * Available modules menu
  */
@@ -142,6 +178,19 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     activeSlotId: PropTypes.string,
     slotDiv: PropTypes.object
   };
+
+  /**
+   * Select handler that warns about CG modules
+   * @param  {Function} onSelect      The original select function
+   * @param  {Object} module          The module being selected
+   */
+  _selectModule(onSelect, module) {
+    if (module && module.preEngineered && module.preEngineered.availability === 'CG' && Persist.promptCG()) {
+      this.context.showModal(<ModalConfirmCG onSelect={onSelect} module={module} />);
+    } else {
+      onSelect(module);
+    }
+  }
 
   /**
    * Constructor
@@ -164,7 +213,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    */
   _initState(props, context) {
     let translate = context.language.translate;
-    let { m, warning, onSelect, modules, ship } = props;
+    let { m, warning, onSelect, modules, ship, slot, selectedCategory } = props;
     let list, currentGroup;
 
     let buildGroup = this._buildGroup.bind(
@@ -183,15 +232,44 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       list = buildGroup(modules[0].grp, modules);
     } else {
       list = [];
-      // At present time slots with grouped options (Hardpoints and Internal) can be empty
-      if (m) {
-        let emptyId = 'empty';
-        if (this.firstSlotId == null) this.firstSlotId = emptyId;
-        let keyDown = this._keyDown.bind(this, onSelect);
-        list.push(<div className='empty-c upp' key={emptyId} data-id={emptyId} onClick={onSelect.bind(null, null)}
-                       onKeyDown={keyDown} tabIndex="0"
-                       ref={slotItem => this.slotItems[emptyId] = slotItem}>{translate('empty')}</div>);
+      // If a category is selected, filter the modules by that category
+      if (selectedCategory) {
+        const filteredGroups = {};
+        let groupCodesForCategory = null;
+        console.log(`Slot: ${slot.type}`);
+        console.log(`Selected Category: ${selectedCategory}`);
+        if (slot.type === "SYS" && selectedCategory in INTCAT) {
+          console.log(`Is Internal slot`);
+          // Get the array of group codes (e.g., ['ft', 'fs']) for the selected category (e.g., 'fuel')
+          groupCodesForCategory = INTCAT[selectedCategory];
+        } else if (slot.type === "WEP" && selectedCategory in HPTCAT) {
+          // Get the array of group codes (e.g., ['ft', 'fs']) for the selected category (e.g., 'fuel')
+          groupCodesForCategory = HPTCAT[selectedCategory];
+          console.log(`Is Hardpoint slot`);
+        }
+
+        if (groupCodesForCategory) {
+          // Iterate over the group codes for this category
+          for (const groupCode of groupCodesForCategory) {
+            console.log(`Group Code: ${groupCode}`);
+            // If this group exists in the available modules for the slot, add it
+            if (modules[groupCode]) {
+              filteredGroups[groupCode] = modules[groupCode];
+            }
+          }
+        }
+
+        modules = filteredGroups;
       }
+      // At present time slots with grouped options (Hardpoints and Internal) can be empty
+
+      let emptyId = 'empty';
+      if (this.firstSlotId == null) this.firstSlotId = emptyId;
+      let keyDown = this._keyDown.bind(this, onSelect);
+      list.push(<div className='empty-c upp' key={emptyId} data-id={emptyId} onClick={onSelect.bind(null, null)}
+                      onKeyDown={keyDown} tabIndex="0"
+                      ref={slotItem => this.slotItems[emptyId] = slotItem}>{translate('empty')}</div>);
+
 
       // Need to regroup the modules by our own categorisation
       let catmodules = {};
@@ -326,6 +404,23 @@ export default class AvailableModulesMenu extends TranslatedComponent {
         // If this is a missing module, skip it
         continue;
       }
+      // The Panther MkII cargo racks are only available for the Panther Clipper MkII
+      if (m.grp === 'cr' && (m.id === '5L' || m.id === '5M')) {
+        // If the ship is not the Panther MkII, skip this module entirely
+        if (ship.id !== 'panthermkii') {
+          continue;
+        }
+
+
+        // Module 5L is a Size 7 Large Cargo Rack specific to the Panther MkII but will work in either Slot01_Size8 or Slot03_Size7
+        if (m.id === '5L' && this.props.activeSlotId !== 'Slot01_Size8' && this.props.activeSlotId !== 'Slot03_Size7') {
+          continue;
+        }
+        // Module 5M is a Size 8 Large Cargo Rack specific to the Panther MkII and will only work in Slot01_Size8
+        if (m.id === '5M' && this.props.activeSlotId !== 'Slot01_Size8') {
+          continue;
+        }
+      }
       let mount = null;
       let disabled = false;
       prevName = m.name;
@@ -340,7 +435,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
         disabled = 1 <= ship.internal.filter(o => o.m && o.m.grp === 'mlc').length;
       }
       let active = mountedModule && mountedModule.id === m.id;
-      let classes = cn(m.name ? 'lc' : 'c', {
+      let classes = cn('lc', {
         warning: !disabled && warningFunc && warningFunc(m),
         active,
         disabled
@@ -363,7 +458,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
         this.lastSlotId = sortedModules[i].id;
 
         let showDiff = this._showDiff.bind(this, mountedModule, m);
-        let select = onSelect.bind(null, m);
+        let select = this._selectModule.bind(this, onSelect, m);
 
         eventHandlers = {
           onMouseEnter: this._over.bind(this, showDiff),
@@ -387,6 +482,14 @@ export default class AvailableModulesMenu extends TranslatedComponent {
           mount = <MountTurret className={'lg'}/>;
           break;
       }
+      let cgmod = null;
+      let spacer = ' ';
+      if (m.preEngineered && m.preEngineered.availability === 'CG') {
+        cgmod = <CommunityGoalSmall className={'community'}/>;
+      }
+      if (m.preEngineered && typeof(m.preEngineered.availability) === 'undefined') {
+        cgmod = <TechBrokerSmall className={'techbroker'}/>;
+      }
       if (m.name && m.name === prevName) {
         // elems.push(<br key={'b' + m.grp + i} />);
         itemsOnThisRow = 0;
@@ -399,6 +502,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       elems.push(
         <li key={m.id} data-id={m.id} className={classes} {...eventHandlers} tabIndex={tbIdx}
             ref={slotItem => this.slotItems[m.id] = slotItem}>
+          {cgmod}
           {mount}
           {(mount ? ' ' : '') + m.class + m.rating + (m.missile ? '/' + m.missile : '') + (m.name ? ' ' + translate(m.name) : '')}
         </li>
