@@ -405,7 +405,8 @@ export default class Coriolis extends React.Component {
                 className={this.state.noTouch ? 'no-touch' : null}>
       <Header announcements={this.state.announcements} appCacheUpdate={this.state.appCacheUpdate}
               currentMenu={currentMenu}/>
-      <div className="announcement-container">{this.state.announcements.map(a => <Announcement
+      <div className="announcement-container">{this.state.announcements.map((a, index) => <Announcement
+        key={index}
         text={a.text}/>)}</div>
       {this.state.error ? this.state.error : this.state.page ? React.createElement(this.state.page, { currentMenu }) :
         <NotFoundPage/>}
