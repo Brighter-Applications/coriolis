@@ -630,7 +630,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    * @param  {Object} nextProps   Incoming/Next properties
    * @param  {Object} nextContext Incoming/Next conext
    */
-  componentWillReceiveProps(nextProps, nextContext) {
+  UNSAFE_componentWillReceiveProps(nextProps, nextContext) {
     this.setState(this._initState(nextProps, nextContext));
   }
 

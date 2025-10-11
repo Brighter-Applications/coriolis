@@ -202,7 +202,7 @@ export default class LineChart extends TranslatedComponent {
   /**
    * Update dimensions and series data based on props and context.
    */
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     this._updateSeries(this.props, this.state);
   }
 
@@ -211,7 +211,7 @@ export default class LineChart extends TranslatedComponent {
    * @param  {Object} nextProps   Incoming/Next properties
    * @param  {Object} nextContext Incoming/Next conext
    */
-  componentWillReceiveProps(nextProps, nextContext) {
+  UNSAFE_componentWillReceiveProps(nextProps, nextContext) {
     const props = this.props;
 
     if (props.code != nextProps.code) {

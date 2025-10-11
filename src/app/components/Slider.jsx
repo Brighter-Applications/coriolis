@@ -172,7 +172,7 @@ export default class Slider extends React.Component {
   /**
    * Add listeners when about to mount
    */
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     if (this.props.onResize) {
       this.resizeListener = this.props.onResize(this._updateDimensions);
     }
@@ -262,7 +262,7 @@ class TextInputBox extends React.Component {
    * @param  {Object} nextProps React Component properites
    * @param  {Object} nextState React Component state values
    */
-  componentWillReceiveProps(nextProps, nextState) {
+  UNSAFE_componentWillReceiveProps(nextProps, nextState) {
     let nextValue = nextProps.percent * nextProps.max;
     // See https://stackoverflow.com/questions/32414308/updating-state-on-props-change-in-react-form
     if (nextValue !== this.state.inputValue && nextValue <= nextProps.max) {

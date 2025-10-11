@@ -38,7 +38,7 @@ export default class EngineProfile extends TranslatedComponent {
    * @param  {Object} nextContext Incoming/Next conext
    * @return {boolean}            Returns true if the component should be rerendered
    */
-  componentWillReceiveProps(nextProps, nextContext) {
+  UNSAFE_componentWillReceiveProps(nextProps, nextContext) {
     if (nextProps.marker != this.props.marker) {
       this.setState({ calcMaxSpeedFunc: this.calcMaxSpeed.bind(this, nextProps.ship, nextProps.eng, nextProps.boost) });
     }

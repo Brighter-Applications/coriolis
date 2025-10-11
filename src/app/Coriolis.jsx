@@ -339,7 +339,7 @@ export default class Coriolis extends React.Component {
   /**
    * Adds necessary listeners and starts Routing
    */
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     // Listen for appcache updated event, present refresh to update view
     // Check that service workers are registered
     if (navigator.storage && navigator.storage.persist) {

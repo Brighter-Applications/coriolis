@@ -487,7 +487,7 @@ export default class Header extends TranslatedComponent {
   /**
    * Add listeners on mount
    */
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     let update = () => this.forceUpdate();
     Persist.addListener('language', update);
     Persist.addListener('insurance', update);
@@ -503,7 +503,7 @@ export default class Header extends TranslatedComponent {
    * @param  {Object} nextProps   Incoming/Next properties
    * @param  {Object} nextContext Incoming/Next conext
    */
-  componentWillReceiveProps(nextProps, nextContext) {
+  UNSAFE_componentWillReceiveProps(nextProps, nextContext) {
     if(this.context.language != nextContext.language) {
       let translate = nextContext.language.translate;
       this.insuranceOptions = [];

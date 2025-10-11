@@ -53,7 +53,7 @@ export default class Page extends React.Component {
   /**
    * Update the window title upon mount
    */
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     document.title = this.state.title || 'Coriolis';
   }
 
@@ -77,7 +77,7 @@ export default class Page extends React.Component {
    * @param  {Object} newProps  Incoming properties
    * @param  {Object} newState  Incoming state
    */
-  componentWillUpdate(newProps, newState) {
+  UNSAFE_componentWillUpdate(newProps, newState) {
     document.title = newState.title || 'Coriolis';
   }
 

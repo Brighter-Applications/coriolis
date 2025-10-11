@@ -648,7 +648,7 @@ export default class OutfittingPage extends Page {
    * @param  {Object} nextProps   Incoming/Next properties
    * @param  {Object} nextContext Incoming/Next conext
    */
-  componentWillReceiveProps(nextProps, nextContext) {
+  UNSAFE_componentWillReceiveProps(nextProps, nextContext) {
     if (this.context.route !== nextContext.route) {
       // Only reinit state if the route has changed
       this.setState(this._initState(nextProps, nextContext));
@@ -658,7 +658,7 @@ export default class OutfittingPage extends Page {
   /**
    * Add listeners when about to mount
    */
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     document.addEventListener('keydown', this._keyDown);
   }
 
