@@ -451,6 +451,11 @@ export function getHpCategoriesForSlot(slot) {
   const groupsToCheck = Object.keys(Modules.hardpoints);
 
   for (const grp of groupsToCheck) {
+    if (slot.eligible && !slot.eligible[grp]) {
+      // If this group is not eligible for the slot, skip it
+      continue;
+    }
+
     if (HardpointCategories[grp]) {
       const moduleGroup = Modules.hardpoints[grp];
       if (moduleGroup) {
