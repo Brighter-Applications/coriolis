@@ -45,7 +45,7 @@ export default class ModuleSet {
     let maxInternal = isNaN(shipData.slots.internal[0]) ? shipData.slots.internal[0].class : shipData.slots.internal[0];
     let mass = shipData.properties.hullMass + 6.5;
     let maxStandardArr = shipData.slots.standard;
-    let maxHardPoint = shipData.slots.hardpoints[0];
+    let maxHardPoint = isNaN(shipData.slots.hardpoints[0]) ? shipData.slots.hardpoints[0].class : shipData.slots.hardpoints[0];
     let stnd = modules.standard;
     this.mass = mass;
     this.standard = {};
@@ -128,7 +128,7 @@ export default class ModuleSet {
   getHps(c, eligible) {
     let o = {};
     for (let key in this.hardpoints) {
-      if (eligible && !eligible[key]) {
+      if (eligible && !eligible[key]) { // If the slot has eligibility restrictions
         continue;
       }
       let data = filter(this.hardpoints[key], c, c ? 1 : 0, this.mass);
