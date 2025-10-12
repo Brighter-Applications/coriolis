@@ -1,6 +1,6 @@
 import React from 'react';
 import PropTypes from 'prop-types';
-import ContainerDimensions from 'react-container-dimensions';
+import ResponsiveWrapper from './ResponsiveWrapper';
 import * as d3 from 'd3';
 import TranslatedComponent from './TranslatedComponent';
 
@@ -225,9 +225,11 @@ export default class LineChart extends TranslatedComponent {
    */
   render() {
     return (
-      <ContainerDimensions>
+      <ResponsiveWrapper>
         { ({ width, height }) => {
-          const { innerWidth, outerHeight, innerHeight } = this._updateDimensions(this.props, this.context.sizeRatio, width, height);
+          // Provide default height if not available
+          const chartHeight = height || 300;
+          const { innerWidth, outerHeight, innerHeight } = this._updateDimensions(this.props, this.context.sizeRatio, width, chartHeight);
           const { xMin, xMax, xLabel, yLabel, xUnit, yUnit, xMark, colors } = this.props;
           const { tipHeight, detailElems, markerElems, seriesData, seriesLines } = this.state;
           const lines = seriesLines.map((line, i) => <path key={i} className='line' fill='none' stroke={colors[i]} strokeWidth='1' d={line(seriesData)} />).reverse();
@@ -235,7 +237,7 @@ export default class LineChart extends TranslatedComponent {
           const markX = xMark ? innerWidth * (xMark - xMin) / (xMax - xMin) : 0;
           const xmark = xMark ? <path key={'mark'} className='line' fill='none' strokeDasharray='5,5' stroke={'#ff8c0d'} strokeWidth='1' d={'M ' + markX + ' ' + innerHeight + ' L ' + markX + ' 0'} /> : '';
           return (
-            <div width={width} height={height}>
+            <div style={{ width: '100%', height: outerHeight }}>
               <svg style={{ width: '100%', height: outerHeight }}>
                 <g transform={`translate(${MARGIN.left},${MARGIN.top})`}>
                   <g>{xmark}</g>
@@ -275,7 +277,7 @@ export default class LineChart extends TranslatedComponent {
             </div>
           );
         }}
-      </ContainerDimensions>
+      </ResponsiveWrapper>
     );
   }
 }

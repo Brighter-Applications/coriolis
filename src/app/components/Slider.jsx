@@ -380,7 +380,7 @@ class TextInputBox extends React.Component {
    */
   render() {
     let {  axisUnit, onChange, percent, scale } = this.props;
-    return <div style={this.state.divStyle}><input style={this.state.inputStyle} value={this._getValue()} min={this.state.min} max={this.props.max} onChange={this._handleChange} onKeyUp={this._keyup} tabIndex={this.state.tabIndex} maxLength={this.state.maxLength} size={this.state.size} onBlur={() => {this._handleBlur();}} onFocus={() => {this._handleFocus();}} type={this.state.type} ref={(ip) => this.sliderVal = ip}/><text className="primary upp" style={this.state.labelStyle}>{this.props.axisUnit}</text></div>;
+    return <div style={this.state.divStyle}><input style={this.state.inputStyle} value={this._getValue()} min={this.state.min} max={this.props.max} onChange={this._handleChange} onKeyUp={this._keyup} tabIndex={this.state.tabIndex} maxLength={this.state.maxLength} size={this.state.size} onBlur={() => {this._handleBlur();}} onFocus={() => {this._handleFocus();}} type={this.state.type} ref={(ip) => this.sliderVal = ip}/><span className="primary upp" style={this.state.labelStyle}>{this.props.axisUnit}</span></div>;
   }
 }
 

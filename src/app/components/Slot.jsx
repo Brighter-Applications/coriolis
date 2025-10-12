@@ -6,6 +6,7 @@ import AvailableModulesMenu from './AvailableModulesMenu';
 import ModificationsMenu from './ModificationsMenu';
 import { diffDetails } from '../utils/SlotFunctions';
 import { wrapCtxMenu } from '../utils/UtilityFunctions';
+import { canMount } from '../utils/SlotFunctions';
 
 /**
  * Abstract Slot
@@ -18,6 +19,7 @@ export default class Slot extends TranslatedComponent {
     onOpen: PropTypes.func.isRequired,
     maxClass: PropTypes.number.isRequired,
     selected: PropTypes.bool,
+    slot: PropTypes.object, // Add slot prop
     m: PropTypes.object,
     enabled: PropTypes.bool.isRequired,
     ship: PropTypes.object.isRequired,
@@ -27,6 +29,29 @@ export default class Slot extends TranslatedComponent {
     drop: PropTypes.func,
     dropClass: PropTypes.string
   };
+
+  /**
+   * Default warning function if none provided
+   * @param {object} module The module to check
+   * @return {React.Component|null} Warning icon or null
+   */
+  _warning(module) {
+    // Return null if no warning needed
+    return null;
+  }
+
+  /**
+   * Check if a module is eligible for this slot
+   * Since availableModules() already filters based on slot restrictions,
+   * this function just needs to return true for all modules in the list
+   * @param {object} module The module to check
+   * @return {boolean} Whether the module can be mounted
+   */
+  _eligible(module) {
+    // All modules passed to AvailableModulesMenu are already pre-filtered
+    // by the availableModules() function based on slot.eligible restrictions
+    return true;
+  }
 
   /**
    * Constructor
@@ -40,6 +65,8 @@ export default class Slot extends TranslatedComponent {
     this._contextMenu = wrapCtxMenu(this._contextMenu.bind(this));
     this._getMaxClassLabel = this._getMaxClassLabel.bind(this);
     this._keyDown = this._keyDown.bind(this);
+    this._eligible = this._eligible.bind(this);
+    this._warning = this._warning.bind(this);
     this.slotDiv = null;
   }
 
@@ -136,15 +163,16 @@ export default class Slot extends TranslatedComponent {
           m={m}
           ship={ship}
           onSelect={onSelect}
-          warning={warning}
+          warning={warning || this._warning}
           diffDetails={diffDetails.bind(ship, this.context.language)}
+          eligible={this._eligible}
           slotDiv = {this.slotDiv}
         />;
       }
     }
 
     // TODO: implement touch dragging
-    
+
     return (
       <div className={cn('slot', dropClass, { selected })} onClick={onOpen} onKeyDown={this._keyDown} onContextMenu={this._contextMenu} onDragOver={dragOver} tabIndex="0" ref={slotDiv => this.slotDiv = slotDiv}>
         {
@@ -153,7 +181,7 @@ export default class Slot extends TranslatedComponent {
         <div className={ missing === true ? 'details-container warning' : 'details-container'}>
           <div className='sz'>{this._getMaxClassLabel(translate)}</div>
             {slotDetails}
-  	    </div>
+          </div>
         {menu}
       </div>
     );

@@ -1,7 +1,7 @@
 import TranslatedComponent from './TranslatedComponent';
 import React from 'react';
 import PropTypes from 'prop-types';
-import ContainerDimensions from 'react-container-dimensions';
+import ResponsiveWrapper from './ResponsiveWrapper';
 import { BarChart, Bar, XAxis, YAxis, LabelList } from 'recharts';
 
 const CORIOLIS_COLOURS = ['#FF8C0D', '#1FB0FF', '#71A052', '#D5D54D'];
@@ -48,7 +48,7 @@ export default class VerticalBarChart extends TranslatedComponent {
     const localMax = Math.max(dataMax, yMax);
 
     return (
-      <ContainerDimensions>
+      <ResponsiveWrapper>
         { ({ width }) => (
           <div width='100%'>
             <BarChart width={width} height={width * ASPECT} data={this.props.data} margin={{ top: 5, right: 5, left: 5, bottom: 5 }}>
@@ -60,7 +60,7 @@ export default class VerticalBarChart extends TranslatedComponent {
             </BarChart>
           </div>
         )}
-      </ContainerDimensions>
+      </ResponsiveWrapper>
     );
   }
 

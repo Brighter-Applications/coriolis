@@ -36,9 +36,22 @@ export default class StandardSlot extends TranslatedComponent {
     super(props);
     this._modificationsSelected = false;
     this._keyDown = this._keyDown.bind(this);
+    this._eligible = this._eligible.bind(this);
     this.modButton = null;
     this.slotDiv = null;
   }
+
+  /**
+   * Check if a module is eligible for this slot
+   * @param {object} module The module to check
+   * @return {boolean} Whether the module can be mounted
+   */
+  _eligible(module) {
+    // For standard slots, check if the module class fits
+    if (!module) return true;
+    return module.class <= this.props.slot.maxClass;
+  }
+
   /**
    * Handle Enter key
    * @param {SyntheticEvent} event KeyDown event
@@ -119,6 +132,7 @@ export default class StandardSlot extends TranslatedComponent {
           onSelect={onSelect}
           warning={warning}
           diffDetails={diffDetails.bind(ship, this.context.language)}
+          eligible={this._eligible}
           slotDiv = {this.slotDiv}
         />;
       }

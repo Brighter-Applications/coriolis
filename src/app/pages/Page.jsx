@@ -2,26 +2,29 @@ import React from 'react';
 import PropTypes from 'prop-types';
 import ErrorDetails from './ErrorDetails';
 import { shallowEqual } from '../utils/UtilityFunctions';
+import { AppContext } from '../AppContext';
 
 /**
  * Abstract/Base Page
  */
 export default class Page extends React.Component {
+  static contextType = AppContext;
 
-  static contextTypes = {
-    closeMenu: PropTypes.func.isRequired,
-    hideModal: PropTypes.func.isRequired,
-    language: PropTypes.object.isRequired,
-    noTouch: PropTypes.bool.isRequired,
-    onCommand: PropTypes.func.isRequired,
-    onWindowResize: PropTypes.func.isRequired,
-    openMenu: PropTypes.func.isRequired,
-    route: PropTypes.object.isRequired,
-    showModal: PropTypes.func.isRequired,
-    sizeRatio: PropTypes.number.isRequired,
-    termtip: PropTypes.func.isRequired,
-    tooltip: PropTypes.func.isRequired
-  };
+  // REMOVE the legacy contextTypes:
+  // static contextTypes = {
+  //   closeMenu: PropTypes.func.isRequired,
+  //   hideModal: PropTypes.func.isRequired,
+  //   language: PropTypes.object.isRequired,
+  //   noTouch: PropTypes.bool.isRequired,
+  //   onCommand: PropTypes.func.isRequired,
+  //   onWindowResize: PropTypes.func.isRequired,
+  //   openMenu: PropTypes.func.isRequired,
+  //   route: PropTypes.object.isRequired,
+  //   showModal: PropTypes.func.isRequired,
+  //   sizeRatio: PropTypes.number.isRequired,
+  //   termtip: PropTypes.func.isRequired,
+  //   tooltip: PropTypes.func.isRequired
+  // };
 
   static propTypes = {
     currentMenu: PropTypes.any
@@ -92,5 +95,4 @@ export default class Page extends React.Component {
     }
     return this.renderPage();
   }
-
 }

@@ -1,22 +1,21 @@
-import React from 'react';
+import React, { Component } from 'react';
 import PropTypes from 'prop-types';
-import * as ModuleUtils from '../shipyard/ModuleUtils';
 import TranslatedComponent from './TranslatedComponent';
-import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import cn from 'classnames';
-import { CoriolisLogo, MountFixed, MountGimballed, MountTurret } from './SvgIcons';
-import FuzzySearch from 'react-fuzzy';
+import { stopCtxPropagation } from '../utils/UtilityFunctions';
+import { MountFixed, MountGimballed, MountTurret } from './SvgIcons';
 
 const PRESS_THRESHOLD = 500; // mouse/touch down threshold
 
-/*
- * Categorisation of module groups
- */
+// Add these constants at the top of the file, after the imports (around line 8):
+
 const GRPCAT = {
   'sg': 'shields',
   'bsg': 'shields',
   'psg': 'shields',
   'scb': 'shields',
+  'cr': 'cargo racks',
+  'crl': 'cargo racks',
   'cc': 'limpet controllers',
   'fx': 'limpet controllers',
   'hb': 'limpet controllers',
@@ -62,7 +61,6 @@ const GRPCAT = {
   'nl': 'ordnance',
   'sc': 'scanners',
   'ss': 'scanners',
-  // Utilities
   'cs': 'scanners',
   'kw': 'scanners',
   'ws': 'scanners',
@@ -71,7 +69,6 @@ const GRPCAT = {
   'po': 'defence',
   'ec': 'defence',
   'sfn': 'defence',
-  // Guardian
   'gpp': 'guardian',
   'gpc': 'guardian',
   'gsrp': 'guardian',
@@ -80,67 +77,54 @@ const GRPCAT = {
   'gmrp': 'guardian',
   'gsc': 'guardian',
   'ghrp': 'guardian',
-
-  // Mining
   'scl': 'mining',
   'pwa': 'mining',
   'sdm': 'mining',
-
-  // Assists
   'dc': 'flight assists',
   'sua': 'flight assists',
-  // Stabilizers
   'ews': 'weapon stabilizers',
 };
-// Order here is the order in which items will be shown in the modules menu
-const CATEGORIES = {
-  // Internals
-  'am': ['am'],
-  'cr': ['cr'],
-  'fi': ['fi'],
+
+const INTCAT = {
+  'auto field-maintenance unit': ['am'],
+  'cargo racks': ['cr', 'crl'],
+  'fsd interdictor': ['fi'],
   'fuel': ['ft', 'fs'],
   'hangars': ['fh', 'pv'],
   'limpet controllers': ['cc', 'fx', 'hb', 'pc', 'rpl', 'mlc'],
   'passenger cabins': ['pce', 'pci', 'pcm', 'pcq'],
-  'rf': ['rf'],
+  'refineries': ['rf'],
   'shields': ['sg', 'bsg', 'psg', 'scb'],
   'structural reinforcement': ['hr', 'mrp'],
   'flight assists': ['dc', 'sua'],
+  'scanners': ['ss'],
+  'experimental': ['rcpl', 'dtl', 'mahr', 'rsl'],
+  'weapon stabilizers': ['ews'],
+  'guardian': ['gsrp', 'gfsb', 'ghrp', 'gmrp'],
+};
 
-  // Hardpoints
+const HPTCAT = {
   'lasers': ['pl', 'ul', 'bl'],
   'projectiles': ['mc', 'advmc', 'c', 'fc', 'pa', 'rg'],
   'ordnance': ['mr', 'amr', 'tp', 'nl'],
-  // Utilities
-  'sb': ['sb'],
-  'hs': ['hs'],
-  'csl': ['csl'],
-  'defence': ['ch', 'po', 'ec'],
-  'scanners': ['sc', 'ss', 'cs', 'kw', 'ws'], // Overloaded with internal scanners
-  // Experimental
-  'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp','rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn', 'rcpl', 'dtl', 'rsl', 'mahr',],
-  'weapon stabilizers': ['ews'],
-  // Guardian
-  'guardian': ['gpp', 'gpd', 'gpc', 'ggc', 'gsrp', 'gfsb', 'ghrp', 'gmrp', 'gsc'],
-
-  'mining': ['ml', 'scl', 'pwa', 'sdm', 'abl'],
+  'mining': ['ml', 'scl', 'sdm', 'abl'],
+  'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp','rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'],
+  'guardian': ['gpc', 'ggc', 'gsc'],
 };
 
 /**
  * Available modules menu
  */
 export default class AvailableModulesMenu extends TranslatedComponent {
+
   static propTypes = {
-    modules: PropTypes.oneOfType([PropTypes.object, PropTypes.array]).isRequired,
+    className: PropTypes.string,
+    modules: PropTypes.array.isRequired,
     onSelect: PropTypes.func.isRequired,
-    diffDetails: PropTypes.func,
+    warning: PropTypes.func.isRequired,
+    diffDetails: PropTypes.func.isRequired,
     m: PropTypes.object,
-    ship: PropTypes.object.isRequired,
-    warning: PropTypes.func,
-    firstSlotId: PropTypes.string,
-    lastSlotId: PropTypes.string,
-    activeSlotId: PropTypes.string,
-    slotDiv: PropTypes.object
+    eligible: PropTypes.func.isRequired
   };
 
   /**
@@ -153,501 +137,973 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     this._hideDiff = this._hideDiff.bind(this);
     this._showSearch = this._showSearch.bind(this);
     this.state = this._initState(props, context);
-    this.slotItems = [];// Array to hold <li> refs.
+    this.slotItems = new Map();
+    this.groupElem = null;
+    this.node = null;
   }
 
   /**
-   * Initiate the list of available moduels
+   * Init state based on module list
    * @param  {Object} props   React Component properties
    * @param  {Object} context React Component context
-   * @return {Object}         list: Array of React Components, currentGroup Component if any
+   * @return {Object}         Initial state
    */
   _initState(props, context) {
-    let translate = context.language.translate;
-    let { m, warning, onSelect, modules, ship } = props;
-    let list, currentGroup;
+    let { language, termtip, tooltip } = context;
+    let { modules, onSelect, m, eligible, warning } = props;
+    let translate = language.translate;
+    let list = [];
+    let emptyId = 'empty';
+    let firstSlotId, lastSlotId, activeSlotId;
 
-    let buildGroup = this._buildGroup.bind(
-      this,
-      ship,
-      translate,
-      m,
-      warning,
-      (m, event) => {
-        this._hideDiff(event);
-        onSelect(m);
-      }
-    );
-    let fuzzy = [];
-    if (modules instanceof Array) {
-      list = buildGroup(modules[0].grp, modules);
-    } else {
-      list = [];
-      // At present time slots with grouped options (Hardpoints and Internal) can be empty
-      if (m) {
-        let emptyId = 'empty';
-        if (this.firstSlotId == null) this.firstSlotId = emptyId;
-        let keyDown = this._keyDown.bind(this, onSelect);
-        list.push(<div className='empty-c upp' key={emptyId} data-id={emptyId} onClick={onSelect.bind(null, null)}
-                       onKeyDown={keyDown} tabIndex="0"
-                       ref={slotItem => this.slotItems[emptyId] = slotItem}>{translate('empty')}</div>);
-      }
+    if (m) {
+      activeSlotId = m.id;
+    }
 
-      // Need to regroup the modules by our own categorisation
-      let catmodules = {};
-      // Pre-create to preserve ordering
-      for (let cat in CATEGORIES) {
-        catmodules[cat] = [];
-      }
-      for (let g in modules) {
-        const moduleCategory = GRPCAT[g] || g;
-        const existing = catmodules[moduleCategory] || [];
-        catmodules[moduleCategory] = existing.concat(modules[g]);
-      }
+    // Check if this is a core internal slot (they can never be empty)
+    const isCoreInternal = this.props.className && this.props.className.includes('standard');
 
-      for (let category in catmodules) {
-        let categoryHeader = false;
-        // Order through CATEGORIES if present
-        const categories = CATEGORIES[category] || [category];
-        if (categories && categories.length) {
-          for (let n in categories) {
-            const grp = categories[n];
-            // We now have the group and the category.  We might not have any modules, though...
-            if (modules[grp]) {
-              // Decide if we need a category header as well as a group header
-              if (categories.length === 1) {
-                // Show category header instead of group header
-                if (m && grp == m.grp) {
-                  // If this is a missing module/weapon, skip it
-                  if (m.grp == "mh" || m.grp == "mm"){
-                    continue;
-                  } else {
-                    list.push(<div ref={(elem) => this.groupElem = elem} key={category}
-                                 className={'select-category upp'}>{translate(category)}</div>);
-                  }
-                } else {
-                  if (category == "mh" || category == "mm"){
-                    continue;
-                  } else {
-                    list.push(<div key={category} className={'select-category upp'}>{translate(category)}</div>);
-                  }
-                }
-              } else {
-                // Show category header as well as group header
-                if (!categoryHeader) {
-                  if (category == "mh" || category == "mm"){
-                    continue;
-                  }
-                  else {
-                    list.push(<div key={category} className={'select-category upp'}>{translate(category)}</div>);
-                    categoryHeader = true;
-                  }
-                }
-                if (m && grp == m.grp) {
-                  list.push(<div ref={(elem) => this.groupElem = elem} key={grp}
-                                 className={'select-group cap'}>{translate(grp)}</div>);
-                } else {
-                  list.push(<div key={grp} className={'select-group cap'}>{translate(grp)}</div>);
-                }
-              }
-              list.push(buildGroup(grp, modules[grp]));
-              for (const i of modules[grp]) {
-                let mount = '';
-                if (i.mount === 'F') {
-                  mount = 'Fixed';
-                } else if (i.mount === 'G') {
-                  mount = 'Gimballed';
-                } else if (i.mount === 'T') {
-                  mount = 'Turreted';
-                }
-                let special = '';
-                if (typeof(i.special) !== 'undefined') {
-                  special = `(${translate(i.special)})`;
-                }
-                const fuzz = { grp, m: i, name: `${i.class}${i.rating}${mount ? ' '  + mount : ''} ${translate(grp)} ${translate(special)}` };
-                fuzzy.push(fuzz);
-              }
-            }
+    if (!isCoreInternal) {
+      firstSlotId = emptyId;
+      lastSlotId = emptyId;
+    }
+
+    // Collect all modules from any structure into a flat array
+    let allModules = [];
+
+    if (modules) {
+      if (Array.isArray(modules)) {
+        // Direct array of modules
+        allModules = modules.filter(this._shouldIncludeModule);
+      } else if (typeof modules === 'object') {
+        // Object structure - extract all modules into flat array
+        Object.keys(modules).forEach(groupKey => {
+          const moduleGroup = modules[groupKey];
+
+          if (Array.isArray(moduleGroup)) {
+            // Filter modules in this group
+            const filteredModules = moduleGroup.filter(this._shouldIncludeModule);
+            allModules = allModules.concat(filteredModules);
+          } else if (moduleGroup && typeof moduleGroup === 'object') {
+            // Nested object structure like { 'cargo': { '1': mod1, '2': mod2 } }
+            const filteredModules = Object.keys(moduleGroup)
+              .map(modKey => moduleGroup[modKey])
+              .filter(this._shouldIncludeModule);
+            allModules = allModules.concat(filteredModules);
           }
-        }
+        });
       }
     }
-    let trackingFocus = false;
-    return { list, currentGroup, fuzzy, trackingFocus };
-  }
 
-  /**
-   * Return Is expiremental capacity reached
-   * @return {boolean}      Is experimental capacity reached
-   */
-  _experimentalCapacityReached() {
-    const ship = this.props.ship;
-    const ews = ship.internal.filter(o => o.m && o.m.grp === 'ews');
-    let expCap;
+    // Process all modules with proper category grouping (no duplicate headers)
+    if (allModules.length > 0) {
+      this._processModules(allModules, list, onSelect, eligible, warning, termtip, tooltip, translate);
 
-    if(ews.length < 1){
-      expCap = 4;
-    } else{
-      expCap = ews[0].m.class == 3 ? 5 : 6;
-    }
-
-    return expCap <= this.props.ship.hardpoints.filter(o => o.m && o.m.experimental).length;
-  }
-
-  /**
-   * Generate React Components for Module Group
-   * @param  {Ship} ship            Ship the selection is for
-   * @param  {Function} translate   Translate function
-   * @param  {Object} mountedModule Mounted Module
-   * @param  {Function} warningFunc Warning function
-   * @param  {function} onSelect    Select/Mount callback
-   * @param  {string} grp           Group name
-   * @param  {Array} modules        Available modules
-   * @return {React.Component}      Available Module Group contents
-   */
-  _buildGroup(ship, translate, mountedModule, warningFunc, onSelect, grp, modules) {
-    let prevClass = null, prevRating = null, prevName;
-    let elems = [];
-
-    const sortedModules = modules.sort(this._moduleOrder);
-
-    // Calculate the number of items per class.  Used so we don't have long lists with only a few items in each row
-    const tmp = sortedModules.map((v, i) => v['class']).reduce((count, cls) => {
-      count[cls] = ++count[cls] || 1;
-      return count;
-    }, {});
-    const itemsPerClass = Math.max.apply(null, Object.keys(tmp).map(key => tmp[key]));
-
-    let itemsOnThisRow = 0;
-    for (let i = 0; i < sortedModules.length; i++) {
-      let m = sortedModules[i];
-      // If m.grp is mh or mm, or m.symbol contains 'Missing' skip it
-      if (m.grp == 'mh' || m.grp == 'mm' || (typeof(m.symbol) !== 'undefined' && m.symbol.includes("Missing"))) {
-        // If this is a missing module, skip it
-        continue;
-      }
-      let mount = null;
-      let disabled = false;
-      prevName = m.name;
-      if (ModuleUtils.isShieldGenerator(m.grp)) {
-        // Shield generators care about maximum hull mass
-        disabled = ship.hullMass > m.maxmass;
-      // If the mounted module is experimental as well, we can replace it so
-      // the maximum does not apply
-      } else if (m.experimental && (!mountedModule || !mountedModule.experimental)) {
-        disabled = this._experimentalCapacityReached();
-      } else if (m.grp === 'mlc' && (!mountedModule || mountedModule.grp !== 'mlc')) {
-        disabled = 1 <= ship.internal.filter(o => o.m && o.m.grp === 'mlc').length;
-      }
-      let active = mountedModule && mountedModule.id === m.id;
-      let classes = cn(m.name ? 'lc' : 'c', {
-        warning: !disabled && warningFunc && warningFunc(m),
-        active,
-        disabled
+      allModules.forEach((mod) => {
+        if (!firstSlotId) firstSlotId = mod.id;
+        lastSlotId = mod.id;
       });
-      let eventHandlers;
+    }
 
-      if (disabled) {
-        eventHandlers = {
-          onKeyDown: this._keyDown.bind(this, null),
-          onKeyUp: this._keyUp.bind(this, null)
+    // Only add empty option for non-core internal slots
+    if (!isCoreInternal) {
+      list.unshift(this._createEmptySlotElement(emptyId, m, onSelect, translate));
+    }
 
-        };
-      } else {
-        /**
-         * Get the ids of the first and last <li> elements in the <ul> that are focusable (i.e. are not active or disabled)
-         * Will be used to keep focus inside the <ul> on Tab and Shift-Tab while it is visible
-         */
-        if (this.firstSlotId == null) this.firstSlotId = sortedModules[i].id;
-        if (active) this.activeSlotId = sortedModules[i].id;
-        this.lastSlotId = sortedModules[i].id;
+    this.activeSlotId = activeSlotId;
+    this.firstSlotId = firstSlotId;
+    this.lastSlotId = lastSlotId;
 
-        let showDiff = this._showDiff.bind(this, mountedModule, m);
-        let select = onSelect.bind(null, m);
+    return { list };
+  }
 
-        eventHandlers = {
-          onMouseEnter: this._over.bind(this, showDiff),
-          onTouchStart: this._touchStart.bind(this, showDiff),
-          onTouchEnd: this._touchEnd.bind(this, select),
-          onMouseLeave: this._hideDiff,
-          onClick: select,
-          onKeyDown: this._keyDown.bind(this, select),
-          onKeyUp: this._keyUp.bind(this, select)
-        };
+  /**
+   * Filter out unrecognised modules
+   */
+  _shouldIncludeModule = (mod) => {
+    if (!mod || !mod.id) return false;
+
+    // Filter out unrecognised modules
+    if (mod.name && mod.name.toLowerCase().includes('unrecognised')) return false;
+    if (mod.id && mod.id.toLowerCase().includes('unrecognised')) return false;
+    if (mod.grp === 'unknown' || mod.grp === 'unrecognised') return false;
+
+    return true;
+  }
+
+  /**
+   * Sort modules by size (descending) then rating (ascending)
+   */
+  _sortModules = (a, b) => {
+    const classA = a.class || 0;
+    const classB = b.class || 0;
+    if (classA !== classB) {
+      return classB - classA; // Size descending: 6, 5, 4, 3, 2, 1
+    }
+
+    // Handle all possible ratings: A, B, C, D, E, F, G, H, I, etc.
+    const ratingA = a.rating || 'Z';
+    const ratingB = b.rating || 'Z';
+    if (ratingA !== ratingB) {
+      return ratingA.localeCompare(ratingB); // Rating ascending: A, B, C, D, E, F, G, H, I
+    }
+
+    const nameA = a.name || a.id || '';
+    const nameB = b.name || b.id || '';
+    return nameA.localeCompare(nameB);
+  }
+
+  /**
+   * Determine if a module is compact (only size/class) or named
+   */
+  _isCompactModule = (mod) => {
+    // Bulkheads are never compact
+    const isBulkhead = mod.grp === 'bh' || mod.grp === 'armour' ||
+                      (mod.name && mod.name.toLowerCase().includes('bulkhead'));
+
+    if (isBulkhead) return false;
+
+    // If it has no name, it's compact (just size/rating like "5A", "2F", "1I")
+    if (!mod.name) return true;
+
+    // If the name is just the class/rating repeated, it's compact
+    if (mod.class && mod.rating && mod.name === `${mod.class}${mod.rating}`) return true;
+
+    // Special/unique modules should NEVER be compact (like Disruptor, Pacifier, etc.)
+    const specialModuleNames = [
+      'disruptor',
+      'pacifier',
+      'retributor',
+      'enforcer',
+      'cytoscrambler',
+      'advanced',
+      'enhanced',
+      'modified',
+      'prismatic',
+      'bi-weave',
+      'guardian',
+      'ax',
+      'caustic',
+      'enzyme',
+      'nanite',
+      'abrasion',
+      'seismic',
+      'sub-surface',
+      'displacement',
+      'mining',
+      'detailed surface scanner',
+      'supercruise assist',
+      'docking computer',
+      'fighter hangar',
+      'planetary vehicle hangar',
+      'corrosion resistant',
+      'military grade',
+      'lightweight',
+      'reinforced',
+      'mirrored',
+      'reactive'
+    ];
+
+    if (mod.name) {
+      const lowerName = mod.name.toLowerCase();
+      const isSpecialModule = specialModuleNames.some(special => lowerName.includes(special));
+
+      if (isSpecialModule) {
+        return false; // Special modules are NEVER compact
       }
+    }
 
-      switch (m.mount) {
-        case 'F':
-          mount = <MountFixed className={'lg'}/>;
+    // Only very basic standard modules should be in grid format
+    const basicGridModules = [
+      'cargo rack',
+      'fuel tank'
+    ];
+
+    if (mod.name) {
+      const lowerName = mod.name.toLowerCase();
+      const isBasicGridModule = basicGridModules.some(type => lowerName === type);
+
+      if (isBasicGridModule) {
+        return true; // Only exact matches for basic modules are compact
+      }
+    }
+
+    // Everything else with a name should be in the named list
+    return false;
+  }
+
+  /**
+   * Create a compact module element for the grid
+   */
+  _createCompactModuleElement = (mod, onSelect, eligible, warning, termtip, tooltip, translate) => {
+    if (!mod || !mod.id) {
+      console.warn('Invalid module:', mod);
+      return null;
+    }
+
+    let validSlot = eligible(mod);
+    let isActive = this.props.m && this.props.m.id === mod.id;
+
+    // Check if this is a hardpoint module
+    const isHardpoint = mod.mount || (mod.grp && (mod.grp === 'wp' || mod.grp === 'ul'));
+
+    let classNames = cn({
+      'compact-module': !isHardpoint, // Use compact-module for non-hardpoint modules
+      'hardpoint-module': isHardpoint, // Use hardpoint-module for hardpoint modules
+      'c': validSlot,
+      'disabled': !validSlot,
+      'active': isActive
+    });
+
+    let warningIcon;
+    if (validSlot && !isActive && warning) {
+      warningIcon = warning(mod);
+    }
+
+    // Generate compact display name for all class/rating combinations
+    let displayName;
+    let mountIcon = null;
+
+    // Check if this is a hardpoint module and get mount type icon
+    if (mod.mount) {
+      switch (mod.mount) {
+        case 'F': // Fixed
+          mountIcon = <MountFixed className="mount-icon" />;
           break;
-        case 'G':
-          mount = <MountGimballed className={'lg'}/>;
+        case 'G': // Gimballed
+          mountIcon = <MountGimballed className="mount-icon" />;
           break;
-        case 'T':
-          mount = <MountTurret className={'lg'}/>;
+        case 'T': // Turret
+          mountIcon = <MountTurret className="mount-icon" />;
           break;
+        default:
+          mountIcon = null;
       }
-      if (m.name && m.name === prevName) {
-        // elems.push(<br key={'b' + m.grp + i} />);
-        itemsOnThisRow = 0;
+    }
+
+    if (mod.class && mod.rating) {
+      displayName = `${mod.class}${mod.rating}`;
+    } else if (mod.rating) {
+      displayName = mod.rating;
+    } else if (mod.class) {
+      displayName = `${mod.class}`;
+    } else {
+      displayName = mod.id.toUpperCase().substring(0, 3);
+    }
+
+    return (
+      <div key={mod.id}
+           className={classNames}
+           tabIndex={validSlot ? '0' : ''}
+           data-id={mod.id}
+           onClick={validSlot ? onSelect.bind(null, mod) : null}
+           onKeyDown={validSlot ? this._keyDown.bind(this, onSelect.bind(null, mod)) : null}
+           ref={slotItem => {
+             if (slotItem) {
+               this.slotItems.set(mod.id, slotItem);
+             }
+           }}>
+        <div className="module-content">
+          {mountIcon && <span className="module-mount">{mountIcon}</span>}
+          <span className="module-text">{warningIcon} {displayName}</span>
+        </div>
+      </div>
+    );
+  }
+
+  /**
+   * Add named/special modules as grid elements (like Disruptor, Pacifier)
+   */
+  _addNamedModulesAsGrid(namedModules, list, onSelect, eligible, warning, termtip, tooltip, translate) {
+    // Group named modules by size for consistent layout
+    const modulesBySize = {};
+    namedModules.forEach(mod => {
+      const size = mod.class || 0;
+      if (!modulesBySize[size]) {
+        modulesBySize[size] = [];
       }
-      if (itemsOnThisRow == 6 || i > 0 && sortedModules.length > 3 && itemsPerClass > 2 && m.class != prevClass && (m.rating != prevRating || m.mount)) {
-        elems.push(<br key={'b' + m.grp + i}/>);
-        itemsOnThisRow = 0;
-      }
-      let tbIdx = (classes.indexOf('disabled') < 0) ? 0 : undefined;
-      elems.push(
-        <li key={m.id} data-id={m.id} className={classes} {...eventHandlers} tabIndex={tbIdx}
-            ref={slotItem => this.slotItems[m.id] = slotItem}>
-          {mount}
-          {(mount ? ' ' : '') + m.class + m.rating + (m.missile ? '/' + m.missile : '') + (m.name ? ' ' + translate(m.name) : '')}
-        </li>
+      modulesBySize[size].push(mod);
+    });
+
+    // Sort sizes in descending order (6, 5, 4, 3, 2, 1)
+    const sizes = Object.keys(modulesBySize).map(Number).sort((a, b) => b - a);
+
+    sizes.forEach(size => {
+      const modulesInRow = modulesBySize[size];
+      const moduleCount = modulesInRow.length;
+
+      // Check if any module in this row is a hardpoint module
+      const hasHardpointModules = modulesInRow.some(mod =>
+        mod.mount || (mod.grp && (mod.grp === 'wp' || mod.grp === 'ul'))
       );
 
-      itemsOnThisRow++;
-      prevClass = m.class;
-      prevRating = m.rating;
-      prevName = m.name;
-    }
-    return <ul key={'modules' + grp}>{elems}</ul>;
+      // Use different row class based on module type
+      const rowClassName = hasHardpointModules ? 'hardpoint-module-row' : 'compact-module-row';
+
+      list.push(
+        <div key={`named-size-${size}`}
+             className={rowClassName}
+             data-module-count={moduleCount}>
+          {modulesInRow.map(mod =>
+            this._createNamedModuleElement(mod, onSelect, eligible, warning, termtip, tooltip, translate)
+          )}
+        </div>
+      );
+    });
   }
 
   /**
-   * Generate tooltip content for the difference between the
-   * mounted module and the hovered modules
-   * @param  {Object} mm    The module mounet currently
-   * @param  {Object} m     The hovered module
-   * @param  {DOMRect} rect DOMRect for target element
+   * Create a named module element (like Disruptor, Pacifier) with proper styling and mount icons
    */
-  _showDiff(mm, m, rect) {
-    if (this.props.diffDetails) {
-      this.touchTimeout = null;
-      this.context.tooltip(this.props.diffDetails(m, mm), rect);
+  _createNamedModuleElement = (mod, onSelect, eligible, warning, termtip, tooltip, translate) => {
+    if (!mod || !mod.id) {
+      console.warn('Invalid module:', mod);
+      return null;
     }
-  }
 
-  /**
-   * Generate tooltip content for the difference between the
-   * mounted module and the hovered modules
-   */
-  _showSearch() {
-    if (this.props.modules instanceof Array) {
-      return;
+    let validSlot = eligible(mod);
+    let isActive = this.props.m && this.props.m.id === mod.id;
+
+    // Check if this is a hardpoint module
+    const isHardpoint = mod.mount || (mod.grp && (mod.grp === 'wp' || mod.grp === 'ul'));
+
+    let classNames = cn({
+      'compact-module': !isHardpoint,
+      'hardpoint-module': isHardpoint,
+      'named-module': true,
+      'c': validSlot,
+      'disabled': !validSlot,
+      'active': isActive
+    });
+
+    let warningIcon;
+    if (validSlot && !isActive && warning) {
+      warningIcon = warning(mod);
     }
-    const mountedModule = this.props.m;
+
+    // Generate display name for named modules
+    let displayName;
+    let mountIcon = null;
+
+    // Check if this is a hardpoint module and get mount type icon
+    if (mod.mount) {
+      switch (mod.mount) {
+        case 'F': // Fixed
+          mountIcon = <MountFixed className="mount-icon" />;
+          break;
+        case 'G': // Gimballed
+          mountIcon = <MountGimballed className="mount-icon" />;
+          break;
+        case 'T': // Turret
+          mountIcon = <MountTurret className="mount-icon" />;
+          break;
+        default:
+          mountIcon = null;
+      }
+    }
+
+    // For named modules, show the name (but shorter)
+    if (mod.name) {
+      // Shorten common long names for better fit
+      let shortName = mod.name
+        .replace('Fragment Cannon', 'Frag')
+        .replace('Pulse Laser', 'Pulse')
+        .replace('Multi-cannon', 'MC')
+        .replace('Missile Rack', 'Missile');
+
+      displayName = shortName.toUpperCase();
+    } else {
+      if (mod.class && mod.rating) {
+        displayName = `${mod.class}${mod.rating}`;
+      } else {
+        displayName = mod.id.toUpperCase();
+      }
+    }
+
     return (
-      <FuzzySearch
-        list={this.state.fuzzy}
-        keys={['grp', 'name']}
-        tokenize={true}
-        className={'input'}
-        width={'100%'}
-        style={{ padding: 0 }}
-        onSelect={e => this.props.onSelect.bind(null, e.m)()}
-        resultsTemplate={(props, state, styles, clickHandler) => {
-          return state.results.map((val, i) => {
-            let disabled;
-
-            if(val.m.experimental && (!mountedModule || !mountedModule.experimental)) {
-              disabled = this._experimentalCapacityReached();
-            } else{
-              disabled = false;
-            }
-            const handler = disabled ? null : () => clickHandler(i);
-
-            return (
-              <div
-                key={i}
-                className={cn('lc', {disabled})}
-                onClick={handler}
-              >
-                {val.name}
-              </div>
-            );
-          });
-        }}
-      />
+      <div key={mod.id}
+           className={classNames}
+           tabIndex={validSlot ? '0' : ''}
+           data-id={mod.id}
+           onClick={validSlot ? onSelect.bind(null, mod) : null}
+           onKeyDown={validSlot ? this._keyDown.bind(this, onSelect.bind(null, mod)) : null}
+           ref={slotItem => {
+             if (slotItem) {
+               this.slotItems.set(mod.id, slotItem);
+             }
+           }}>
+        <div className="module-content">
+          {mountIcon && <span className="module-mount">{mountIcon}</span>}
+          <span className="module-text">{warningIcon} {displayName}</span>
+        </div>
+      </div>
     );
   }
 
   /**
-   * Mouse over diff handler
-   * @param  {Function} showDiff diff tooltip callback
-   * @param  {SyntheticEvent} event Event
+   * Process modules by grouping them by main category and sub-category
    */
-  _over(showDiff, event) {
-    event.preventDefault();
-    showDiff(event.currentTarget.getBoundingClientRect());
+  _processModules(modules, list, onSelect, eligible, warning, termtip, tooltip, translate) {
+    const sortedModules = modules.sort(this._sortModules);
+
+    // Group modules by detailed sub-category
+    const moduleGroups = this._groupModulesByType(sortedModules);
+
+    // Organize into main categories and sub-categories
+    const mainCategories = {
+      'Shields': [],
+      'Fuel': [],
+      'Structural Reinforcement': [],
+      'Hangars': [],
+      'Lasers': [],
+      'Projectiles': [],
+      'Other Internal': [],
+      'Other Hardpoints': []
+    };
+
+    Object.keys(moduleGroups).forEach(groupKey => {
+      if (groupKey.includes('shields')) {
+        mainCategories['Shields'].push({ key: groupKey, modules: moduleGroups[groupKey] });
+      } else if (groupKey.includes('fuel')) {
+        mainCategories['Fuel'].push({ key: groupKey, modules: moduleGroups[groupKey] });
+      } else if (groupKey.includes('reinforcement')) {
+        mainCategories['Structural Reinforcement'].push({ key: groupKey, modules: moduleGroups[groupKey] });
+      } else if (groupKey.includes('hangars')) {
+        mainCategories['Hangars'].push({ key: groupKey, modules: moduleGroups[groupKey] });
+      } else if (groupKey.includes('lasers')) {
+        mainCategories['Lasers'].push({ key: groupKey, modules: moduleGroups[groupKey] });
+      } else if (groupKey.includes('projectiles')) {
+        mainCategories['Projectiles'].push({ key: groupKey, modules: moduleGroups[groupKey] });
+      } else if (groupKey.includes('internal')) {
+        mainCategories['Other Internal'].push({ key: groupKey, modules: moduleGroups[groupKey] });
+      } else if (groupKey.includes('hardpoint')) {
+        mainCategories['Other Hardpoints'].push({ key: groupKey, modules: moduleGroups[groupKey] });
+      }
+    });
+
+    // Render each main category with its sub-categories
+    Object.keys(mainCategories).forEach(mainCategoryName => {
+      const subCategories = mainCategories[mainCategoryName];
+
+      if (subCategories.length > 0) {
+        // Add main category header
+        list.push(<div key={`main-${mainCategoryName}`} className="select-group cap">{mainCategoryName}</div>);
+
+        // Add each sub-category
+        subCategories.forEach(subCategory => {
+          const { key: groupKey, modules: groupModules } = subCategory;
+
+          // Add sub-category header
+          const groupName = this._getGroupDisplayName(groupKey, translate);
+          list.push(<div key={`sub-${groupKey}`} className="module-separator cap">{groupName}</div>);
+
+          // Separate compact and named modules within this sub-group
+          const compactModules = [];
+          const namedModules = [];
+
+          groupModules.forEach(mod => {
+            if (this._isCompactModule(mod)) {
+              compactModules.push(mod);
+            } else {
+              namedModules.push(mod);
+            }
+          });
+
+          // Add compact modules as grid
+          if (compactModules.length > 0) {
+            this._addCompactModulesAsGrid(compactModules, list, onSelect, eligible, warning, termtip, tooltip, translate, groupKey);
+          }
+
+          // Add named modules
+          if (namedModules.length > 0) {
+            namedModules.forEach(mod => {
+              this._addModuleToList(mod, list, onSelect, eligible, warning, termtip, tooltip, translate);
+            });
+          }
+        });
+      }
+    });
   }
 
   /**
-   * Toucch Start - Show diff after press, otherwise treat as tap
-   * @param  {Function} showDiff diff tooltip callback
-   * @param  {SyntheticEvent} event Event
+   * Add compact modules organized in rows by size
    */
-  _touchStart(showDiff, event) {
-    event.preventDefault();
-    let rect = event.currentTarget.getBoundingClientRect();
-    this.touchTimeout = setTimeout(showDiff.bind(this, rect), PRESS_THRESHOLD);
-  }
 
-  /**
-   * Touch End - Select module on tap
-   * @param  {Function} select Select module callback
-   * @param  {SyntheticEvent} event Event
-   */
-  _touchEnd(select, event) {
-    event.preventDefault();
-    if (this.touchTimeout !== null) {  // If timeout has not fired (been nulled out) yet
-      select();
+  _addCompactModulesAsGrid(compactModules, list, onSelect, eligible, warning, termtip, tooltip, translate, groupKey = 'default') {
+    // Check if we have a single-rating type (like all E-class cargo racks)
+    const ratings = [...new Set(compactModules.map(mod => mod.rating))];
+    const isSingleRatingType = ratings.length === 1;
+
+    // Generate unique key based on module content
+    const moduleIds = compactModules.map(mod => mod.id).sort().join('-');
+
+    const gridKey = `compact-grid-${groupKey}-${moduleIds.slice(0, 30)}`; // Include group key
+
+    if (isSingleRatingType) {
+      // For single-rating types (like Cargo Racks), arrange them in one or more rows
+      const maxPerRow = 6;
+      const rows = [];
+      for (let i = 0; i < compactModules.length; i += maxPerRow) {
+        rows.push(compactModules.slice(i, i + maxPerRow));
+      }
+
+      list.push(
+        <div key={gridKey} className="compact-module-grid">
+          {rows.map((rowModules, rowIndex) => {
+            const moduleCount = rowModules.length;
+
+            // Check if any module in this row is a hardpoint module
+            const hasHardpointModules = rowModules.some(mod =>
+              mod.mount || (mod.grp && (mod.grp === 'wp' || mod.grp === 'ul'))
+            );
+
+            // Use different row class based on module type
+            const rowClassName = hasHardpointModules ? 'hardpoint-module-row' : 'compact-module-row';
+
+            return (
+              <div key={`${gridKey}-row-${rowIndex}`}
+                   className={rowClassName}
+                   data-module-count={moduleCount}>
+                {rowModules.map(mod =>
+                  this._createCompactModuleElement(mod, onSelect, eligible, warning, termtip, tooltip, translate)
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
+    } else {
+      // For multi-rating types (like weapons), group by size as before
+      const modulesBySize = {};
+      compactModules.forEach(mod => {
+        const size = mod.class || 0;
+        if (!modulesBySize[size]) {
+          modulesBySize[size] = [];
+        }
+        modulesBySize[size].push(mod);
+      });
+
+      // Sort sizes in descending order (6, 5, 4, 3, 2, 1)
+      const sizes = Object.keys(modulesBySize).map(Number).sort((a, b) => b - a);
+
+      list.push(
+        <div key={gridKey} className="compact-module-grid">
+          {sizes.map(size => {
+            const modulesInRow = modulesBySize[size];
+            const moduleCount = modulesInRow.length;
+
+            // Check if any module in this row is a hardpoint module
+            const hasHardpointModules = modulesInRow.some(mod =>
+              mod.mount || (mod.grp && (mod.grp === 'wp' || mod.grp === 'ul'))
+            );
+
+            // Use different row class based on module type
+            const rowClassName = hasHardpointModules ? 'hardpoint-module-row' : 'compact-module-row';
+
+            return (
+              <div key={`${gridKey}-size-${size}`}
+                   className={rowClassName}
+                   data-module-count={moduleCount}>
+                {modulesInRow.map(mod =>
+                  this._createCompactModuleElement(mod, onSelect, eligible, warning, termtip, tooltip, translate)
+                )}
+              </div>
+            );
+          })}
+        </div>
+      );
     }
-    this._hideDiff();
   }
 
   /**
-   * Key down - select module on Enter key, move to next/previous module on Tab/Shift-Tab, close on Esc
-   * @param  {Function} select Select module callback
-   * @param  {SyntheticEvent} event Event
+   * Add a module to the list (for named/special modules)
    */
-  _keyDown(select, event) {
-    let className = event.currentTarget.attributes['class'].value;
-    if (event.key == 'Enter' && className.indexOf('disabled') < 0 && className.indexOf('active') < 0) {
-      select();
+  _addModuleToList(mod, list, onSelect, eligible, warning, termtip, tooltip, translate) {
+    if (!mod || !mod.id) {
+      console.warn('Invalid module:', mod);
       return;
     }
-    let elemId = event.currentTarget.attributes['data-id'].value;
-    if (className.indexOf('disabled') < 0 && event.key == 'Tab') {
-      if (event.shiftKey && elemId == this.firstSlotId) {
-        event.preventDefault();
-        this.slotItems[this.lastSlotId].focus();
-        return;
+
+    let validSlot = eligible(mod);
+    let isActive = this.props.m && this.props.m.id === mod.id;
+
+    // Use special module styling with margins and borders
+    let classNames = cn({
+      'special-module': true, // Add special-module class for styling
+      'c': validSlot,
+      'disabled': !validSlot,
+      'active': isActive
+    });
+
+    let warningIcon;
+    if (validSlot && !isActive && warning) {
+      warningIcon = warning(mod);
+    }
+
+    // Check if this is a hardpoint module and get mount type icon
+    let mountIcon = null;
+    if (mod.mount) {
+      switch (mod.mount) {
+        case 'F': // Fixed
+          mountIcon = <MountFixed className="mount-icon" />;
+          break;
+        case 'G': // Gimballed
+          mountIcon = <MountGimballed className="mount-icon" />;
+          break;
+        case 'T': // Turret
+          mountIcon = <MountTurret className="mount-icon" />;
+          break;
+        default:
+          mountIcon = null;
       }
-      if (!event.shiftKey && elemId == this.lastSlotId) {
-        event.preventDefault();
-        this.slotItems[this.firstSlotId].focus();
-        return;
-      }
     }
-  }
 
-  /**
-   * Key Up
-   * @param {Function}  select Select module callback
-   * @param {SytheticEvent} event Event
-   */
-  _keyUp(select, event) {
-    // nothing here yet
-  }
+    // Generate proper display name for named modules
+    let displayName;
+    if (mod.name) {
+      const isBulkhead = mod.grp === 'bh' || mod.grp === 'armour' ||
+                        (mod.name && mod.name.toLowerCase().includes('bulkhead'));
 
-  /**
-   * Hide diff tooltip
-   * @param  {SyntheticEvent} event Event
-   */
-  _hideDiff(event) {
-    clearTimeout(this.touchTimeout);
-    this.touchTimeout = null;
-    this.context.tooltip();
-  }
-
-  /**
-   * Order two modules suitably for display in module selection
-   * @param  {Object} a the first module
-   * @param  {Object} b the second module
-   * @return {int}      -1 if the first module should go first, 1 if the second module should go first
-   */
-  _moduleOrder(a, b) {
-    // Named modules go last
-    if (!a.name && b.name) {
-      return -1;
-    }
-    if (a.name && !b.name) {
-      return 1;
-    }
-    // Class ordered from highest (8) to lowest (1)
-    if (a.class < b.class) {
-      return 1;
-    }
-    if (a.class > b.class) {
-      return -1;
-    }
-    // Mount type, if applicable
-    if (a.mount && b.mount && a.mount !== b.mount) {
-      if (a.mount === 'F' || (a.mount === 'G' && b.mount === 'T')) {
-        return -1;
+      if (isBulkhead) {
+        displayName = mod.name.toUpperCase();
       } else {
-        return 1;
+        if (mod.class && mod.rating) {
+          displayName = `${mod.class}${mod.rating} ${mod.name}`.toUpperCase();
+        } else {
+          displayName = mod.name.toUpperCase();
+        }
+      }
+    } else {
+      if (mod.class && mod.rating) {
+        displayName = `${mod.class}${mod.rating}`;
+      } else {
+        displayName = mod.id.toUpperCase();
       }
     }
-    // Sort multi limpet controllers by name
-    if (a.grp === 'mlc') {
-      if (a.name[0] <= b.name[0]) {
-        return -1;
+
+    // Create the module element with box styling and margins
+    list.push(
+      <div key={mod.id}
+           className={classNames}
+           tabIndex={validSlot ? '0' : ''}
+           data-id={mod.id}
+           onClick={validSlot ? onSelect.bind(null, mod) : null}
+           onKeyDown={validSlot ? this._keyDown.bind(this, onSelect.bind(null, mod)) : null}
+           ref={slotItem => {
+             if (slotItem) {
+               this.slotItems.set(mod.id, slotItem);
+             }
+           }}>
+        <div className="module-content">
+          {mountIcon && <span className="module-mount">{mountIcon}</span>}
+          <span className="module-text">{warningIcon} {displayName}</span>
+        </div>
+      </div>
+    );
+  }
+  /**
+   * Group modules by their type/category
+   */
+  _groupModulesByType(modules) {
+    const groups = {};
+
+    modules.forEach(mod => {
+      let groupKey = this._getModuleGroupKey(mod);
+
+      if (!groups[groupKey]) {
+        groups[groupKey] = [];
       }
-      if (a.name[0] > b.name[0]) {
-        return 1;
-      }
-    }
-    // Rating ordered from highest (A) to lowest (E)
-    if (a.rating < b.rating) {
-      return -1;
-    }
-    if (a.rating > b.rating) {
-      return 1;
-    }
-    // Do not attempt to order by name at this point, as that mucks up the order of armour
-    return 0;
+      groups[groupKey].push(mod);
+    });
+
+    return groups;
   }
 
   /**
-   * Scroll to mounted (if it exists) module group on mount
+   * Determine the group key for a module with proper sub-categorization
+   */
+  _getModuleGroupKey(mod) {
+    if (!mod) return 'other';
+
+    const grp = mod.grp || '';
+    const name = (mod.name || '').toLowerCase();
+
+    // Check if this is a hardpoint module
+    const isHardpoint = mod.mount || (grp && (grp === 'wp' || grp === 'ul'));
+
+    if (isHardpoint) {
+      // Detailed hardpoint sub-categorization
+      if (grp === 'pl' || grp === 'ul' || grp === 'bl') {
+        if (name.includes('disruptor') || name.includes('retributor') || name.includes('cytoscrambler')) {
+          return 'hardpoint-lasers-special';
+        }
+        if (grp === 'pl') return 'hardpoint-lasers-pulse';
+        if (grp === 'ul') return 'hardpoint-lasers-burst';
+        if (grp === 'bl') return 'hardpoint-lasers-beam';
+        return 'hardpoint-lasers-other';
+      }
+
+      if (grp === 'mc' || grp === 'advmc' || grp === 'c' || grp === 'fc' || grp === 'pa' || grp === 'rg') {
+        if (name.includes('pacifier') || name.includes('enforcer')) {
+          return 'hardpoint-projectiles-special';
+        }
+        if (grp === 'mc' || grp === 'advmc') return 'hardpoint-projectiles-multicannon';
+        if (grp === 'c') return 'hardpoint-projectiles-cannon';
+        if (grp === 'fc') return 'hardpoint-projectiles-fragment';
+        if (grp === 'pa') return 'hardpoint-projectiles-plasma';
+        if (grp === 'rg') return 'hardpoint-projectiles-railgun';
+        return 'hardpoint-projectiles-other';
+      }
+
+      if (grp === 'mr' || grp === 'amr' || grp === 'tp' || grp === 'nl') {
+        return 'hardpoint-ordnance';
+      }
+
+      if (grp === 'ml' || grp === 'scl' || grp === 'sdm' || grp === 'abl') {
+        return 'hardpoint-mining';
+      }
+
+      // Experimental weapons
+      if (['axmc', 'axmce', 'axmr', 'axmre', 'ntp', 'rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'].includes(grp)) {
+        return 'hardpoint-experimental';
+      }
+
+      // Guardian weapons
+      if (['gpc', 'ggc', 'gsc'].includes(grp)) {
+        return 'hardpoint-guardian';
+      }
+
+      return 'hardpoint-other';
+    } else {
+      // Detailed internal sub-categorization
+      if (['sg', 'bsg', 'psg', 'scb'].includes(grp)) {
+        if (grp === 'sg') {
+          if (name.includes('prismatic')) return 'internal-shields-prismatic';
+          if (name.includes('bi-weave')) return 'internal-shields-biweave';
+          return 'internal-shields-standard';
+        }
+        if (grp === 'bsg') return 'internal-shields-biweave';
+        if (grp === 'psg') return 'internal-shields-prismatic';
+        if (grp === 'scb') return 'internal-shields-cellbank';
+      }
+
+      if (['cr', 'crl'].includes(grp)) {
+        return 'internal-cargo';
+      }
+
+      if (['ft', 'fs'].includes(grp)) {
+        if (grp === 'ft') return 'internal-fuel-tanks';
+        if (grp === 'fs') return 'internal-fuel-scoops';
+      }
+
+      if (['hr', 'mrp'].includes(grp)) {
+        if (grp === 'hr') return 'internal-reinforcement-hull';
+        if (grp === 'mrp') return 'internal-reinforcement-module';
+      }
+
+      if (['cc', 'fx', 'hb', 'pc', 'rpl', 'mlc'].includes(grp)) {
+        return 'internal-limpets';
+      }
+
+      if (['pce', 'pci', 'pcm', 'pcq'].includes(grp)) {
+        return 'internal-passengers';
+      }
+
+      if (['fh', 'pv'].includes(grp)) {
+        if (grp === 'fh') return 'internal-hangars-fighter';
+        if (grp === 'pv') return 'internal-hangars-srv';
+      }
+
+      // Use the original INTCAT lookup for other modules
+      for (const [category, groups] of Object.entries(INTCAT)) {
+        if (groups.includes(grp)) {
+          return `internal-${category.replace(/\s+/g, '-')}`;
+        }
+      }
+
+      return 'internal-other';
+    }
+  }
+
+  /**
+   * Get display name for module group with proper hierarchy
+   */
+  _getGroupDisplayName(groupKey, translate) {
+    const groupNames = {
+      // Shield sub-categories
+      'internal-shields-standard': 'Shield Generators',
+      'internal-shields-prismatic': 'Prismatic Shield Generators',
+      'internal-shields-biweave': 'Bi-Weave Shield Generators',
+      'internal-shields-cellbank': 'Shield Cell Banks',
+
+      // Fuel sub-categories
+      'internal-fuel-tanks': 'Fuel Tanks',
+      'internal-fuel-scoops': 'Fuel Scoops',
+
+      // Reinforcement sub-categories
+      'internal-reinforcement-hull': 'Hull Reinforcement Packages',
+      'internal-reinforcement-module': 'Module Reinforcement Packages',
+
+      // Hangar sub-categories
+      'internal-hangars-fighter': 'Fighter Hangars',
+      'internal-hangars-srv': 'SRV Hangars',
+
+      // Laser weapon sub-categories
+      'hardpoint-lasers-pulse': 'Pulse Lasers',
+      'hardpoint-lasers-burst': 'Burst Lasers',
+      'hardpoint-lasers-beam': 'Beam Lasers',
+      'hardpoint-lasers-special': 'Special Laser Weapons',
+      'hardpoint-lasers-other': 'Other Lasers',
+
+      // Projectile weapon sub-categories
+      'hardpoint-projectiles-multicannon': 'Multi-Cannons',
+      'hardpoint-projectiles-cannon': 'Cannons',
+      'hardpoint-projectiles-fragment': 'Fragment Cannons',
+      'hardpoint-projectiles-plasma': 'Plasma Accelerators',
+      'hardpoint-projectiles-railgun': 'Rail Guns',
+      'hardpoint-projectiles-special': 'Special Projectile Weapons',
+      'hardpoint-projectiles-other': 'Other Projectiles',
+
+      // Other categories (simplified)
+      'internal-cargo': 'Cargo Racks',
+      'internal-limpets': 'Limpet Controllers',
+      'internal-passengers': 'Passenger Cabins',
+      'internal-refineries': 'Refineries',
+      'internal-fsd-interdictor': 'FSD Interdictors',
+      'internal-flight-assists': 'Flight Assists',
+      'internal-scanners': 'Scanners',
+      'internal-experimental': 'Experimental Internal',
+      'internal-weapon-stabilizers': 'Weapon Stabilizers',
+      'internal-guardian': 'Guardian Technology',
+      'internal-auto-field-maintenance-unit': 'Auto Field-Maintenance Units',
+      'internal-other': 'Other Internal',
+
+      'hardpoint-ordnance': 'Missiles & Torpedoes',
+      'hardpoint-mining': 'Mining Equipment',
+      'hardpoint-experimental': 'Experimental Weapons',
+      'hardpoint-guardian': 'Guardian Weapons',
+      'hardpoint-other': 'Other Hardpoints',
+
+      'other': 'Other Modules'
+    };
+
+    return groupNames[groupKey] || groupKey.toUpperCase();
+  }
+
+  /**
+   * Key down handler
+   */
+  _keyDown(cb, e) {
+    if (e.keyCode === 13 || e.keyCode === 32) { // Enter or Space
+      e.preventDefault();
+      e.stopPropagation();
+      cb();
+    }
+  }
+
+  /**
+   * Scroll to the currently fitted module
+   */
+  _scrollToActiveModule() {
+    if (!this.props.m || !this.node) return;
+
+    // Use requestAnimationFrame to ensure DOM is fully rendered
+    requestAnimationFrame(() => {
+      const activeElement = this.node.querySelector(`[data-id="${this.props.m.id}"]`);
+      if (activeElement) {
+        // Calculate the position to center the element in the scrollable container
+        const containerHeight = this.node.clientHeight;
+        const elementTop = activeElement.offsetTop;
+        const elementHeight = activeElement.offsetHeight;
+
+        // Center the element in the visible area
+        const scrollPosition = elementTop - (containerHeight / 2) + (elementHeight / 2);
+
+        // Smooth scroll to the position
+        this.node.scrollTo({
+          top: Math.max(0, scrollPosition),
+          behavior: 'smooth'
+        });
+      }
+    });
+  }
+
+  /**
+   * Create empty slot element
+   */
+  _createEmptySlotElement(emptyId, m, onSelect, translate) {
+    return (
+      <div key={emptyId}
+           className={cn('empty-slot', { 'active': !m })}
+           tabIndex='0'
+           data-id={emptyId}
+           onClick={onSelect.bind(null, null)}
+           onKeyDown={this._keyDown.bind(this, onSelect.bind(null, null))}
+           ref={slotItem => {
+             if (slotItem) {
+               this.slotItems.set(emptyId, slotItem);
+             }
+           }}>
+        {translate('empty')}
+      </div>
+    );
+  }
+
+  /**
+   * Hide the diff details popup
+   */
+  _hideDiff() {
+    if (this.node) {
+      this.node.classList.remove('show-diff');
+    }
+  }
+
+  /**
+   * Show the search/filter input
+   */
+  _showSearch() {
+    this.setState({ searchActive: true }, () => {
+      if (this.node) {
+        let input = this.node.querySelector('.module-search input');
+        if (input) {
+          input.focus();
+        }
+      }
+    });
+  }
+
+  /**
+   * Update state based on context changes
    */
   componentDidMount() {
-    if (this.groupElem) {  // Scroll to currently selected group
-      this.node.scrollTop = this.groupElem.offsetTop;
-    }
-    /**
-     * Set focus on active or first slot element, if applicable.
-     */
-    if (this.slotItems[this.activeSlotId]) {
-      this.slotItems[this.activeSlotId].focus();
-    } else if (this.slotItems[this.firstSlotId]) {
-      this.slotItems[this.firstSlotId].focus();
-    }
+    this._scrollToActiveModule(); // Scroll to the currently fitted module
   }
 
   /**
-   * Handle focus if the component updates
-   *
+   * Handle component updates
    */
-  componentWillUnmount() {
-    if (this.props.slotDiv) {
-      this.props.slotDiv.focus();
+  componentDidUpdate(prevProps) {
+    // If the fitted module changed, scroll to the new active module
+    if (prevProps.m !== this.props.m) {
+      this._scrollToActiveModule();
     }
   }
 
   /**
-   * Update state based on property and context changes
-   * @param  {Object} nextProps   Incoming/Next properties
-   * @param  {Object} nextContext Incoming/Next conext
-   */
-  UNSAFE_componentWillReceiveProps(nextProps, nextContext) {
-    this.setState(this._initState(nextProps, nextContext));
-  }
-
-  /**
-   * Render the list
-   * @return {React.Component} List
+   * Render component
+   * @return {Object} React component
    */
   render() {
+    let { className } = this.props;
+    let { list } = this.state;
+
+    let classes = cn('select', className);
+
     return (
-      <div ref={node => this.node = node}
-           className={cn('select', this.props.className)}
-           onScroll={this._hideDiff}
-           onClick={(e) => e.stopPropagation()}
-           onContextMenu={stopCtxPropagation}
-      >
-        {this._showSearch()}
-        {this.state.list}
+      <div className={classes}
+           ref={node => { this.node = node; }}
+           onContextMenu={stopCtxPropagation}>
+        {list}
       </div>
     );
   }

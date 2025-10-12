@@ -1,5 +1,6 @@
 import React from 'react';
 import TranslatedComponent from './TranslatedComponent';
+import { AppContext } from '../AppContext';
 import { Languages } from '../i18n/Language';
 import { Insurance } from '../shipyard/Constants';
 import Link from './Link';
@@ -19,7 +20,8 @@ import Announcement from './Announcement';
 import { outfitURL } from '../utils/UrlGenerators';
 
 const SIZE_MIN = 0.65;
-const SIZE_RANGE = 0.55;
+const SIZE_MAX = 1.75;
+const SIZE_DEFAULT = 1;
 
 /**
  * Normalize percentages to 'clean' values
@@ -55,6 +57,7 @@ function selectAll(e) {
  * Coriolis App Header section / menus
  */
 export default class Header extends TranslatedComponent {
+  static contextType = AppContext;
 
 	/**
 	 * Constructor
