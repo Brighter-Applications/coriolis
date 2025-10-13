@@ -124,6 +124,7 @@ export default class StandardSlot extends TranslatedComponent {
           modButton = {this.modButton}
         />;
       } else {
+        console.log('Module added to list:', m);
         menu = <AvailableModulesMenu
           className='standard'
           modules={modules}
@@ -133,6 +134,7 @@ export default class StandardSlot extends TranslatedComponent {
           warning={warning}
           diffDetails={diffDetails.bind(ship, this.context.language)}
           eligible={this._eligible}
+          slot={slot} // Add this line to pass slot restriction info
           slotDiv = {this.slotDiv}
         />;
       }

@@ -82,6 +82,7 @@ const GRPCAT = {
   'sdm': 'mining',
   'dc': 'flight assists',
   'sua': 'flight assists',
+  'pas': 'flight assists',
   'ews': 'weapon stabilizers',
 };
 
@@ -96,20 +97,28 @@ const INTCAT = {
   'refineries': ['rf'],
   'shields': ['sg', 'bsg', 'psg', 'scb'],
   'structural reinforcement': ['hr', 'mrp'],
-  'flight assists': ['dc', 'sua'],
+  'flight assists': ['dc', 'sua', 'pas'],
   'scanners': ['ss'],
   'experimental': ['rcpl', 'dtl', 'mahr', 'rsl'],
   'weapon stabilizers': ['ews'],
   'guardian': ['gsrp', 'gfsb', 'ghrp', 'gmrp'],
+  // Add standard/core modules (remove bulkheads since they're handled separately)
+  'power plant': ['pp'],
+  'thrusters': ['th', 't'],
+  'frame shift drive': ['fsd'],
+  'life support': ['ls'],
+  'power distributor': ['pd'],
+  'sensors': ['s', 'ss'],
+  'fuel tank': ['ft']
 };
 
 const HPTCAT = {
   'lasers': ['pl', 'ul', 'bl'],
   'projectiles': ['mc', 'advmc', 'c', 'fc', 'pa', 'rg'],
   'ordnance': ['mr', 'amr', 'tp', 'nl'],
-  'mining': ['ml', 'scl', 'sdm', 'abl'],
   'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp','rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'],
   'guardian': ['gpc', 'ggc', 'gsc'],
+  'mining': ['ml', 'scl', 'sdm', 'abl'],
 };
 
 /**
@@ -124,7 +133,8 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     warning: PropTypes.func.isRequired,
     diffDetails: PropTypes.func.isRequired,
     m: PropTypes.object,
-    eligible: PropTypes.func.isRequired
+    eligible: PropTypes.func.isRequired,
+    slot: PropTypes.object // Add this line for slot restriction information
   };
 
   /**
@@ -134,12 +144,17 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    */
   constructor(props, context) {
     super(props);
+
+    this.slotItems = new Map();
+
+    this._initState = this._initState.bind(this);
+    this._shouldIncludeModule = this._shouldIncludeModule.bind(this); // Add this line
+    this._keyDown = this._keyDown.bind(this);
     this._hideDiff = this._hideDiff.bind(this);
     this._showSearch = this._showSearch.bind(this);
+    this._scrollToActiveModule = this._scrollToActiveModule.bind(this);
+
     this.state = this._initState(props, context);
-    this.slotItems = new Map();
-    this.groupElem = null;
-    this.node = null;
   }
 
   /**
@@ -223,10 +238,25 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   _shouldIncludeModule = (mod) => {
     if (!mod || !mod.id) return false;
 
-    // Filter out unrecognised modules
-    if (mod.name && mod.name.toLowerCase().includes('unrecognised')) return false;
-    if (mod.id && mod.id.toLowerCase().includes('unrecognised')) return false;
-    if (mod.grp === 'unknown' || mod.grp === 'unrecognised') return false;
+    // Filter out unrecognised modules more comprehensively
+    const id = mod.id.toLowerCase();
+    const name = (mod.name || '').toLowerCase();
+    const grp = mod.grp || '';
+
+    // Filter out any module with "unrecognised" in name or ID
+    if (name.includes('unrecognised') || id.includes('unrecognised')) return false;
+
+    // Filter out specific error/placeholder modules
+    if (id === '1z' || id === '0z' || id.endsWith('z')) return false;
+
+    // Filter out modules with unrecognised/unknown group
+    if (grp === 'unknown' || grp === 'unrecognised') return false;
+
+    // Filter out modules that are clearly error placeholders
+    if (name.includes('error') || name.includes('placeholder')) return false;
+
+    // Filter out modules with invalid/missing critical properties for their type
+    if (!mod.class && !mod.rating && !mod.name && mod.id.length < 3) return false;
 
     return true;
   }
@@ -546,58 +576,139 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   _processModules(modules, list, onSelect, eligible, warning, termtip, tooltip, translate) {
     const sortedModules = modules.sort(this._sortModules);
 
-    // Group modules by detailed sub-category
+    // Group modules by their actual group key (mod.grp)
     const moduleGroups = this._groupModulesByType(sortedModules);
 
-    // Organize into main categories and sub-categories
-    const mainCategories = {
-      'Shields': [],
-      'Fuel': [],
-      'Structural Reinforcement': [],
-      'Hangars': [],
-      'Lasers': [],
-      'Projectiles': [],
-      'Other Internal': [],
-      'Other Hardpoints': []
-    };
+    // Organize groups into main categories using GRPCAT, INTCAT, HPTCAT
+    const mainCategories = {};
 
+    // Process each group and assign to main category
     Object.keys(moduleGroups).forEach(groupKey => {
-      if (groupKey.includes('shields')) {
-        mainCategories['Shields'].push({ key: groupKey, modules: moduleGroups[groupKey] });
-      } else if (groupKey.includes('fuel')) {
-        mainCategories['Fuel'].push({ key: groupKey, modules: moduleGroups[groupKey] });
-      } else if (groupKey.includes('reinforcement')) {
-        mainCategories['Structural Reinforcement'].push({ key: groupKey, modules: moduleGroups[groupKey] });
-      } else if (groupKey.includes('hangars')) {
-        mainCategories['Hangars'].push({ key: groupKey, modules: moduleGroups[groupKey] });
-      } else if (groupKey.includes('lasers')) {
-        mainCategories['Lasers'].push({ key: groupKey, modules: moduleGroups[groupKey] });
-      } else if (groupKey.includes('projectiles')) {
-        mainCategories['Projectiles'].push({ key: groupKey, modules: moduleGroups[groupKey] });
-      } else if (groupKey.includes('internal')) {
-        mainCategories['Other Internal'].push({ key: groupKey, modules: moduleGroups[groupKey] });
-      } else if (groupKey.includes('hardpoint')) {
-        mainCategories['Other Hardpoints'].push({ key: groupKey, modules: moduleGroups[groupKey] });
+      const groupModules = moduleGroups[groupKey];
+
+      // Special handling for bulkheads
+      if (groupKey === 'bh' || groupKey === 'armour') {
+        if (!mainCategories['bulkheads']) {
+          mainCategories['bulkheads'] = [];
+        }
+        mainCategories['bulkheads'].push({
+          groupKey: groupKey,
+          modules: groupModules
+        });
+        return; // Skip the rest of the logic for bulkheads
       }
+
+      // Find which main category this group belongs to
+      let mainCategoryName = null;
+
+      // Check hardpoint categories first for weapon modules
+      for (const [categoryName, groupList] of Object.entries(HPTCAT)) {
+        if (groupList.includes(groupKey)) {
+          if (categoryName === 'experimental') {
+            mainCategoryName = 'hardpoint-experimental';
+          } else if (categoryName === 'guardian') {
+            mainCategoryName = 'hardpoint-guardian';
+          } else {
+            mainCategoryName = categoryName;
+          }
+          break;
+        }
+      }
+
+      // If not found in hardpoint categories, check internal categories
+      if (!mainCategoryName) {
+        for (const [categoryName, groupList] of Object.entries(INTCAT)) {
+          if (groupList.includes(groupKey)) {
+            mainCategoryName = categoryName;
+            break;
+          }
+        }
+      }
+
+      // Fallback to GRPCAT if not found in specific categories
+      if (!mainCategoryName && GRPCAT[groupKey]) {
+        mainCategoryName = GRPCAT[groupKey];
+      }
+
+      // Final fallback
+      if (!mainCategoryName) {
+        mainCategoryName = 'other';
+      }
+
+      // Initialize main category if it doesn't exist
+      if (!mainCategories[mainCategoryName]) {
+        mainCategories[mainCategoryName] = [];
+      }
+
+      // Add this group to the main category
+      mainCategories[mainCategoryName].push({
+        groupKey: groupKey,
+        modules: groupModules
+      });
     });
 
-    // Render each main category with its sub-categories
-    Object.keys(mainCategories).forEach(mainCategoryName => {
-      const subCategories = mainCategories[mainCategoryName];
+    // Define the order of main categories for display
+    const categoryOrder = [
+      // Core modules first
+      'bulkheads',
+      'power plant',
+      'thrusters',
+      'frame shift drive',
+      'life support',
+      'power distributor',
+      'sensors',
+      // Internal modules
+      'auto field-maintenance unit',
+      'cargo racks',
+      'fsd interdictor',
+      'fuel',
+      'hangars',
+      'limpet controllers',
+      'passenger cabins',
+      'refineries',
+      'shields',
+      'structural reinforcement',
+      'flight assists',
+      'scanners',
+      'weapon stabilizers',
+      'guardian',
+      'experimental',
+      // Hardpoint modules in the desired order
+      'lasers',
+      'projectiles',
+      'ordnance',
+      'hardpoint-experimental',
+      'hardpoint-guardian',
+      'mining',
+      'other'
+    ];
 
-      if (subCategories.length > 0) {
+    // Render each main category with its groups
+    categoryOrder.forEach(mainCategoryName => {
+      const groups = mainCategories[mainCategoryName];
+
+      if (groups && groups.length > 0) {
         // Add main category header
-        list.push(<div key={`main-${mainCategoryName}`} className="select-group cap">{mainCategoryName}</div>);
+        const displayCategoryName = this._getMainCategoryDisplayName(mainCategoryName);
+        list.push(<div key={`main-${mainCategoryName}`} className="select-group cap">{displayCategoryName}</div>);
 
-        // Add each sub-category
-        subCategories.forEach(subCategory => {
-          const { key: groupKey, modules: groupModules } = subCategory;
+        // Check if there are multiple groups in this category
+        const hasMultipleGroups = groups.length > 1;
 
-          // Add sub-category header
-          const groupName = this._getGroupDisplayName(groupKey, translate);
-          list.push(<div key={`sub-${groupKey}`} className="module-separator cap">{groupName}</div>);
+        // Add each group within this category
+        groups.forEach(group => {
+          const { groupKey, modules: groupModules } = group;
 
-          // Separate compact and named modules within this sub-group
+          // Only add group header if there are multiple groups in this category
+          if (hasMultipleGroups) {
+            // Get group display name using the new method
+            const groupDisplayName = this._getGroupDisplayName(groupKey, groupModules);
+
+            // Add group header (sub-category)
+            list.push(<div key={`group-${groupKey}`} className="module-separator cap">{groupDisplayName}</div>);
+          }
+
+          // Separate compact and named modules within this group
           const compactModules = [];
           const namedModules = [];
 
@@ -605,7 +716,18 @@ export default class AvailableModulesMenu extends TranslatedComponent {
             if (this._isCompactModule(mod)) {
               compactModules.push(mod);
             } else {
-              namedModules.push(mod);
+              // Check if the module is a planetary approach suite and if the slot is pas restricted
+              if (mainCategoryName === 'flight assists' && mod.grp === 'pas') {
+                // Check if 'eligible' is set and if eligible has 'pas'
+                if (eligible({ grp: 'pas' })) {
+                  namedModules.push(mod); // Only add PAS if the slot is pas restricted and this module is a PAS
+                  console.log('Adding PAS module to pas restricted slot:', mod);
+                } else {
+                  console.log('Skipping PAS module for non pas restricted slot:', mod, ' slot eligible:', eligible);
+                  // continue to the next item in the loop and skip adding the pas module to the availableModulesMenu for a non pas restricted slot
+                  return;
+                }
+              }
             }
           });
 
@@ -623,6 +745,184 @@ export default class AvailableModulesMenu extends TranslatedComponent {
         });
       }
     });
+  }
+
+  /**
+   * Get display name for main categories
+   */
+  _getMainCategoryDisplayName(categoryName) {
+    const categoryDisplayNames = {
+      // Core modules
+      'bulkheads': 'Bulkheads',
+      'power plant': 'Power Plant',
+      'thrusters': 'Thrusters',
+      'frame shift drive': 'Frame Shift Drive',
+      'life support': 'Life Support',
+      'power distributor': 'Power Distributor',
+      'sensors': 'Sensors',
+      // Internal modules
+      'auto field-maintenance unit': 'Auto Field-Maintenance Unit',
+      'cargo racks': 'Cargo Racks',
+      'fsd interdictor': 'FSD Interdictor',
+      'fuel': 'Fuel',
+      'hangars': 'Hangars',
+      'limpet controllers': 'Limpet Controllers',
+      'passenger cabins': 'Passenger Cabins',
+      'refineries': 'Refineries',
+      'shields': 'Shields',
+      'structural reinforcement': 'Structural Reinforment',
+      'flight assists': 'Flight Assists',
+      'scanners': 'Scanners',
+      'weapon stabilizers': 'Weapon Stabilizers',
+      'guardian': 'Guardian',
+      'experimental': 'Experimental',
+      'lasers': 'Lasers',
+      'projectiles': 'Projectiles',
+      'ordnance': 'Ordnance',
+      'hardpoint-experimental': 'Experimental',
+      'hardpoint-guardian': 'Guardian',
+      'mining': 'Mining',
+      'other': 'Other Modules'
+    };
+
+    return categoryDisplayNames[categoryName] || categoryName.toUpperCase();
+  }
+/**
+   * Get friendly display name for module group keys
+   */
+  _getGroupDisplayName(groupKey, modules) {
+    // First try to get the name from the first module's ukName if available
+    if (modules && modules.length > 0 && modules[0].ukName) {
+      return modules[0].ukName;
+    }
+
+    // Fallback to mapping common group keys to friendly names
+    const groupDisplayNames = {
+      // Hardpoint modules
+      'pl': 'Pulse Laser',
+      'ul': 'Burst Laser',
+      'bl': 'Beam Laser',
+      'mc': 'Multi-Cannon',
+      'advmc': 'Multi-Cannon (Advanced)',
+      'c': 'Cannon',
+      'fc': 'Fragment Cannon',
+      'pa': 'Plasma Accelerator',
+      'rg': 'Rail Gun',
+      'mr': 'Missile Rack',
+      'amr': 'Missile Rack (Advanced)',
+      'tp': 'Torpedo Pylon',
+      'nl': 'Mine Launcher',
+      'ml': 'Mining Laser',
+      'scl': 'Seismic Charge Launcher',
+      'sdm': 'Sub-Surface Displacement Missile',
+      'abl': 'Abrasion Blaster',
+      'axmc': 'AX Multi-Cannon',
+      'axmce': 'AX Multi-Cannon (Enhanced)',
+      'axmr': 'AX Missile Rack',
+      'axmre': 'AX Missile Rack (Enhanced)',
+      'ntp': 'Nanite Torpedo Pylon',
+      'rfl': 'Remote Release Flak Launcher',
+      'tbrfl': 'Remote Release Flechette Launcher',
+      'tbsc': 'Shock Cannon',
+      'tbem': 'Enzyme Missile Rack',
+      'gpc': 'Guardian Plasma Charger',
+      'ggc': 'Guardian Gauss Cannon',
+      'gsc': 'Guardian Shard Cannon',
+
+      // Utility modules
+      'sb': 'Shield Booster',
+      'hs': 'Heat Sink Launcher',
+      'ch': 'Chaff Launcher',
+      'po': 'Point Defence',
+      'ec': 'Electronic Countermeasure',
+      'cs': 'Cargo Scanner',
+      'kw': 'Kill Warrant Scanner',
+      'ws': 'Wake Scanner',
+      'sc': 'Surface Scanner',
+      'ss': 'Detailed Surface Scanner',
+
+      // Internal modules
+      'cr': 'Cargo Rack',
+      'crl': 'Corrosion Resistant Cargo Rack',
+      'sg': 'Shield Generator',
+      'bsg': 'Bi-Weave Shield Generator',
+      'psg': 'Prismatic Shield Generator',
+      'scb': 'Shield Cell Bank',
+      'cc': 'Collector Limpet Controller',
+      'fx': 'Fuel Transfer Limpet Controller',
+      'hb': 'Hatch Breaker Limpet Controller',
+      'pc': 'Prospector Limpet Controller',
+      'rpl': 'Repair Limpet Controller',
+      'mlc': 'Multi Limpet Controller',
+      'fh': 'Fighter Hangar',
+      'pv': 'Planetary Vehicle Hangar',
+      'fs': 'Fuel Scoop',
+      'ft': 'Fuel Tank',
+      'hr': 'Hull Reinforcement Package',
+      'mrp': 'Module Reinforcement Package',
+      'dc': 'Docking Computer',
+      'sua': 'Supercruise Assist',
+      'ews': 'Experimental Weapon Stabiliser',
+
+      // Standard modules
+      'pp': 'Power Plant',
+      'th': 'Thrusters',
+      'fsd': 'Frame Shift Drive',
+      'ls': 'Life Support',
+      'pd': 'Power Distributor',
+      'ss': 'Sensors'
+    };
+
+    return groupDisplayNames[groupKey] || groupKey.toUpperCase();
+  }
+
+  /**
+   * Check if a hardpoint slot has restrictions
+   */
+  _isRestrictedHardpointSlot(slotObject) {
+    return slotObject && typeof slotObject === 'object' && slotObject.name;
+  }
+
+  /**
+   * Get the restriction type for a hardpoint slot
+   */
+  _getHardpointSlotRestriction(slotObject) {
+    if (!this._isRestrictedHardpointSlot(slotObject)) {
+      return null;
+    }
+    return slotObject.name.toLowerCase();
+  }
+
+  /**
+   * Check if a module is eligible for a restricted hardpoint slot
+   */
+  _isModuleEligibleForRestrictedHardpoint(mod, restriction) {
+    if (!restriction || !mod) return true;
+
+    const grp = mod.grp || '';
+    const name = (mod.name || '').toLowerCase();
+
+    switch (restriction) {
+      case 'mining':
+        // Mining hardpoints can only use mining equipment
+        return ['ml', 'scl', 'sdm', 'abl'].includes(grp) ||
+               name.includes('mining') ||
+               name.includes('abrasion') ||
+               name.includes('seismic') ||
+               name.includes('sub-surface');
+
+      case 'utility':
+        // Utility hardpoints for specific utility modules
+        return ['sc', 'ss', 'cs', 'kw', 'ws', 'xs', 'ch', 'po', 'ec', 'sfn'].includes(grp);
+
+      case 'weapon':
+        // Weapon-only hardpoints
+        return ['pl', 'ul', 'bl', 'mc', 'advmc', 'c', 'fc', 'pa', 'rg', 'mr', 'amr', 'tp', 'nl'].includes(grp) ||
+               mod.mount; // Any module with a mount type is a weapon
+
+      default:
+        return true;
+    }
   }
 
   /**
@@ -820,174 +1120,14 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   }
 
   /**
-   * Determine the group key for a module with proper sub-categorization
+   * Determine the group key for a module - use the actual module group from coriolis-data
    */
   _getModuleGroupKey(mod) {
     if (!mod) return 'other';
 
-    const grp = mod.grp || '';
-    const name = (mod.name || '').toLowerCase();
-
-    // Check if this is a hardpoint module
-    const isHardpoint = mod.mount || (grp && (grp === 'wp' || grp === 'ul'));
-
-    if (isHardpoint) {
-      // Detailed hardpoint sub-categorization
-      if (grp === 'pl' || grp === 'ul' || grp === 'bl') {
-        if (name.includes('disruptor') || name.includes('retributor') || name.includes('cytoscrambler')) {
-          return 'hardpoint-lasers-special';
-        }
-        if (grp === 'pl') return 'hardpoint-lasers-pulse';
-        if (grp === 'ul') return 'hardpoint-lasers-burst';
-        if (grp === 'bl') return 'hardpoint-lasers-beam';
-        return 'hardpoint-lasers-other';
-      }
-
-      if (grp === 'mc' || grp === 'advmc' || grp === 'c' || grp === 'fc' || grp === 'pa' || grp === 'rg') {
-        if (name.includes('pacifier') || name.includes('enforcer')) {
-          return 'hardpoint-projectiles-special';
-        }
-        if (grp === 'mc' || grp === 'advmc') return 'hardpoint-projectiles-multicannon';
-        if (grp === 'c') return 'hardpoint-projectiles-cannon';
-        if (grp === 'fc') return 'hardpoint-projectiles-fragment';
-        if (grp === 'pa') return 'hardpoint-projectiles-plasma';
-        if (grp === 'rg') return 'hardpoint-projectiles-railgun';
-        return 'hardpoint-projectiles-other';
-      }
-
-      if (grp === 'mr' || grp === 'amr' || grp === 'tp' || grp === 'nl') {
-        return 'hardpoint-ordnance';
-      }
-
-      if (grp === 'ml' || grp === 'scl' || grp === 'sdm' || grp === 'abl') {
-        return 'hardpoint-mining';
-      }
-
-      // Experimental weapons
-      if (['axmc', 'axmce', 'axmr', 'axmre', 'ntp', 'rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'].includes(grp)) {
-        return 'hardpoint-experimental';
-      }
-
-      // Guardian weapons
-      if (['gpc', 'ggc', 'gsc'].includes(grp)) {
-        return 'hardpoint-guardian';
-      }
-
-      return 'hardpoint-other';
-    } else {
-      // Detailed internal sub-categorization
-      if (['sg', 'bsg', 'psg', 'scb'].includes(grp)) {
-        if (grp === 'sg') {
-          if (name.includes('prismatic')) return 'internal-shields-prismatic';
-          if (name.includes('bi-weave')) return 'internal-shields-biweave';
-          return 'internal-shields-standard';
-        }
-        if (grp === 'bsg') return 'internal-shields-biweave';
-        if (grp === 'psg') return 'internal-shields-prismatic';
-        if (grp === 'scb') return 'internal-shields-cellbank';
-      }
-
-      if (['cr', 'crl'].includes(grp)) {
-        return 'internal-cargo';
-      }
-
-      if (['ft', 'fs'].includes(grp)) {
-        if (grp === 'ft') return 'internal-fuel-tanks';
-        if (grp === 'fs') return 'internal-fuel-scoops';
-      }
-
-      if (['hr', 'mrp'].includes(grp)) {
-        if (grp === 'hr') return 'internal-reinforcement-hull';
-        if (grp === 'mrp') return 'internal-reinforcement-module';
-      }
-
-      if (['cc', 'fx', 'hb', 'pc', 'rpl', 'mlc'].includes(grp)) {
-        return 'internal-limpets';
-      }
-
-      if (['pce', 'pci', 'pcm', 'pcq'].includes(grp)) {
-        return 'internal-passengers';
-      }
-
-      if (['fh', 'pv'].includes(grp)) {
-        if (grp === 'fh') return 'internal-hangars-fighter';
-        if (grp === 'pv') return 'internal-hangars-srv';
-      }
-
-      // Use the original INTCAT lookup for other modules
-      for (const [category, groups] of Object.entries(INTCAT)) {
-        if (groups.includes(grp)) {
-          return `internal-${category.replace(/\s+/g, '-')}`;
-        }
-      }
-
-      return 'internal-other';
-    }
-  }
-
-  /**
-   * Get display name for module group with proper hierarchy
-   */
-  _getGroupDisplayName(groupKey, translate) {
-    const groupNames = {
-      // Shield sub-categories
-      'internal-shields-standard': 'Shield Generators',
-      'internal-shields-prismatic': 'Prismatic Shield Generators',
-      'internal-shields-biweave': 'Bi-Weave Shield Generators',
-      'internal-shields-cellbank': 'Shield Cell Banks',
-
-      // Fuel sub-categories
-      'internal-fuel-tanks': 'Fuel Tanks',
-      'internal-fuel-scoops': 'Fuel Scoops',
-
-      // Reinforcement sub-categories
-      'internal-reinforcement-hull': 'Hull Reinforcement Packages',
-      'internal-reinforcement-module': 'Module Reinforcement Packages',
-
-      // Hangar sub-categories
-      'internal-hangars-fighter': 'Fighter Hangars',
-      'internal-hangars-srv': 'SRV Hangars',
-
-      // Laser weapon sub-categories
-      'hardpoint-lasers-pulse': 'Pulse Lasers',
-      'hardpoint-lasers-burst': 'Burst Lasers',
-      'hardpoint-lasers-beam': 'Beam Lasers',
-      'hardpoint-lasers-special': 'Special Laser Weapons',
-      'hardpoint-lasers-other': 'Other Lasers',
-
-      // Projectile weapon sub-categories
-      'hardpoint-projectiles-multicannon': 'Multi-Cannons',
-      'hardpoint-projectiles-cannon': 'Cannons',
-      'hardpoint-projectiles-fragment': 'Fragment Cannons',
-      'hardpoint-projectiles-plasma': 'Plasma Accelerators',
-      'hardpoint-projectiles-railgun': 'Rail Guns',
-      'hardpoint-projectiles-special': 'Special Projectile Weapons',
-      'hardpoint-projectiles-other': 'Other Projectiles',
-
-      // Other categories (simplified)
-      'internal-cargo': 'Cargo Racks',
-      'internal-limpets': 'Limpet Controllers',
-      'internal-passengers': 'Passenger Cabins',
-      'internal-refineries': 'Refineries',
-      'internal-fsd-interdictor': 'FSD Interdictors',
-      'internal-flight-assists': 'Flight Assists',
-      'internal-scanners': 'Scanners',
-      'internal-experimental': 'Experimental Internal',
-      'internal-weapon-stabilizers': 'Weapon Stabilizers',
-      'internal-guardian': 'Guardian Technology',
-      'internal-auto-field-maintenance-unit': 'Auto Field-Maintenance Units',
-      'internal-other': 'Other Internal',
-
-      'hardpoint-ordnance': 'Missiles & Torpedoes',
-      'hardpoint-mining': 'Mining Equipment',
-      'hardpoint-experimental': 'Experimental Weapons',
-      'hardpoint-guardian': 'Guardian Weapons',
-      'hardpoint-other': 'Other Hardpoints',
-
-      'other': 'Other Modules'
-    };
-
-    return groupNames[groupKey] || groupKey.toUpperCase();
+    // Use the actual group key from coriolis-data (mod.grp)
+    const grp = mod.grp || 'other';
+    return grp;
   }
 
   /**

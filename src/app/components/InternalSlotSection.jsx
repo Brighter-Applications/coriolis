@@ -228,7 +228,6 @@ export default class InternalSlotSection extends SlotSection {
 
     for (let i = 0, l = internal.length; i < l; i++) {
       let s = internal[i];
-
       slots.push(<InternalSlot
         key={i}
         maxClass={s.maxClass}

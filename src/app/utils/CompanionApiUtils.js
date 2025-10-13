@@ -44,6 +44,7 @@ export const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
   'Type8': 'type_8_transport',
   'Type9': 'type_9_heavy',
   'Type9_Military': 'type_10_defender',
+  'LakonMiner': 'type_11_prospector',
   'TypeX': 'alliance_chieftain',
   'TypeX_2': 'alliance_crusader',
   'TypeX_3': 'alliance_challenger',
