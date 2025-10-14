@@ -17,7 +17,7 @@ if (!agent) {
  * @param  {function} error     Failure/Error callback
  */
 export default function shorternUrl(url, success, error) {
-  orbisShorten(url, success, error);
+  hollowShorten(url, success, error);
 }
 
 const SHORTEN_API_GOOGLE = 'https://www.googleapis.com/urlshortener/v1/url?key=';
