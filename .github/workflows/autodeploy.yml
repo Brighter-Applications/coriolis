@@ -7,7 +7,7 @@ on:
   push:
     branches:
       - beta
-      - live
+      - live-legacy
 # Figure out the target branch name
 env:
   BRANCH_NAME: ${{ github.base_ref || github.ref_name }}
