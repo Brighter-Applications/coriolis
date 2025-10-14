@@ -43,6 +43,7 @@ jobs:
           npm install 2>&1
           npm start
           cd ../coriolis
+          rm -Rf node_modules package-lock.json
           npm install 2>&1
           npm run build 2>&1
       - name: Zip the code
