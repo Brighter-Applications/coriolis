@@ -74,8 +74,8 @@ jobs:
       shell: bash
       run: |
         /usr/local/bin/stop-start-builder.sh stop
-  deploy:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+  deploy-legacy:
+    runs-on: [self-hosted, Linux, X64, ubuntu2404, webapp]
     needs: build
     steps:
       - name: Authorize GCP
@@ -99,5 +99,5 @@ jobs:
       - name: Move the build to the web server
         shell: bash
         run: |
-          if [ ${{ env.BRANCH_NAME }} == "beta" ]; then rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/beta.coriolis.io/; else rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/coriolis.io/; fi
+          if [ ${{ env.BRANCH_NAME }} == "live-legacy" ]; then sudo -u www-data cp -r ./coriolis/build/* /var/www/coriolis.io/; fi
 
