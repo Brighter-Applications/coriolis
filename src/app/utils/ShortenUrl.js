@@ -17,7 +17,7 @@ if (!agent) {
  * @param  {function} error     Failure/Error callback
  */
 export default function shortenUrl(url, success, error) {
-  orbisShorten(url, success, error);
+  hollowShorten(url, success, error);
 }
 
 const SHORTEN_API_GOOGLE = 'https://www.googleapis.com/urlshortener/v1/url?key=';
@@ -74,7 +74,7 @@ function shortenUrlEddp(url, success, error) {
   }
 }
 
-const SHORTEN_API_HOLLOW = 'https://s.orbis.zone/shorten/';
+const SHORTEN_API_HOLLOW = 'https://sh.orbis.zone/shorten/';
 /**
  * Shorten a URL using Hollow's URL shortener API
  * @param  {string} url        The URL to shorten
