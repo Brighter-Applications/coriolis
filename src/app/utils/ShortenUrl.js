@@ -74,6 +74,35 @@ function shortenUrlEddp(url, success, error) {
   }
 }
 
+const SHORTEN_API_HOLLOW = 'https://sh.orbis.zone/shorten/';
+/**
+ * Shorten a URL using Hollow's URL shortener API
+ * @param  {string} url        The URL to shorten
+ * @param  {function} success   Success callback
+ * @param  {function} error     Failure/Error callback
+ */
+function hollowShorten(url, success, error) {
+  if (window.navigator.onLine) {
+    try {
+      request.post(SHORTEN_API_HOLLOW)
+        .field('url', url)
+        .end(function(err, response) {
+          if (err) {
+            console.error(err);
+            error('Bad Request');
+          } else {
+            success(response.body.shorturl);
+          }
+        });
+    } catch (e) {
+      console.log(e);
+      error(e.message ? e.message : e);
+    }
+  } else {
+    error('Not Online');
+  }
+}
+
 const SHORTEN_API_ORBIS = 'https://s.orbis.zone/api.php';
 /**
  * Shorten a URL using Orbis's URL shortener API
