@@ -1,6 +1,6 @@
 {
   "name": "coriolis_shipyard",
-  "version": "3.0.1",
+  "version": "4.0.0",
   "repository": {
     "type": "git",
     "url": "https://github.com/EDCD/coriolis"
@@ -16,10 +16,13 @@
     },
     {
       "name": "felixlinker"
+    },
+    {
+      "name": "alex-williams"
     }
   ],
   "private": true,
-  "engine": "node >= 10.13.0",
+  "engine": "node >= 22.2.0",
   "license": "MIT",
   "scripts": {
     "extract-translations": "grep -hroE \"(translate\\('[^']+'\\))|(tip.bind\\(null, '[^']+')\" src/* | grep -oE \"'[^']+'\" | grep -oE \"[^']+\" | sort -u -f",
