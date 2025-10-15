@@ -700,7 +700,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
           const { groupKey, modules: groupModules } = group;
 
           // Only add group header if there are multiple groups in this category
-          if (hasMultipleGroups) {
+          if (hasMultipleGroups || groupKey === 'fh') {
             // Get group display name using the new method
             const groupDisplayName = this._getGroupDisplayName(groupKey, groupModules);
 
@@ -734,7 +734,13 @@ export default class AvailableModulesMenu extends TranslatedComponent {
             }
           });
 
-          // Add compact modules as grid
+          // If there's only one compact module, treat it as a named module instead
+          if (compactModules.length === 1) {
+            namedModules.push(compactModules[0]);
+            compactModules.length = 0; // Clear the compact array
+          }
+
+          // Add compact modules as grid (only if there are multiple)
           if (compactModules.length > 0) {
             this._addCompactModulesAsGrid(compactModules, list, onSelect, eligible, warning, termtip, tooltip, translate, groupKey);
           }
@@ -857,6 +863,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       'pc': 'Prospector Limpet Controller',
       'rpl': 'Repair Limpet Controller',
       'mlc': 'Multi Limpet Controller',
+      'rsl': 'Research Limpet Controller',
       'fh': 'Fighter Hangar',
       'pv': 'Planetary Vehicle Hangar',
       'fs': 'Fuel Scoop',
