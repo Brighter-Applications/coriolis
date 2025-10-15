@@ -78,27 +78,35 @@ export default class ModificationsMenu extends TranslatedComponent {
       const blueprint = getBlueprint(blueprintName, m);
       let blueprintGrades = [];
       for (let grade in Modifications.modules[m.grp].blueprints[blueprintName].grades) {
-        // Grade is a string in the JSON so make it a number
         grade = Number(grade);
-        const classes = cn('c', {
+        const classes = cn('compact-module', {
           active: m.blueprint && blueprint.id === m.blueprint.id && grade === m.blueprint.grade
         });
         const close = this._blueprintSelected.bind(this, blueprintName, grade);
         const key = blueprintName + ':' + grade;
         const tooltipContent = blueprintTooltip(translate, blueprint.grades[grade], Modifications.modules[m.grp].blueprints[blueprintName].grades[grade].engineers, m.grp);
         if (classes.indexOf('active') >= 0) this.selectedModId = key;
-        blueprintGrades.unshift(<li key={key} tabIndex="0" data-id={key} className={classes} style={{ width: '2em' }} onMouseOver={termtip.bind(null, tooltipContent)} onMouseOut={tooltip.bind(null, null)} onClick={close} onKeyDown={this._keyDown} ref={modItem => {
-          if (modItem) {
-            this.modItems.set(key, modItem);
-          }
-        }}>{grade}</li>);
+        blueprintGrades.unshift(
+          <div
+            role='button'
+            key={key}
+            tabIndex='0'
+            data-id={key}
+            className={classes}
+            onMouseOver={termtip.bind(null, tooltipContent)}
+            onMouseOut={tooltip.bind(null, null)}
+            onClick={close}
+            onKeyDown={this._keyDown}
+            ref={(modItem) => this.modItems.set(key, modItem)}
+          ><div className='module-content'><span className='module-text'>{grade}</span></div></div>
+        );
       }
       if (blueprintGrades) {
         const thisLen = blueprintGrades.length;
         if (this.firstModId == null) this.firstModId = blueprintGrades[0].key;
         this.lastModId = blueprintGrades[thisLen - 1].key;
-        blueprints.push(<div key={blueprint.name} className={'select-group cap'}>{translate(blueprint.name)}</div>);
-        blueprints.push(<ul key={blueprintName}>{blueprintGrades}</ul>);
+        blueprints.push(<div key={blueprint.name} className='select-group cap'>{translate(blueprint.name)}</div>);
+        blueprints.push(<div key={blueprintName} className='grades-row' data-grade-count={thisLen}>{blueprintGrades}</div>);
       }
     }
     return blueprints;
@@ -507,29 +515,41 @@ export default class ModificationsMenu extends TranslatedComponent {
               this.modItems.set(this.firstBPLabel, modItems);
             }
           }}>{translate('PHRASE_SELECT_BLUEPRINT')}</div> }
-        { showBlueprintsMenu ? this._renderBlueprints(this.props, this.context) : null }
-        { showSpecial & !showSpecialsMenu ? <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: specialMenuOpened })} style={{ cursor: 'pointer' }} onMouseOver={specialTt ? termtip.bind(null, specialTt) : null} onMouseOut={specialTt ? tooltip.bind(null, null) : null}  onClick={_toggleSpecialsMenu} onKeyDown={ this._keyDown }>{specialLabel}</div> : null }
-        { showSpecialsMenu ? specials : null }
-        { showReset ? <div tabIndex="0" className={'section-menu button-inline-menu warning'} style={{ cursor: 'pointer' }} onClick={_reset} onKeyDown={ this._keyDown } onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_RESET')} onMouseOut={tooltip.bind(null, null)}> { translate('reset') } </div> : null }
-        { showRolls ?
 
-          <table style={{ width: '100%', backgroundColor: 'transparent' }}>
-            <tbody>
-              { showRolls ?
+        <div className={cn('menu-section-wrapper', { open: showBlueprintsMenu })}>
+          { showBlueprintsMenu ? this._renderBlueprints(this.props, this.context) : null }
+        </div>
+
+        { showSpecial & !showSpecialsMenu ? <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: specialMenuOpened })} style={{ cursor: 'pointer' }} onMouseOver={specialTt ? termtip.bind(null, specialTt) : null} onMouseOut={specialTt ? tooltip.bind(null, null) : null}  onClick={_toggleSpecialsMenu} onKeyDown={ this._keyDown }>{specialLabel}</div> : null }
+
+        <div className={cn('menu-section-wrapper', { open: showSpecialsMenu })}>
+          { showSpecialsMenu ? specials : null }
+        </div>
+
+        { showReset ? <div tabIndex="0" className={'section-menu button-inline-menu warning'} style={{ cursor: 'pointer' }} onClick={_reset} onKeyDown={ this._keyDown } onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_RESET')} onMouseOut={tooltip.bind(null, null)}> { translate('reset') } </div> : null }
+
+        <div className={cn('menu-section-wrapper', { open: showRolls })}>
+          { showRolls ?
+            <table style={{ width: '100%', backgroundColor: 'transparent' }}>
+              <tbody>
                 <tr>
                   <td tabIndex="0" className={ cn('section-menu button-inline-menu', { active: false }) }> { translate('mroll') }: </td>
                   <td tabIndex="0" className={ cn('section-menu button-inline-menu', { active: blueprintCv ===    0 }) } style={{ cursor: 'pointer' }} onClick={_rollWorst} onKeyDown={ this._keyDown } onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_WORST')} onMouseOut={tooltip.bind(null, null)}> { translate('0%') } </td>
                   <td tabIndex="0" className={ cn('section-menu button-inline-menu', { active: blueprintCv ===   50 })} style={{ cursor: 'pointer' }} onClick={_rollFifty} onKeyDown={ this._keyDown } onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_FIFTY')} onMouseOut={tooltip.bind(null, null)}> { translate('50%') } </td>
                   <td tabIndex="0" className={ cn('section-menu button-inline-menu', { active: blueprintCv ===  100 })} style={{ cursor: 'pointer' }} onClick={_rollFull} onKeyDown={ this._keyDown } onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_BEST')} onMouseOut={tooltip.bind(null, null)}> { translate('100%') } </td>
                   <td tabIndex="0" className={ cn('section-menu button-inline-menu', { active: blueprintCv === null || blueprintCv % 50 != 0 })} style={{ cursor: 'pointer' }} onClick={_rollRandom} onKeyDown={ this._keyDown } onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_RANDOM')} onMouseOut={tooltip.bind(null, null)}> { translate('random') } </td>
-                </tr> : null }
-            </tbody>
-          </table> : null }
-        { showMods ? <hr /> : null }
-        { showMods ?
-          <span onMouseOver={termtip.bind(null, 'HELP_MODIFICATIONS_MENU')} onMouseOut={tooltip.bind(null, null)} >
-            { this._renderModifications(this.props) }
-          </span> : null }
+                </tr>
+              </tbody>
+            </table> : null }
+        </div>
+
+        <div className={cn('menu-section-wrapper', { open: showMods })}>
+          { showMods ? <hr /> : null }
+          { showMods ?
+            <span onMouseOver={termtip.bind(null, 'HELP_MODIFICATIONS_MENU')} onMouseOut={tooltip.bind(null, null)} >
+              { this._renderModifications(this.props) }
+            </span> : null }
+        </div>
       </div>
     );
   }

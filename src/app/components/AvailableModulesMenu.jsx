@@ -3,7 +3,10 @@ import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import cn from 'classnames';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
-import { MountFixed, MountGimballed, MountTurret } from './SvgIcons';
+import { MountFixed, MountGimballed, MountTurret, Warning, CommunityGoalSmall, TechBrokerSmall } from './SvgIcons';
+import ModalConfirmCG from './ModalConfirmCG';
+import Persist from '../stores/Persist';
+
 
 const PRESS_THRESHOLD = 500; // mouse/touch down threshold
 
@@ -138,6 +141,38 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   };
 
   /**
+   * Select handler that warns about CG modules
+   * @param  {Function} onSelect      The original select function
+   * @param  {Object} module          The module being selected
+   */
+  _selectModule(onSelect, module) {
+    if (module && module.preEngineered && module.preEngineered.availability === 'CG' && Persist.promptCG()) {
+      this.context.showModal(<ModalConfirmCG onSelect={onSelect} module={module} />);
+    } else {
+      onSelect(module);
+    }
+  }
+
+  /**
+   * Get the availability icon for a module (CG or Tech Broker)
+   * @param  {Object} mod The module
+   * @return {React.Component} Icon component or null
+   */
+  _getAvailabilityIcon(mod) {
+    if (!mod || !mod.preEngineered) return null;
+
+    if (mod.preEngineered.availability === 'CG') {
+      return <CommunityGoalSmall className='community' />;
+    }
+
+    if (typeof mod.preEngineered.availability === 'undefined') {
+      return <TechBrokerSmall className='techbroker' />;
+    }
+
+    return null;
+  }
+
+  /**
    * Constructor
    * @param  {Object} props   React Component properties
    * @param  {Object} context React Component context
@@ -153,8 +188,16 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     this._hideDiff = this._hideDiff.bind(this);
     this._showSearch = this._showSearch.bind(this);
     this._scrollToActiveModule = this._scrollToActiveModule.bind(this);
+    this._handleSearchChange = this._handleSearchChange.bind(this);
+    this._filterModulesBySearch = this._filterModulesBySearch.bind(this);
+    this.searchInputRef = React.createRef();
 
-    this.state = this._initState(props, context);
+    const initialState = this._initState(props, context);
+    this.state = {
+      ...initialState,
+      searchQuery: ''
+      // Don't override allModules - it's already in initialState
+    };
   }
 
   /**
@@ -229,7 +272,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     this.firstSlotId = firstSlotId;
     this.lastSlotId = lastSlotId;
 
-    return { list };
+    return { list, allModules };
   }
 
   /**
@@ -246,8 +289,12 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     // Filter out any module with "unrecognised" in name or ID
     if (name.includes('unrecognised') || id.includes('unrecognised')) return false;
 
-    // Filter out specific error/placeholder modules
-    if (id === '1z' || id === '0z' || id.endsWith('z')) return false;
+    // Filter out specific error/placeholder modules by ID
+    // Don't use generic endsWith('z') as it filters out Guardian 5A Power Distributor (ID: 2Z)
+    if (id === '1z' || id === '0z' || id === '4m' || id === '4n') return false;
+
+    // Filter out modules with rating 'Z' which is used for unrecognised modules
+    if (mod.rating === 'Z' && name.includes('unrecognised')) return false;
 
     // Filter out modules with unrecognised/unknown group
     if (grp === 'unknown' || grp === 'unrecognised') return false;
@@ -377,18 +424,25 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     // Check if this is a hardpoint module
     const isHardpoint = mod.mount || (mod.grp && (mod.grp === 'wp' || mod.grp === 'ul'));
 
+    // Check if module has a warning
+    const hasWarning = validSlot && !isActive && warning && warning(mod);
+
     let classNames = cn({
       'compact-module': !isHardpoint, // Use compact-module for non-hardpoint modules
       'hardpoint-module': isHardpoint, // Use hardpoint-module for hardpoint modules
       'c': validSlot,
       'disabled': !validSlot,
-      'active': isActive
+      'active': isActive,
+      'warning': hasWarning
     });
 
     let warningIcon;
-    if (validSlot && !isActive && warning) {
-      warningIcon = warning(mod);
+    if (hasWarning) {
+      warningIcon = <Warning className="warning-icon" />;
     }
+
+    // Get availability icon (CG or Tech Broker)
+    const availabilityIcon = this._getAvailabilityIcon(mod);
 
     // Generate compact display name for all class/rating combinations
     let displayName;
@@ -426,16 +480,16 @@ export default class AvailableModulesMenu extends TranslatedComponent {
            className={classNames}
            tabIndex={validSlot ? '0' : ''}
            data-id={mod.id}
-           onClick={validSlot ? onSelect.bind(null, mod) : null}
-           onKeyDown={validSlot ? this._keyDown.bind(this, onSelect.bind(null, mod)) : null}
+           onClick={validSlot ? this._selectModule.bind(this, onSelect, mod) : null}
+           onKeyDown={validSlot ? this._keyDown.bind(this, this._selectModule.bind(this, onSelect, mod)) : null}
            ref={slotItem => {
              if (slotItem) {
                this.slotItems.set(mod.id, slotItem);
              }
            }}>
-        <div className="module-content">
+        <div className="module-content"> {availabilityIcon}
           {mountIcon && <span className="module-mount">{mountIcon}</span>}
-          <span className="module-text">{warningIcon} {displayName}</span>
+          <span className="module-text">{warningIcon} {displayName} </span>
         </div>
       </div>
     );
@@ -497,18 +551,22 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     // Check if this is a hardpoint module
     const isHardpoint = mod.mount || (mod.grp && (mod.grp === 'wp' || mod.grp === 'ul'));
 
+    // Check if module has a warning
+    const hasWarning = validSlot && !isActive && warning && warning(mod);
+
     let classNames = cn({
       'compact-module': !isHardpoint,
       'hardpoint-module': isHardpoint,
       'named-module': true,
       'c': validSlot,
       'disabled': !validSlot,
-      'active': isActive
+      'active': isActive,
+      'warning': hasWarning
     });
 
     let warningIcon;
-    if (validSlot && !isActive && warning) {
-      warningIcon = warning(mod);
+    if (hasWarning) {
+      warningIcon = <Warning className="warning-icon" />;
     }
 
     // Generate display name for named modules
@@ -564,6 +622,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
            }}>
         <div className="module-content">
           {mountIcon && <span className="module-mount">{mountIcon}</span>}
+
           <span className="module-text">{warningIcon} {displayName}</span>
         </div>
       </div>
@@ -699,8 +758,20 @@ export default class AvailableModulesMenu extends TranslatedComponent {
         groups.forEach(group => {
           const { groupKey, modules: groupModules } = group;
 
-          // Only add group header if there are multiple groups in this category
-          if (hasMultipleGroups || groupKey === 'fh') {
+          // Determine if we should show a group header (sub-header)
+          // Show group header if:
+          // 1. There are multiple groups in this category, OR
+          // 2. The group key is 'fh' (fighter hangar), OR
+          // 3. The main category is 'shields' (always show sub-headers for shields), OR
+          // 4. The main category is 'experimental' (always show sub-headers for experimental), OR
+          // 5. The main category is 'limpet controllers' (always show sub-headers for limpet controllers)
+          const shouldShowGroupHeader = hasMultipleGroups ||
+                                       groupKey === 'fh' ||
+                                       mainCategoryName === 'shields' ||
+                                       mainCategoryName === 'experimental' ||
+                                       mainCategoryName === 'limpet controllers';
+
+          if (shouldShowGroupHeader) {
             // Get group display name using the new method
             const groupDisplayName = this._getGroupDisplayName(groupKey, groupModules);
 
@@ -1037,17 +1108,21 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     let validSlot = eligible(mod);
     let isActive = this.props.m && this.props.m.id === mod.id;
 
+    // Check if module has a warning
+    const hasWarning = validSlot && !isActive && warning && warning(mod);
+
     // Use special module styling with margins and borders
     let classNames = cn({
       'special-module': true, // Add special-module class for styling
       'c': validSlot,
       'disabled': !validSlot,
-      'active': isActive
+      'active': isActive,
+      'warning': hasWarning
     });
 
     let warningIcon;
-    if (validSlot && !isActive && warning) {
-      warningIcon = warning(mod);
+    if (hasWarning) {
+      warningIcon = <Warning className="warning-icon" />;
     }
 
     // Check if this is a hardpoint module and get mount type icon
@@ -1091,6 +1166,9 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       }
     }
 
+    // Get availability icon (CG or Tech Broker)
+    const availabilityIcon = this._getAvailabilityIcon(mod);
+
     // Create the module element with box styling and margins
     list.push(
       <div key={mod.id}
@@ -1104,13 +1182,14 @@ export default class AvailableModulesMenu extends TranslatedComponent {
                this.slotItems.set(mod.id, slotItem);
              }
            }}>
-        <div className="module-content">
+        <div className="module-content"> {availabilityIcon}
           {mountIcon && <span className="module-mount">{mountIcon}</span>}
           <span className="module-text">{warningIcon} {displayName}</span>
         </div>
       </div>
     );
   }
+
   /**
    * Group modules by their type/category
    */
@@ -1186,6 +1265,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       <div key={emptyId}
            className={cn('empty-slot', { 'active': !m })}
            tabIndex='0'
+
            data-id={emptyId}
            onClick={onSelect.bind(null, null)}
            onKeyDown={this._keyDown.bind(this, onSelect.bind(null, null))}
@@ -1223,6 +1303,110 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   }
 
   /**
+   * Handle search input changes
+   */
+  _handleSearchChange(e) {
+    const searchQuery = e.target.value;
+    this.setState({ searchQuery }, () => {
+      this._filterModulesBySearch();
+    });
+  }
+
+  /**
+   * Filter modules based on search query
+   */
+  _filterModulesBySearch() {
+    const { language, termtip, tooltip } = this.context;
+    const { onSelect, m, eligible, warning } = this.props;
+    const { searchQuery, allModules } = this.state;
+    const translate = language.translate;
+
+    let list = [];
+    let emptyId = 'empty';
+    const isCoreInternal = this.props.className && this.props.className.includes('standard');
+
+    // Filter modules based on search query
+    const query = searchQuery.toLowerCase().trim();
+    let filteredModules = allModules;
+
+    if (query) {
+      filteredModules = allModules.filter(mod => {
+        // Search in module name
+        if (mod.name && mod.name.toLowerCase().includes(query)) return true;
+
+        // Search in module ID
+        if (mod.id && mod.id.toLowerCase().includes(query)) return true;
+
+        // Search in class/rating combination
+        if (mod.class && mod.rating) {
+          const classRating = `${mod.class}${mod.rating}`.toLowerCase();
+          if (classRating.includes(query)) return true;
+        }
+
+        // Search in group name and category
+        if (mod.grp) {
+          // Search in the group display name
+          const groupName = this._getGroupDisplayName(mod.grp, [mod]).toLowerCase();
+          if (groupName.includes(query)) return true;
+
+          // Search in the main category name (GRPCAT mapping)
+          const mainCategory = GRPCAT[mod.grp] || '';
+          if (mainCategory.toLowerCase().includes(query)) return true;
+
+          // Search in the display category name (which might be different)
+          // Find which main category this group belongs to
+          let mainCategoryKey = null;
+
+          for (const [categoryName, groupList] of Object.entries(HPTCAT)) {
+            if (groupList.includes(mod.grp)) {
+              mainCategoryKey = categoryName === 'experimental' ? 'hardpoint-experimental' :
+                               categoryName === 'guardian' ? 'hardpoint-guardian' : categoryName;
+              break;
+            }
+          }
+
+          if (!mainCategoryKey) {
+            for (const [categoryName, groupList] of Object.entries(INTCAT)) {
+              if (groupList.includes(mod.grp)) {
+                mainCategoryKey = categoryName;
+                break;
+              }
+            }
+          }
+
+          if (mainCategoryKey) {
+            const displayCategoryName = this._getMainCategoryDisplayName(mainCategoryKey).toLowerCase();
+            if (displayCategoryName.includes(query)) return true;
+          }
+        }
+
+        return false;
+      });
+
+      console.log(`Search for "${query}" found ${filteredModules.length} modules out of ${allModules.length}`);
+    }
+
+    // Process filtered modules
+    if (filteredModules.length > 0) {
+      this._processModules(filteredModules, list, onSelect, eligible, warning, termtip, tooltip, translate);
+    } else if (query) {
+      // Show "no results" message
+      list.push(
+        <div key="no-results" className="select-group" style={{ padding: '1em', color: '#999' }}>
+          No modules found matching "{searchQuery}"
+        </div>
+      );
+    }
+
+    // Add empty option for non-core internal slots
+    if (!isCoreInternal) {
+      list.unshift(this._createEmptySlotElement(emptyId, m, onSelect, translate));
+    }
+
+    this.setState({ list });
+  }
+
+  /**
    * Update state based on context changes
    */
   componentDidMount() {
@@ -1245,14 +1429,32 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    */
   render() {
     let { className } = this.props;
-    let { list } = this.state;
+    let { list, searchQuery } = this.state;
 
     let classes = cn('select', className);
+
+    // Determine if we should show search box
+    // Show for optional internal, hardpoint, and utility slots (not for standard/core modules)
+    const isCoreInternal = className && className.includes('standard');
+    const showSearch = !isCoreInternal;
 
     return (
       <div className={classes}
            ref={node => { this.node = node; }}
            onContextMenu={stopCtxPropagation}>
+        {showSearch && (
+          <div className="module-search-container">
+            <input
+              ref={this.searchInputRef}
+              type="text"
+              className="module-search-input"
+              placeholder="Search modules..."
+              value={searchQuery}
+              onChange={this._handleSearchChange}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+        )}
         {list}
       </div>
     );
