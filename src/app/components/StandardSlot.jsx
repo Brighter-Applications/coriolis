@@ -124,7 +124,6 @@ export default class StandardSlot extends TranslatedComponent {
           modButton = {this.modButton}
         />;
       } else {
-        console.log('Module added to list:', m);
         menu = <AvailableModulesMenu
           className='standard'
           modules={modules}
@@ -170,7 +169,9 @@ export default class StandardSlot extends TranslatedComponent {
             </div>
           </div>
         </div>
-        {menu}
+        <div className={cn('menu-section-wrapper', { open: selected && menu })}>
+          {menu}
+        </div>
       </div>
     );
   }

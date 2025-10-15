@@ -182,7 +182,9 @@ export default class Slot extends TranslatedComponent {
           <div className='sz'>{this._getMaxClassLabel(translate)}</div>
             {slotDetails}
           </div>
-        {menu}
+        <div className={cn('menu-section-wrapper', { open: selected && menu })}>
+          {menu}
+        </div>
       </div>
     );
   }

@@ -6,11 +6,31 @@ import { ListModifications, Modified } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { blueprintTooltip } from '../utils/BlueprintFunctions';
+import { CommunityGoalSmall, TechBrokerSmall } from './SvgIcons';
 
 /**
  * Internal Slot
  */
 export default class InternalSlot extends Slot {
+
+  /**
+   * Get the availability icon for a module (CG or Tech Broker)
+   * @param  {Object} mod The module
+   * @return {React.Component} Icon component or null
+   */
+  _getAvailabilityIcon(mod) {
+    if (!mod || !mod.preEngineered) return null;
+
+    if (mod.preEngineered.availability === 'CG') {
+      return <CommunityGoalSmall className='community' />;
+    }
+
+    if (typeof mod.preEngineered.availability === 'undefined') {
+      return <TechBrokerSmall className='techbroker' />;
+    }
+
+    return null;
+  }
 
   /**
    * Generate the slot contents
@@ -44,12 +64,24 @@ export default class InternalSlot extends Slot {
         );
       }
 
+      let cgttip = '';
+      // Get availability icon (CG or Tech Broker)
+      const availabilityIcon = this._getAvailabilityIcon(m);
+      if (availabilityIcon && availabilityIcon === <TechBrokerSmall className='techbroker' />) {
+        cgttip = 'Tech Broker Module';
+      }
+      else if (availabilityIcon && availabilityIcon === <CommunityGoalSmall className='community' />) {
+        cgttip = 'Community Goal Module';
+      }
+
       let mass = m.getMass() || m.cargo || m.fuel || 0;
 
       const className = cn('details', enabled ? '' : 'disabled');
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
         <div className={'cb'}>
-          <div className={'l'}>{classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified /></span> : ''}</div>
+          <div className={'l'}>
+            {availabilityIcon ?  <span onMouseOver={termtip.bind(null, cgttip)}
+                                               onMouseOut={tooltip.bind(null, null)}>{availabilityIcon}</span> : ''}{classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified /></span> : ''}</div>
           <div className={'r'}>{formats.round(mass)}{u.T}</div>
         </div>
         <div className={'cb'}>

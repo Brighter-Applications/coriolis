@@ -162,7 +162,6 @@
     "react-dom": "^19.2.0",
     "react-fuzzy": "^0.5.2",
     "react-ga": "^2.5.3",
-    "react-number-editor": "^4.0.3",
     "react-use-measure": "^2.1.7",
     "recharts": "^3.2.1",
     "register-service-worker": "^1.7.2",

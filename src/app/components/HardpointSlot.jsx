@@ -11,7 +11,9 @@ import {
   MountGimballed,
   MountTurret,
   ListModifications,
-  Modified
+  Modified,
+  CommunityGoalSmall,
+  TechBrokerSmall
 } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
@@ -37,6 +39,27 @@ export default class HardpointSlot extends Slot {
    */
   _getMaxClassLabel(translate) {
     return translate(['U', 'S', 'M', 'L', 'H'][this.props.maxClass]);
+  }
+
+
+
+  /**
+   * Get the availability icon for a module (CG or Tech Broker)
+   * @param  {Object} mod The module
+   * @return {React.Component} Icon component or null
+   */
+  _getAvailabilityIcon(mod) {
+    if (!mod || !mod.preEngineered) return null;
+
+    if (mod.preEngineered.availability === 'CG') {
+      return <CommunityGoalSmall className='community' />;
+    }
+
+    if (typeof mod.preEngineered.availability === 'undefined') {
+      return <TechBrokerSmall className='techbroker' />;
+    }
+
+    return null;
   }
 
   /**
@@ -71,10 +94,22 @@ export default class HardpointSlot extends Slot {
         );
       }
 
+      let cgttip = '';
+      // Get availability icon (CG or Tech Broker)
+      const availabilityIcon = this._getAvailabilityIcon(m);
+      if (availabilityIcon && availabilityIcon === <TechBrokerSmall className='techbroker' />) {
+        cgttip = 'Tech Broker Module';
+      }
+      else if (availabilityIcon && availabilityIcon === <CommunityGoalSmall className='community' />) {
+        cgttip = 'Community Goal Module';
+      }
+
       const className = cn('details', enabled ? '' : 'disabled');
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
         <div className={'cb'}>
           <div className={'l'}>
+            {availabilityIcon ? <span onMouseOver={termtip.bind(null, cgttip)}
+                                               onMouseOut={tooltip.bind(null, null)}>{availabilityIcon}</span> : ''}
             {m.mount && m.mount == 'F' ? <span onMouseOver={termtip.bind(null, 'fixed')}
                                                onMouseOut={tooltip.bind(null, null)}><MountFixed/></span> : ''}
             {m.mount && m.mount == 'G' ? <span onMouseOver={termtip.bind(null, 'gimballed')}
