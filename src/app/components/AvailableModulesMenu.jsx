@@ -717,7 +717,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
               compactModules.push(mod);
             } else {
               // Check if the module is a planetary approach suite and if the slot is pas restricted
-              if (mainCategoryName === 'flight assists' && mod.grp === 'pas') {
+              if (mod.grp === 'pas') {
                 // Check if 'eligible' is set and if eligible has 'pas'
                 if (eligible({ grp: 'pas' })) {
                   namedModules.push(mod); // Only add PAS if the slot is pas restricted and this module is a PAS
@@ -727,6 +727,9 @@ export default class AvailableModulesMenu extends TranslatedComponent {
                   // continue to the next item in the loop and skip adding the pas module to the availableModulesMenu for a non pas restricted slot
                   return;
                 }
+              } else {
+                // For all other modules (NOT including bulkheads), add them normally
+                namedModules.push(mod);
               }
             }
           });
