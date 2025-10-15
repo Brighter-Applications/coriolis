@@ -433,6 +433,12 @@ export default class Ship {
    * @param  {Object} bp     The blueprint
    */
   setModuleBlueprint(m, bp) {
+    // Check if this is a pre-engineered module that cannot be re-engineered
+    if (m.preEngineered && !m.preEngineered.reengineerable) {
+      // Don't allow changing the blueprint on a locked pre-engineered module
+      return;
+    }
+
     m.blueprint = bp;
     this.clearModifications(m);
     // Set any hidden items for the blueprint now
@@ -453,8 +459,83 @@ export default class Ship {
    * @param  {Object} m      The module for which to clear the blueprint
    */
   clearModuleBlueprint(m) {
+    // Check if this is a pre-engineered module that cannot be re-engineered
+    if (m.preEngineered && !m.preEngineered.reengineerable) {
+      // Don't allow clearing the blueprint on a locked pre-engineered module
+      return;
+    }
+
     m.blueprint = {};
     this.updateModificationsString();
+  }
+
+  /**
+   * Initialize pre-engineered module blueprints
+   * This applies all the pre-configured blueprints to a pre-engineered module
+   * @param  {Object} m      The pre-engineered module to initialize
+   */
+  initializePreEngineeredModule(m) {
+    if (!m.preEngineered || !m.preEngineered.blueprints || m.preEngineered.blueprints.length === 0) {
+      return; // Not a pre-engineered module
+    }
+
+    // Initialize the blueprint object if it doesn't exist
+    if (!m.blueprint || !m.blueprint.name) {
+      m.blueprint = {};
+    }
+
+    // Apply each blueprint in sequence
+    for (let i = 0; i < m.preEngineered.blueprints.length; i++) {
+      const blueprintName = m.preEngineered.blueprints[i];
+      const blueprint = getBlueprint(blueprintName, m);
+
+      if (!blueprint || !blueprint.grades) {
+        continue;
+      }
+
+      const grade = m.preEngineered.grade || 5;
+
+      // For the first blueprint, set up the blueprint structure
+      if (i === 0) {
+        m.blueprint = JSON.parse(JSON.stringify(blueprint));
+        m.blueprint.grade = grade;
+      }
+
+      // Apply the modifications from this blueprint at the specified grade
+      if (blueprint.grades[grade] && blueprint.grades[grade].features) {
+        const features = blueprint.grades[grade].features;
+
+        for (const featureName in features) {
+          const modification = Modifications.modifications[featureName];
+          if (!modification) continue;
+
+          // Get the feature value (use best value for pre-engineered)
+          let value = features[featureName][1]; // Best value
+
+          // Convert to internal format
+          if (modification.type === 'percentage') {
+            value = value * 10000;
+          } else if (modification.type === 'numeric') {
+            value = value * 100;
+          }
+
+          // Apply the modification
+          if (modification.hidden) {
+            this.setModification(m, featureName, value, false);
+          } else {
+            this.setModification(m, featureName, value, false);
+          }
+        }
+      }
+    }
+
+    // Apply experimental effect if specified
+    if (m.preEngineered.experimentalEffects && m.preEngineered.experimentalEffects.length > 0) {
+      const specialName = m.preEngineered.experimentalEffects[0];
+      if (Modifications.specials[specialName]) {
+        m.blueprint.special = Modifications.specials[specialName];
+      }
+    }
   }
 
   /**
@@ -1603,6 +1684,12 @@ export default class Ship {
       slot.m = m;
       slot.enabled = true;
       slot.discountedCost = (m && m.cost) ? m.cost * this.moduleCostMultiplier : 0;
+
+      // Initialize pre-engineered modules if this is a new module being installed
+      if (m && m.preEngineered && (!m.blueprint || !m.blueprint.name)) {
+        this.initializePreEngineeredModule(m);
+      }
+
       this.updateStats(slot, m, oldModule, preventUpdate);
 
       switch (slot.cat) {

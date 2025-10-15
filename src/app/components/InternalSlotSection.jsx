@@ -237,6 +237,7 @@ export default class InternalSlotSection extends SlotSection {
         onSelect={this._selectModule.bind(this, s)}
         selected={currentMenu == s}
         eligible={s.eligible}
+        slot={s}
         m={s.m}
         drag={this._drag.bind(this, s)}
         dragOver={this._dragOverSlot.bind(this, s)}

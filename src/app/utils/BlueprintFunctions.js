@@ -74,6 +74,83 @@ export function specialToolTip(translate, blueprint, grp, m, specialName) {
 }
 
 /**
+ * Generate a tooltip with details of a pre-engineered module's combined blueprints
+ * @param   {Object}  translate   The translate object
+ * @param   {Object}  m           The pre-engineered module
+ * @param   {string}  grp         The group of the module
+ * @returns {Object}              The react components
+ */
+export function preEngineeredTooltip(translate, m, grp) {
+  const effects = [];
+
+  if (!m.preEngineered || !m.preEngineered.blueprints || m.preEngineered.blueprints.length === 0) {
+    return undefined;
+  }
+
+  // Show the description
+  const description = m.preEngineered.description ? (
+    <div className={'success'} style={{ maxWidth: 350, padding: 5, marginBottom: 10 }}>
+      {m.preEngineered.description}
+    </div>
+  ) : null;
+
+  // Collect all modifications from the module
+  for (const feature in m.mods) {
+    const featureDef = Modifications.modifications[feature];
+    if (featureDef && !featureDef.hidden) {
+      let symbol = '';
+      if (feature === 'jitter') {
+        symbol = '°';
+      } else if (featureDef.type === 'percentage') {
+        symbol = '%';
+      }
+      let current = m.getModValue(feature);
+      if (featureDef.type === 'percentage' || featureDef.name === 'burst' || featureDef.name === 'burstrof') {
+        current = Math.round(current / 10) / 10;
+      } else if (featureDef.type === 'numeric') {
+        current /= 100;
+      }
+      const currentIsBeneficial = isValueBeneficial(feature, current);
+
+      effects.push(
+        <tr key={feature}>
+          <td style={{ textAlign: 'left' }}>{translate(feature, grp)}</td>
+          <td>&nbsp;</td>
+          <td className={current === 0 ? '' : currentIsBeneficial ? 'secondary' : 'warning'}
+            style={{ textAlign: 'right' }}>{current}{symbol}</td>
+          <td>&nbsp;</td>
+        </tr>
+      );
+    }
+  }
+
+  return (
+    <div>
+      {description}
+      <div style={{ fontWeight: 'bold', marginBottom: 5 }}>
+        {translate('Pre-engineered with')}: {m.preEngineered.blueprints.map(bp => {
+          const blueprint = getBlueprint(bp, m);
+          return translate(blueprint.name);
+        }).join(' + ')} {translate('grade')} {m.preEngineered.grade}
+      </div>
+      <table width='100%'>
+        <thead>
+          <tr>
+            <td>{translate('feature')}</td>
+            <td>&nbsp;</td>
+            <td>{translate('current')}</td>
+            <td>&nbsp;</td>
+          </tr>
+        </thead>
+        <tbody>
+          {effects}
+        </tbody>
+      </table>
+    </div>
+  );
+}
+
+/**
  * Generate a tooltip with details of a blueprint's effects
  * @param   {Object}  translate   The translate object
  * @param   {Object}  blueprint   The blueprint at the required grade

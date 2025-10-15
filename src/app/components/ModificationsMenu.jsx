@@ -9,6 +9,7 @@ import Modification from './Modification';
 import {
   getBlueprint,
   blueprintTooltip,
+  preEngineeredTooltip,
   setPercent,
   getPercent,
   setRandom,
@@ -306,6 +307,16 @@ export default class ModificationsMenu extends TranslatedComponent {
   }
 
   /**
+   * Clear the special effect from a pre-engineered module
+   */
+  _clearSpecial() {
+    this.context.tooltip(null);
+    const { m, ship } = this.props;
+    ship.clearModuleSpecial(m);
+    this.props.onChange();
+  }
+
+  /**
    * Provide a '50%' roll within the information we have
    */
   _rollFifty() {
@@ -436,6 +447,11 @@ export default class ModificationsMenu extends TranslatedComponent {
     const _rollRandom = this._rollRandom;
     const _reset = this._reset;
 
+    // Check if this is a pre-engineered module
+    const isPreEngineered = m.preEngineered && m.preEngineered.blueprints && m.preEngineered.blueprints.length > 0;
+    const canReengineer = isPreEngineered ? m.preEngineered.reengineerable : true;
+    const canApplyExperimental = isPreEngineered ? m.preEngineered.canApplyExperimental : true;
+
     let blueprintLabel;
     let haveBlueprint = false;
     let blueprintTt;
@@ -466,13 +482,26 @@ export default class ModificationsMenu extends TranslatedComponent {
       // console.log(haveBlueprint);
       blueprintTt  = blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade].engineers, m.grp);
       blueprintCv = getPercent(m);
+    } else if (isPreEngineered && m.preEngineered.blueprints && m.preEngineered.blueprints.length > 0) {
+      // For pre-engineered modules, show all applied blueprints
+      const blueprintNames = m.preEngineered.blueprints.map(bpName => {
+        const bp = getBlueprint(bpName, m);
+        return translate(bp.name);
+      }).join(' + ');
+      blueprintLabel = blueprintNames + ' ' + translate('grade') + ' ' + m.preEngineered.grade;
+      haveBlueprint = true;
+      // For pre-engineered modules, use the custom tooltip that shows all blueprints combined
+      blueprintTt = preEngineeredTooltip(translate, m, m.grp);
+      blueprintCv = 100; // Pre-engineered modules are always at 100%
     }
 
     let specialLabel;
     let specialTt;
+    let haveSpecial = false;
     if (m.blueprint && m.blueprint.special) {
       specialLabel = translate(m.blueprint.special.name);
       specialTt = specialToolTip(translate, m.blueprint.grades[m.blueprint.grade], m.grp, m, m.blueprint.special.edname);
+      haveSpecial = true;
     } else {
       specialLabel = translate('PHRASE_SELECT_SPECIAL');
     }
@@ -505,11 +534,11 @@ export default class ModificationsMenu extends TranslatedComponent {
         }}
       >
         { showBlueprintsMenu | showSpecialsMenu ? '' : haveBlueprint ?
-          <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: blueprintMenuOpened })} style={{ cursor: 'pointer' }} onMouseOver={termtip.bind(null, blueprintTt)} onMouseOut={tooltip.bind(null, null)} onClick={_toggleBlueprintsMenu} onKeyDown={ this._keyDown } ref={modItems => {
+          <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: blueprintMenuOpened, disabled: isPreEngineered && !canReengineer })} style={{ cursor: isPreEngineered && !canReengineer ? 'not-allowed' : 'pointer' }} onMouseOver={termtip.bind(null, isPreEngineered && !canReengineer ? translate('PHRASE_PREENGINEERED_LOCKED') : blueprintTt)} onMouseOut={tooltip.bind(null, null)} onClick={isPreEngineered && !canReengineer ? null : _toggleBlueprintsMenu} onKeyDown={ this._keyDown } ref={modItems => {
             if (modItems) {
               this.modItems.set(this.firstBPLabel, modItems);
             }
-          }}>{blueprintLabel}</div> :
+          }}>{blueprintLabel}{isPreEngineered ? ' (Pre-Eng)' : ''}</div> :
           <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: blueprintMenuOpened })} style={{ cursor: 'pointer' }} onClick={_toggleBlueprintsMenu} onKeyDown={ this._keyDown } ref={modItems => {
             if (modItems) {
               this.modItems.set(this.firstBPLabel, modItems);
@@ -520,13 +549,19 @@ export default class ModificationsMenu extends TranslatedComponent {
           { showBlueprintsMenu ? this._renderBlueprints(this.props, this.context) : null }
         </div>
 
-        { showSpecial & !showSpecialsMenu ? <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: specialMenuOpened })} style={{ cursor: 'pointer' }} onMouseOver={specialTt ? termtip.bind(null, specialTt) : null} onMouseOut={specialTt ? tooltip.bind(null, null) : null}  onClick={_toggleSpecialsMenu} onKeyDown={ this._keyDown }>{specialLabel}</div> : null }
+        { showSpecial & !showSpecialsMenu ?
+          canApplyExperimental ?
+            <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: specialMenuOpened })} style={{ cursor: 'pointer' }} onMouseOver={specialTt ? termtip.bind(null, specialTt) : null} onMouseOut={specialTt ? tooltip.bind(null, null) : null}  onClick={_toggleSpecialsMenu} onKeyDown={ this._keyDown }>{specialLabel}</div>
+            :
+            <div tabIndex="0" className={ cn('section-menu button-inline-menu', { disabled: true })} style={{ cursor: 'not-allowed' }} onMouseOver={specialTt ? termtip.bind(null, specialTt) : null} onMouseOut={specialTt ? tooltip.bind(null, null) : null}>{specialLabel}{haveSpecial ? ' (Pre-Eng)' : ''}</div>
+          : null }
 
         <div className={cn('menu-section-wrapper', { open: showSpecialsMenu })}>
           { showSpecialsMenu ? specials : null }
         </div>
 
-        { showReset ? <div tabIndex="0" className={'section-menu button-inline-menu warning'} style={{ cursor: 'pointer' }} onClick={_reset} onKeyDown={ this._keyDown } onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_RESET')} onMouseOut={tooltip.bind(null, null)}> { translate('reset') } </div> : null }
+        { showReset && !isPreEngineered ? <div tabIndex="0" className={'section-menu button-inline-menu warning'} style={{ cursor: 'pointer' }} onClick={_reset} onKeyDown={ this._keyDown } onMouseOver={termtip.bind(null, 'PHRASE_BLUEPRINT_RESET')} onMouseOut={tooltip.bind(null, null)}> { translate('reset') } </div> : null }
+        { isPreEngineered && haveBlueprint && m.blueprint && m.blueprint.special && canApplyExperimental ? <div tabIndex="0" className={'section-menu button-inline-menu warning'} style={{ cursor: 'pointer' }} onClick={this._clearSpecial.bind(this)} onKeyDown={ this._keyDown } onMouseOver={termtip.bind(null, 'PHRASE_CLEAR_SPECIAL')} onMouseOut={tooltip.bind(null, null)}> { translate('clear special') } </div> : null }
 
         <div className={cn('menu-section-wrapper', { open: showRolls })}>
           { showRolls ?
