@@ -137,7 +137,9 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     diffDetails: PropTypes.func.isRequired,
     m: PropTypes.object,
     eligible: PropTypes.func.isRequired,
-    slot: PropTypes.object // Add this line for slot restriction information
+    slot: PropTypes.object, // Add this line for slot restriction information
+    selectedCategory: PropTypes.string, // Category to filter by ('current' for same as fitted module, or category name)
+    onBack: PropTypes.func // Callback for back button
   };
 
   /**
@@ -184,6 +186,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
 
     this._initState = this._initState.bind(this);
     this._shouldIncludeModule = this._shouldIncludeModule.bind(this); // Add this line
+    this._getModuleCategory = this._getModuleCategory.bind(this);
     this._keyDown = this._keyDown.bind(this);
     this._hideDiff = this._hideDiff.bind(this);
     this._showSearch = this._showSearch.bind(this);
@@ -201,6 +204,42 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   }
 
   /**
+   * Get the main category for a module
+   * @param {Object} mod The module
+   * @return {string} The main category name
+   */
+  _getModuleCategory(mod) {
+    if (!mod || !mod.grp) return null;
+
+    // Check hardpoint categories
+    for (const [categoryName, groupList] of Object.entries(HPTCAT)) {
+      if (groupList.includes(mod.grp)) {
+        if (categoryName === 'experimental') {
+          return 'hardpoint-experimental';
+        } else if (categoryName === 'guardian') {
+          return 'hardpoint-guardian';
+        } else {
+          return categoryName;
+        }
+      }
+    }
+
+    // Check internal categories
+    for (const [categoryName, groupList] of Object.entries(INTCAT)) {
+      if (groupList.includes(mod.grp)) {
+        return categoryName;
+      }
+    }
+
+    // Fallback to GRPCAT
+    if (GRPCAT[mod.grp]) {
+      return GRPCAT[mod.grp];
+    }
+
+    return null;
+  }
+
+  /**
    * Init state based on module list
    * @param  {Object} props   React Component properties
    * @param  {Object} context React Component context
@@ -208,7 +247,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    */
   _initState(props, context) {
     let { language, termtip, tooltip } = context;
-    let { modules, onSelect, m, eligible, warning } = props;
+    let { modules, onSelect, m, eligible, warning, selectedCategory } = props;
     let translate = language.translate;
     let list = [];
     let emptyId = 'empty';
@@ -250,6 +289,20 @@ export default class AvailableModulesMenu extends TranslatedComponent {
             allModules = allModules.concat(filteredModules);
           }
         });
+      }
+    }
+
+    // Filter by category if specified
+    if (selectedCategory) {
+      if (selectedCategory === 'current' && m) {
+        // Filter to modules in the same category as the currently fitted module
+        const currentCategory = this._getModuleCategory(m);
+        if (currentCategory) {
+          allModules = allModules.filter(mod => this._getModuleCategory(mod) === currentCategory);
+        }
+      } else if (selectedCategory !== 'current') {
+        // Filter to modules in the specified category
+        allModules = allModules.filter(mod => this._getModuleCategory(mod) === selectedCategory);
       }
     }
 
@@ -1428,7 +1481,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    * @return {Object} React component
    */
   render() {
-    let { className } = this.props;
+    let { className, selectedCategory, onBack } = this.props;
     let { list, searchQuery } = this.state;
 
     let classes = cn('select', className);
@@ -1438,10 +1491,28 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     const isCoreInternal = className && className.includes('standard');
     const showSearch = !isCoreInternal;
 
+    // Show back button if a category is selected
+    const showBackButton = selectedCategory && onBack;
+
     return (
       <div className={classes}
            ref={node => { this.node = node; }}
            onContextMenu={stopCtxPropagation}>
+        {showBackButton && (
+          <div
+            className="back-button special-module c"
+            onClick={(e) => {
+              e.stopPropagation();
+              onBack();
+            }}
+            onKeyDown={this._keyDown.bind(this, onBack)}
+            tabIndex="0"
+          >
+            <div className="module-content">
+              <span className="module-text">← Back to Categories</span>
+            </div>
+          </div>
+        )}
         {showSearch && (
           <div className="module-search-container">
             <input

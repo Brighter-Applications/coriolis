@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import cn from 'classnames';
 import AvailableModulesMenu from './AvailableModulesMenu';
+import CategoryMenu from './CategoryMenu';
 import ModificationsMenu from './ModificationsMenu';
 import { diffDetails } from '../utils/SlotFunctions';
 import { wrapCtxMenu } from '../utils/UtilityFunctions';
@@ -61,13 +62,36 @@ export default class Slot extends TranslatedComponent {
     super(props);
 
     this._modificationsSelected = false;
+    this._selectedCategory = null;
+    this._showCategoryMenu = false; // Track whether to show category menu
 
     this._contextMenu = wrapCtxMenu(this._contextMenu.bind(this));
     this._getMaxClassLabel = this._getMaxClassLabel.bind(this);
     this._keyDown = this._keyDown.bind(this);
     this._eligible = this._eligible.bind(this);
     this._warning = this._warning.bind(this);
+    this._onSelectCategory = this._onSelectCategory.bind(this);
+    this._onBackToCategories = this._onBackToCategories.bind(this);
     this.slotDiv = null;
+  }
+
+  /**
+   * Handle category selection
+   * @param {string} category The selected category
+   */
+  _onSelectCategory(category) {
+    this._selectedCategory = category;
+    this._showCategoryMenu = false; // We've selected a category, so show the modules menu
+    this.forceUpdate();
+  }
+
+  /**
+   * Handle back button to return to category menu
+   */
+  _onBackToCategories() {
+    this._selectedCategory = null;
+    this._showCategoryMenu = true; // User clicked back, so show the category menu
+    this.forceUpdate();
   }
 
   // Must be implemented by subclasses:
@@ -129,8 +153,10 @@ export default class Slot extends TranslatedComponent {
     let missing = false;
 
     if (!selected) {
-      // If not selected then sure that modifications flag is unset
+      // If not selected then sure that modifications and category flags are unset
       this._modificationsSelected = false;
+      this._selectedCategory = null;
+      this._showCategoryMenu = false;
     }
 
     if (m) {
@@ -148,6 +174,7 @@ export default class Slot extends TranslatedComponent {
 
     if (selected) {
       if (this._modificationsSelected) {
+        // Show modifications menu
         menu = <ModificationsMenu
           className={this._getClassNames()}
           onChange={onChange}
@@ -156,7 +183,18 @@ export default class Slot extends TranslatedComponent {
           marker={modificationsMarker}
           modButton = {this.modButton}
         />;
-      } else {
+      } else if (this._showCategoryMenu) {
+        // User clicked back or this is an empty slot - show category menu
+        menu = <CategoryMenu
+          className={this._getClassNames()}
+          modules={availableModules()}
+          maxClass={this.props.maxClass}
+          eligible={this._eligible}
+          slot={this.props.slot}
+          onSelectCategory={this._onSelectCategory}
+        />;
+      } else if (this._selectedCategory) {
+        // User selected a specific category - show modules filtered by that category with back button
         menu = <AvailableModulesMenu
           className={this._getClassNames()}
           modules={availableModules()}
@@ -167,6 +205,34 @@ export default class Slot extends TranslatedComponent {
           diffDetails={diffDetails.bind(ship, this.context.language)}
           eligible={this._eligible}
           slotDiv = {this.slotDiv}
+          selectedCategory={this._selectedCategory}
+          onBack={this._onBackToCategories}
+        />;
+      } else if (m) {
+        // Module already fitted and no category selected yet - show modules in same category with back button
+        menu = <AvailableModulesMenu
+          className={this._getClassNames()}
+          modules={availableModules()}
+          m={m}
+          ship={ship}
+          onSelect={onSelect}
+          warning={warning || this._warning}
+          diffDetails={diffDetails.bind(ship, this.context.language)}
+          eligible={this._eligible}
+          slotDiv = {this.slotDiv}
+          selectedCategory={'current'}
+          onBack={this._onBackToCategories}
+        />;
+      } else {
+        // Empty slot and no category selected - show category menu
+        this._showCategoryMenu = true; // Ensure the flag is set for empty slots
+        menu = <CategoryMenu
+          className={this._getClassNames()}
+          modules={availableModules()}
+          maxClass={this.props.maxClass}
+          eligible={this._eligible}
+          slot={this.props.slot}
+          onSelectCategory={this._onSelectCategory}
         />;
       }
     }
