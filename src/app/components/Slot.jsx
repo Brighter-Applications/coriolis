@@ -192,6 +192,10 @@ export default class Slot extends TranslatedComponent {
           eligible={this._eligible}
           slot={this.props.slot}
           onSelectCategory={this._onSelectCategory}
+          onSelectModule={onSelect}
+          m={m}
+          ship={ship}
+          warning={warning || this._warning}
         />;
       } else if (this._selectedCategory) {
         // User selected a specific category - show modules filtered by that category with back button
@@ -233,6 +237,10 @@ export default class Slot extends TranslatedComponent {
           eligible={this._eligible}
           slot={this.props.slot}
           onSelectCategory={this._onSelectCategory}
+          onSelectModule={onSelect}
+          m={m}
+          ship={ship}
+          warning={warning || this._warning}
         />;
       }
     }
