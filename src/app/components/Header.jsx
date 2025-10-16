@@ -21,6 +21,7 @@ import { outfitURL } from '../utils/UrlGenerators';
 
 const SIZE_MIN = 0.65;
 const SIZE_MAX = 1.75;
+const SIZE_RANGE = SIZE_MAX - SIZE_MIN;
 const SIZE_DEFAULT = 1;
 
 /**
@@ -83,6 +84,9 @@ export default class Header extends TranslatedComponent {
     this._getAnnouncementsMenu = this._getAnnouncementsMenu.bind(this);
     this._openSettings = this._openMenu.bind(this, 'settings');
     this._showHelp = this._showHelp.bind(this);
+    this._toggleTooltips = this._toggleTooltips.bind(this);
+    this._toggleModuleResistances = this._toggleModuleResistances.bind(this);
+    this._togglePromptCG = this._togglePromptCG.bind(this);
     this.update = this.update.bind(this);
     this.languageOptions = [];
     this.insuranceOptions = [];
@@ -218,6 +222,13 @@ export default class Header extends TranslatedComponent {
    */
   _toggleModuleResistances() {
     Persist.showModuleResistances(!Persist.showModuleResistances());
+  }
+
+  /**
+   * Toggle CG module prompt setting
+   */
+  _togglePromptCG() {
+    Persist.setPromptCG(!Persist.promptCG());
   }
 
   /**
@@ -415,6 +426,7 @@ export default class Header extends TranslatedComponent {
     let translate = this.context.language.translate;
     let tips = Persist.showTooltips();
     let moduleResistances = Persist.showModuleResistances();
+    let promptCG = Persist.promptCG();
 
     return (
       <div className='menu-list no-wrap cap' onClick={ (e) => e.stopPropagation() }>
@@ -435,6 +447,10 @@ export default class Header extends TranslatedComponent {
             <tr className='cap ptr' onClick={this._toggleModuleResistances} >
               <td>{translate('module resistances')}</td>
               <td className={cn('ri', { disabled: !moduleResistances, 'primary-disabled': moduleResistances })}>{(moduleResistances ? '✓' : '✗')}</td>
+            </tr>
+            <tr className='cap ptr' onClick={this._togglePromptCG} >
+              <td>CG Module Prompts</td>
+              <td className={cn('ri', { disabled: !promptCG, 'primary-disabled': promptCG })}>{(promptCG ? '✓' : '✗')}</td>
             </tr>
             <tr>
               <td>{translate('insurance')}</td>
@@ -499,6 +515,7 @@ export default class Header extends TranslatedComponent {
     Persist.addListener('builds', update);
     Persist.addListener('tooltips', update);
     Persist.addListener('moduleresistances', update);
+    Persist.addListener('promptCG', update);
   }
 
   /**

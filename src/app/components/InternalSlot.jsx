@@ -48,6 +48,8 @@ export default class InternalSlot extends Slot {
       let { termtip, tooltip } = this.context;
       let validMods = (Modifications.modules[m.grp] ? Modifications.modules[m.grp].modifications : []);
       let showModuleResistances = Persist.showModuleResistances();
+      // Show modifications button if there are available modifications OR if module has a blueprint/mods applied
+      let hasModifications = validMods.length > 0 || (m.blueprint && m.blueprint.name) || (m.mods && Object.keys(m.mods).length > 0);
 
       // Modifications tooltip shows blueprint and grade, if available
       let modTT = translate('modified');
@@ -121,7 +123,7 @@ export default class InternalSlot extends Slot {
           { m.getProtection() ? <div className='l'>{translate('protection')}: {formats.rPct(m.getProtection())}</div> : null }
           { m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null }
           { m.getInfo() ? <div className='l'>{translate(m.getInfo())}</div> : null }
-	  { m && validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
+	  { m && hasModifications ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
         </div>
       </div>;
     } else {

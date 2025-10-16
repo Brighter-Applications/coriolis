@@ -76,8 +76,10 @@ export default class HardpointSlot extends Slot {
       let classRating = `${m.class}${m.rating}${m.missile ? '/' + m.missile : ''}`;
       let { drag, drop } = this.props;
       let { termtip, tooltip } = this.context;
-      let validMods = Modifications.modules[m.grp].modifications || [];
+      let validMods = Modifications.modules[m.grp] ? (Modifications.modules[m.grp].modifications || []) : [];
       let showModuleResistances = Persist.showModuleResistances();
+      // Show modifications button if there are available modifications OR if module has a blueprint/mods applied
+      let hasModifications = validMods.length > 0 || (m.blueprint && m.blueprint.name) || (m.mods && Object.keys(m.mods).length > 0);
 
       // Modifications tooltip shows blueprint and grade, if available
       let modTT = translate('modified');
@@ -97,11 +99,11 @@ export default class HardpointSlot extends Slot {
       let cgttip = '';
       // Get availability icon (CG or Tech Broker)
       const availabilityIcon = this._getAvailabilityIcon(m);
-      if (availabilityIcon && availabilityIcon === <TechBrokerSmall className='techbroker' />) {
-        cgttip = 'Tech Broker Module';
-      }
-      else if (availabilityIcon && availabilityIcon === <CommunityGoalSmall className='community' />) {
+      if (m && m.preEngineered && m.preEngineered.availability === 'CG') {
         cgttip = 'Community Goal Module';
+      }
+      else if (m && m.preEngineered && m.preEngineered.availability === undefined) {
+        cgttip = 'Tech Broker Module';
       }
 
       const className = cn('details', enabled ? '' : 'disabled');
@@ -172,7 +174,7 @@ export default class HardpointSlot extends Slot {
             className='l'>{translate('thermres')}: {formats.pct(m.getThermalResistance())}</div> : null}
           {m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null}
           {m.getInfo() ? <div className='l'>{translate(m.getInfo())}</div> : null}
-          {m && validMods.length > 0 ? <div className='r' tabIndex="0" ref={modButton => this.modButton = modButton}>
+          {m && hasModifications ? <div className='r' tabIndex="0" ref={modButton => this.modButton = modButton}>
             <button tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation}
                     onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}>
               <ListModifications/></button>
