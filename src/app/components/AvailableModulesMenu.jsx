@@ -666,8 +666,8 @@ export default class AvailableModulesMenu extends TranslatedComponent {
            className={classNames}
            tabIndex={validSlot ? '0' : ''}
            data-id={mod.id}
-           onClick={validSlot ? onSelect.bind(null, mod) : null}
-           onKeyDown={validSlot ? this._keyDown.bind(this, onSelect.bind(null, mod)) : null}
+           onClick={validSlot ? this._selectModule.bind(this, onSelect, mod) : null}
+           onKeyDown={validSlot ? this._keyDown.bind(this, this._selectModule.bind(this, onSelect, mod)) : null}
            ref={slotItem => {
              if (slotItem) {
                this.slotItems.set(mod.id, slotItem);
@@ -1228,8 +1228,8 @@ export default class AvailableModulesMenu extends TranslatedComponent {
            className={classNames}
            tabIndex={validSlot ? '0' : ''}
            data-id={mod.id}
-           onClick={validSlot ? onSelect.bind(null, mod) : null}
-           onKeyDown={validSlot ? this._keyDown.bind(this, onSelect.bind(null, mod)) : null}
+           onClick={validSlot ? this._selectModule.bind(this, onSelect, mod) : null}
+           onKeyDown={validSlot ? this._keyDown.bind(this, this._selectModule.bind(this, onSelect, mod)) : null}
            ref={slotItem => {
              if (slotItem) {
                this.slotItems.set(mod.id, slotItem);

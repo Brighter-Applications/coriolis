@@ -207,7 +207,9 @@ export default class ModificationsMenu extends TranslatedComponent {
             tmp = undefined;
           }
           m.blueprint.special = Modifications.specials[specialName];
-          let specialTt = specialToolTip(translate, m.blueprint.grades[m.blueprint.grade], m.grp, m, specialName);
+          // For pre-engineered modules, grades might not exist in the same structure
+          const blueprintGrade = m.blueprint.grades && m.blueprint.grades[m.blueprint.grade] ? m.blueprint.grades[m.blueprint.grade] : {};
+          let specialTt = specialToolTip(translate, blueprintGrade || {}, m.grp, m, specialName);
           m.blueprint.special = tmp;
           specials.push(<div tabIndex="0" style={{ cursor: 'pointer' }} className={classes} key={ specialName } data-id={ specialName } onMouseOver={termtip.bind(null, specialTt)} onMouseOut={tooltip.bind(null, null)} onClick={ close } onKeyDown={this._keyDown} ref={modItem => {
             if (modItem) {
@@ -239,7 +241,9 @@ export default class ModificationsMenu extends TranslatedComponent {
       if (!Modifications.modifications[modName].hidden) {
         const key = modName + (m.getModValue(modName) / 100 || 0);
         const editable = modName !== 'fallofffromrange';
-        const highlight = m.blueprint.grades[m.blueprint.grade].features[modName];
+        // For pre-engineered modules, grades might not exist in the same structure
+        const blueprintGrade = m.blueprint && m.blueprint.grades && m.blueprint.grades[m.blueprint.grade] ? m.blueprint.grades[m.blueprint.grade] : { features: {} };
+        const highlight = blueprintGrade.features[modName];
         this.lastNeId = modName;
         (editable && highlight ? modifiableModifications : modifications).push(
           <Modification key={ key } ship={ ship } m={ m } highlight={highlight}
@@ -403,6 +407,7 @@ export default class ModificationsMenu extends TranslatedComponent {
     if (!this.modValDidChange) {
       if (this.modItems.get('modMainDiv').children.length > 0) {
         if (this.modItems.get(this.selectedModId)) {
+          if (this.modItems.get(this.selectedModId).focus)
           this.modItems.get(this.selectedModId).focus();
           return;
         } else if (this.modItems.get(this.selectedSpecialId)) {
@@ -410,7 +415,7 @@ export default class ModificationsMenu extends TranslatedComponent {
           return;
         }
         let firstEleCn = this.modItems.get('modMainDiv').children[0].className;
-        if (firstEleCn.indexOf('button-inline-menu') >= 0) {
+        if (firstEleCn && firstEleCn.indexOf('button-inline-menu') >= 0) {
           this.modItems.get('modMainDiv').firstElementChild.focus();
         } else if (firstEleCn.indexOf('select-group cap') >= 0)  {
           this.modItems.get('modMainDiv').children[1].firstElementChild.focus();
@@ -431,7 +436,7 @@ export default class ModificationsMenu extends TranslatedComponent {
 
   /**
    * Render the list
-   * @return {React.Component} List
+   * @return {React.Component} List of items related to blueprint/modifications
    */
   render() {
     const { language, tooltip, termtip } = this.context;
@@ -476,10 +481,10 @@ export default class ModificationsMenu extends TranslatedComponent {
       this.props.ship.clearModuleBlueprint(m);
       this.props.ship.clearModuleSpecial(m);
     }
-    if (m.blueprint && m.blueprint.name && Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade]) {
+    if (m.blueprint && m.blueprint.name && Modifications.modules[m.grp].blueprints[bprintSearchName] && Modifications.modules[m.grp].blueprints[bprintSearchName].grades && Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade]) {
       blueprintLabel = translate(m.blueprint.name) + ' ' + translate('grade') + ' ' + m.blueprint.grade;
       haveBlueprint = true;
-      // console.log(haveBlueprint);
+
       blueprintTt  = blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], Modifications.modules[m.grp].blueprints[bprintSearchName].grades[m.blueprint.grade].engineers, m.grp);
       blueprintCv = getPercent(m);
     } else if (isPreEngineered && m.preEngineered.blueprints && m.preEngineered.blueprints.length > 0) {
@@ -500,7 +505,9 @@ export default class ModificationsMenu extends TranslatedComponent {
     let haveSpecial = false;
     if (m.blueprint && m.blueprint.special) {
       specialLabel = translate(m.blueprint.special.name);
-      specialTt = specialToolTip(translate, m.blueprint.grades[m.blueprint.grade], m.grp, m, m.blueprint.special.edname);
+      // For pre-engineered modules, grades might not exist in the same structure
+      const blueprintGrade = m.blueprint.grades && m.blueprint.grades[m.blueprint.grade] ? m.blueprint.grades[m.blueprint.grade] : {};
+      specialTt = specialToolTip(translate, blueprintGrade, m.grp, m, m.blueprint.special.edname);
       haveSpecial = true;
     } else {
       specialLabel = translate('PHRASE_SELECT_SPECIAL');
@@ -553,7 +560,7 @@ export default class ModificationsMenu extends TranslatedComponent {
           canApplyExperimental ?
             <div tabIndex="0" className={ cn('section-menu button-inline-menu', { selected: specialMenuOpened })} style={{ cursor: 'pointer' }} onMouseOver={specialTt ? termtip.bind(null, specialTt) : null} onMouseOut={specialTt ? tooltip.bind(null, null) : null}  onClick={_toggleSpecialsMenu} onKeyDown={ this._keyDown }>{specialLabel}</div>
             :
-            <div tabIndex="0" className={ cn('section-menu button-inline-menu', { disabled: true })} style={{ cursor: 'not-allowed' }} onMouseOver={specialTt ? termtip.bind(null, specialTt) : null} onMouseOut={specialTt ? tooltip.bind(null, null) : null}>{specialLabel}{haveSpecial ? ' (Pre-Eng)' : ''}</div>
+            <div tabIndex="0" className={ cn('section-menu button-inline-menu', { disabled: true })} style={{ cursor: 'not-allowed' }} onMouseOver={specialTt ? termtip.bind(null, haveSpecial ? translate('PHRASE_PREENGINEERED_LOCKED_EXP') : specialTt) : null} onMouseOut={specialTt ? tooltip.bind(null, null) : null}>{specialLabel}{haveSpecial ? ' (Pre-Eng)' : ''}</div>
           : null }
 
         <div className={cn('menu-section-wrapper', { open: showSpecialsMenu })}>
