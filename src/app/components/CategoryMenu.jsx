@@ -3,6 +3,8 @@ import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import cn from 'classnames';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
+import AvailableModulesMenu from './AvailableModulesMenu';
+import { diffDetails } from '../utils/SlotFunctions';
 
 // Category mappings from AvailableModulesMenu
 const GRPCAT = {
@@ -118,14 +120,24 @@ export default class CategoryMenu extends TranslatedComponent {
     className: PropTypes.string,
     modules: PropTypes.oneOfType([PropTypes.array, PropTypes.object]).isRequired,
     onSelectCategory: PropTypes.func.isRequired,
+    onSelectModule: PropTypes.func, // Add callback for direct module selection from search
     maxClass: PropTypes.number,
     eligible: PropTypes.func,
-    slot: PropTypes.object // Add slot for restriction checking
+    slot: PropTypes.object, // Add slot for restriction checking
+    m: PropTypes.object, // Current module
+    ship: PropTypes.object, // Ship object for diffDetails
+    warning: PropTypes.func // Warning function
   };
 
   constructor(props, context) {
     super(props);
     this._keyDown = this._keyDown.bind(this);
+    this._handleSearchChange = this._handleSearchChange.bind(this);
+    this.searchInputRef = React.createRef();
+
+    this.state = {
+      searchQuery: ''
+    };
   }
 
   /**
@@ -235,6 +247,14 @@ export default class CategoryMenu extends TranslatedComponent {
   }
 
   /**
+   * Handle search input changes
+   */
+  _handleSearchChange(e) {
+    const searchQuery = e.target.value;
+    this.setState({ searchQuery });
+  }
+
+  /**
    * Key down handler
    */
   _keyDown(cb, e) {
@@ -249,8 +269,8 @@ export default class CategoryMenu extends TranslatedComponent {
    * Render the category menu
    */
   render() {
-    const { onSelectCategory } = this.props;
-    const { translate } = this.context.language;
+    const { onSelectCategory, onSelectModule, modules, eligible, m, ship, warning, className } = this.props;
+    const { searchQuery } = this.state;
     const availableCategories = this._getAvailableCategories();
 
     // Define display order for categories
@@ -293,12 +313,58 @@ export default class CategoryMenu extends TranslatedComponent {
       return indexA - indexB;
     });
 
+    // Render search results if there's a search query
+    const hasSearchQuery = searchQuery && searchQuery.trim();
+
+    // If searching, render AvailableModulesMenu with search pre-populated
+    if (hasSearchQuery) {
+      return (
+        <div>
+          <div className="module-search-container">
+            <input
+              ref={this.searchInputRef}
+              type="text"
+              className="module-search-input"
+              placeholder="Search modules..."
+              value={searchQuery}
+              onChange={this._handleSearchChange}
+              onClick={(e) => e.stopPropagation()}
+            />
+          </div>
+          <AvailableModulesMenuWithSearch
+            className={className}
+            modules={modules}
+            m={m}
+            ship={ship}
+            onSelect={onSelectModule}
+            warning={warning}
+            diffDetails={ship ? diffDetails.bind(ship, this.context.language) : undefined}
+            eligible={eligible}
+            searchQuery={searchQuery}
+          />
+        </div>
+      );
+    }
+
     return (
       <div
-        className={cn('select', 'category-menu', this.props.className)}
+        className={cn('select', 'category-menu', className)}
         onContextMenu={stopCtxPropagation}
       >
+        <div className="module-search-container">
+          <input
+            ref={this.searchInputRef}
+            type="text"
+            className="module-search-input"
+            placeholder="Search modules..."
+            value={searchQuery}
+            onChange={this._handleSearchChange}
+            onClick={(e) => e.stopPropagation()}
+          />
+        </div>
+
         <div className="select-group cap">Select Module Category</div>
+
         {sortedCategories.map(category => (
           <div
             key={category}
@@ -317,5 +383,39 @@ export default class CategoryMenu extends TranslatedComponent {
         ))}
       </div>
     );
+  }
+}
+
+/**
+ * Wrapper component for AvailableModulesMenu with pre-populated search
+ */
+class AvailableModulesMenuWithSearch extends AvailableModulesMenu {
+  constructor(props, context) {
+    super(props, context);
+    // Set the search query from props
+    if (props.searchQuery) {
+      this.state = {
+        ...this.state,
+        searchQuery: props.searchQuery
+      };
+    }
+  }
+
+  componentDidMount() {
+    super.componentDidMount();
+    // Trigger search filtering after mount
+    if (this.props.searchQuery) {
+      this._filterModulesBySearch();
+    }
+  }
+
+  componentDidUpdate(prevProps) {
+    super.componentDidUpdate(prevProps);
+    // Update search if query changed
+    if (prevProps.searchQuery !== this.props.searchQuery && this.props.searchQuery) {
+      this.setState({ searchQuery: this.props.searchQuery }, () => {
+        this._filterModulesBySearch();
+      });
+    }
   }
 }

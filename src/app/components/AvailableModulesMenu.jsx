@@ -1367,11 +1367,12 @@ export default class AvailableModulesMenu extends TranslatedComponent {
 
   /**
    * Filter modules based on search query
+   * When searching, ignore category filters and search ALL modules
    */
   _filterModulesBySearch() {
     const { language, termtip, tooltip } = this.context;
-    const { onSelect, m, eligible, warning } = this.props;
-    const { searchQuery, allModules } = this.state;
+    const { onSelect, m, eligible, warning, modules } = this.props;
+    const { searchQuery } = this.state;
     const translate = language.translate;
 
     let list = [];
@@ -1380,10 +1381,34 @@ export default class AvailableModulesMenu extends TranslatedComponent {
 
     // Filter modules based on search query
     const query = searchQuery.toLowerCase().trim();
-    let filteredModules = allModules;
+
+    // When searching, we want to search ALL modules, not just the category-filtered ones
+    // So we rebuild the allModules list from the original modules prop
+    let allModulesForSearch = [];
+    if (modules) {
+      if (Array.isArray(modules)) {
+        allModulesForSearch = modules.filter(this._shouldIncludeModule);
+      } else if (typeof modules === 'object') {
+        Object.keys(modules).forEach(groupKey => {
+          const moduleGroup = modules[groupKey];
+
+          if (Array.isArray(moduleGroup)) {
+            const filteredModules = moduleGroup.filter(this._shouldIncludeModule);
+            allModulesForSearch = allModulesForSearch.concat(filteredModules);
+          } else if (moduleGroup && typeof moduleGroup === 'object') {
+            const filteredModules = Object.keys(moduleGroup)
+              .map(modKey => moduleGroup[modKey])
+              .filter(this._shouldIncludeModule);
+            allModulesForSearch = allModulesForSearch.concat(filteredModules);
+          }
+        });
+      }
+    }
+
+    let filteredModules = allModulesForSearch;
 
     if (query) {
-      filteredModules = allModules.filter(mod => {
+      filteredModules = allModulesForSearch.filter(mod => {
         // Search in module name
         if (mod.name && mod.name.toLowerCase().includes(query)) return true;
 
@@ -1436,7 +1461,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
         return false;
       });
 
-      console.log(`Search for "${query}" found ${filteredModules.length} modules out of ${allModules.length}`);
+      console.log(`Search for "${query}" found ${filteredModules.length} modules out of ${allModulesForSearch.length} (ignoring category filters)`);
     }
 
     // Process filtered modules
