@@ -13,7 +13,8 @@ import {
   ListModifications,
   Modified,
   CommunityGoalSmall,
-  TechBrokerSmall
+  TechBrokerSmall,
+  PowerPlaySmall
 } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
@@ -44,12 +45,20 @@ export default class HardpointSlot extends Slot {
 
 
   /**
-   * Get the availability icon for a module (CG or Tech Broker)
+   * Get the availability icon for a module (CG, Tech Broker, or PowerPlay)
    * @param  {Object} mod The module
    * @return {React.Component} Icon component or null
    */
   _getAvailabilityIcon(mod) {
-    if (!mod || !mod.preEngineered) return null;
+    if (!mod) return null;
+
+    // Check for PowerPlay modules first
+    if (mod.powerplay === 'True' || mod.powerplay === true) {
+      return <PowerPlaySmall className='powerplay' />;
+    }
+
+    // Then check for pre-engineered modules (CG or Tech Broker)
+    if (!mod.preEngineered) return null;
 
     if (mod.preEngineered.availability === 'CG') {
       return <CommunityGoalSmall className='community' />;
@@ -97,9 +106,12 @@ export default class HardpointSlot extends Slot {
       }
 
       let cgttip = '';
-      // Get availability icon (CG or Tech Broker)
+      // Get availability icon (CG, Tech Broker, or PowerPlay)
       const availabilityIcon = this._getAvailabilityIcon(m);
-      if (m && m.preEngineered && m.preEngineered.availability === 'CG') {
+      if (m && (m.powerplay === 'True' || m.powerplay === true)) {
+        cgttip = 'PowerPlay Module';
+      }
+      else if (m && m.preEngineered && m.preEngineered.availability === 'CG') {
         cgttip = 'Community Goal Module';
       }
       else if (m && m.preEngineered && m.preEngineered.availability === undefined) {

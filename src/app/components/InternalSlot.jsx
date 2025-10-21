@@ -6,7 +6,7 @@ import { ListModifications, Modified } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { blueprintTooltip } from '../utils/BlueprintFunctions';
-import { CommunityGoalSmall, TechBrokerSmall } from './SvgIcons';
+import { CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall } from './SvgIcons';
 
 /**
  * Internal Slot
@@ -14,12 +14,20 @@ import { CommunityGoalSmall, TechBrokerSmall } from './SvgIcons';
 export default class InternalSlot extends Slot {
 
   /**
-   * Get the availability icon for a module (CG or Tech Broker)
+   * Get the availability icon for a module (CG, Tech Broker, or PowerPlay)
    * @param  {Object} mod The module
    * @return {React.Component} Icon component or null
    */
   _getAvailabilityIcon(mod) {
-    if (!mod || !mod.preEngineered) return null;
+    if (!mod) return null;
+
+    // Check for PowerPlay modules first
+    if (mod.powerplay === 'True' || mod.powerplay === true) {
+      return <PowerPlaySmall className='powerplay' />;
+    }
+
+    // Then check for pre-engineered modules (CG or Tech Broker)
+    if (!mod.preEngineered) return null;
 
     if (mod.preEngineered.availability === 'CG') {
       return <CommunityGoalSmall className='community' />;
@@ -67,9 +75,12 @@ export default class InternalSlot extends Slot {
       }
 
       let cgttip = '';
-      // Get availability icon (CG or Tech Broker)
+      // Get availability icon (CG, Tech Broker, or PowerPlay)
       const availabilityIcon = this._getAvailabilityIcon(m);
-      if (availabilityIcon && availabilityIcon === <TechBrokerSmall className='techbroker' />) {
+      if (m && (m.powerplay === 'True' || m.powerplay === true)) {
+        cgttip = 'PowerPlay Module';
+      }
+      else if (availabilityIcon && availabilityIcon === <TechBrokerSmall className='techbroker' />) {
         cgttip = 'Tech Broker Module';
       }
       else if (availabilityIcon && availabilityIcon === <CommunityGoalSmall className='community' />) {
