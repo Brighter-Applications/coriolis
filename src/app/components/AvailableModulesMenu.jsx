@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import cn from 'classnames';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
-import { MountFixed, MountGimballed, MountTurret, Warning, CommunityGoalSmall, TechBrokerSmall } from './SvgIcons';
+import { MountFixed, MountGimballed, MountTurret, Warning, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall } from './SvgIcons';
 import ModalConfirmCG from './ModalConfirmCG';
 import Persist from '../stores/Persist';
 
@@ -156,12 +156,20 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   }
 
   /**
-   * Get the availability icon for a module (CG or Tech Broker)
+   * Get the availability icon for a module (CG, Tech Broker, or PowerPlay)
    * @param  {Object} mod The module
    * @return {React.Component} Icon component or null
    */
   _getAvailabilityIcon(mod) {
-    if (!mod || !mod.preEngineered) return null;
+    if (!mod) return null;
+
+    // Check for PowerPlay modules first
+    if (mod.powerplay === 'True' || mod.powerplay === true) {
+      return <PowerPlaySmall className='powerplay' />;
+    }
+
+    // Then check for pre-engineered modules (CG or Tech Broker)
+    if (!mod.preEngineered) return null;
 
     if (mod.preEngineered.availability === 'CG') {
       return <CommunityGoalSmall className='community' />;
