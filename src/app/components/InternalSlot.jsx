@@ -2,11 +2,10 @@ import React from 'react';
 import cn from 'classnames';
 import Slot from './Slot';
 import Persist from '../stores/Persist';
-import { ListModifications, Modified, CommunityGoalSmall, TechBrokerSmall } from './SvgIcons';
+import { ListModifications, Modified, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { blueprintTooltip } from '../utils/BlueprintFunctions';
-import { CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall } from './SvgIcons';
 
 /**
  * Internal Slot
@@ -106,9 +105,7 @@ export default class InternalSlot extends Slot {
       }
 
       let mass = m.getMass() || m.cargo || m.fuel || 0;
-
       const className = cn('details', enabled ? '' : 'disabled');
-      let mass = m.getMass() || m.cargo || m.fuel || 0;
 
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
         <div className={'cb'}>
