@@ -242,7 +242,6 @@ export default class InternalSlotSection extends SlotSection {
         eligible={s.eligible}
         slot={s}
         m={s.m}
-        menu={menu}
         drag={this._drag.bind(this, s)}
         dragOver={this._dragOverSlot.bind(this, s)}
         drop={this._drop}
