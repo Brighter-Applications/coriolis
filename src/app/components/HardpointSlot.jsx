@@ -13,7 +13,8 @@ import {
   ListModifications,
   Modified,
   CommunityGoalSmall,
-  TechBrokerSmall
+  TechBrokerSmall,
+  PowerPlaySmall
 } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
@@ -41,6 +42,35 @@ export default class HardpointSlot extends Slot {
     return translate(['U', 'S', 'M', 'L', 'H'][this.props.maxClass]);
   }
 
+
+
+  /**
+   * Get the availability icon for a module (CG, Tech Broker, or PowerPlay)
+   * @param  {Object} mod The module
+   * @return {React.Component} Icon component or null
+   */
+  _getAvailabilityIcon(mod) {
+    if (!mod) return null;
+
+    // Check for PowerPlay modules first
+    if (mod.powerplay === 'True' || mod.powerplay === true) {
+      return <PowerPlaySmall className='powerplay' />;
+    }
+
+    // Then check for pre-engineered modules (CG or Tech Broker)
+    if (!mod.preEngineered) return null;
+
+    if (mod.preEngineered.availability === 'CG') {
+      return <CommunityGoalSmall className='community' />;
+    }
+
+    if (typeof mod.preEngineered.availability === 'undefined') {
+      return <TechBrokerSmall className='techbroker' />;
+    }
+
+    return null;
+  }
+
   /**
    * Generate the slot contents
    * @param  {Object} m             Mounted Module
@@ -55,8 +85,10 @@ export default class HardpointSlot extends Slot {
       let classRating = `${m.class}${m.rating}${m.missile ? '/' + m.missile : ''}`;
       let { drag, drop } = this.props;
       let { termtip, tooltip } = this.context;
-      let validMods = Modifications.modules[m.grp].modifications || [];
+      let validMods = Modifications.modules[m.grp] ? (Modifications.modules[m.grp].modifications || []) : [];
       let showModuleResistances = Persist.showModuleResistances();
+      // Show modifications button if there are available modifications OR if module has a blueprint/mods applied
+      let hasModifications = validMods.length > 0 || (m.blueprint && m.blueprint.name) || (m.mods && Object.keys(m.mods).length > 0);
 
       // Modifications tooltip shows blueprint and grade, if available
       let modTT = translate('modified');
@@ -101,12 +133,25 @@ export default class HardpointSlot extends Slot {
         cgttip = 'Tech Broker module';
       }
 
+      let cgttip = '';
+      // Get availability icon (CG, Tech Broker, or PowerPlay)
+      const availabilityIcon = this._getAvailabilityIcon(m);
+      if (m && (m.powerplay === 'True' || m.powerplay === true)) {
+        cgttip = 'PowerPlay Module';
+      }
+      else if (m && m.preEngineered && m.preEngineered.availability === 'CG') {
+        cgttip = 'Community Goal Module';
+      }
+      else if (m && m.preEngineered && m.preEngineered.availability === undefined) {
+        cgttip = 'Tech Broker Module';
+      }
+
       const className = cn('details', enabled ? '' : 'disabled');
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
         <div className={'cb'}>
           <div className={'l'}>
-            {cgmod ? <span onMouseOver={termtip.bind(null, cgttip)}
-                                               onMouseOut={tooltip.bind(null, null)}>{cgmod}</span> : ''}
+            {availabilityIcon ? <span onMouseOver={termtip.bind(null, cgttip)}
+                                               onMouseOut={tooltip.bind(null, null)}>{availabilityIcon}</span> : ''}
             {m.mount && m.mount == 'F' ? <span onMouseOver={termtip.bind(null, 'fixed')}
                                                onMouseOut={tooltip.bind(null, null)}><MountFixed/></span> : ''}
             {m.mount && m.mount == 'G' ? <span onMouseOver={termtip.bind(null, 'gimballed')}
@@ -169,7 +214,7 @@ export default class HardpointSlot extends Slot {
             className='l'>{translate('thermres')}: {formats.pct(m.getThermalResistance())}</div> : null}
           {m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null}
           {m.getInfo() ? <div className='l'>{translate(m.getInfo())}</div> : null}
-          {m && validMods.length > 0 ? <div className='r' tabIndex="0" ref={modButton => this.modButton = modButton}>
+          {m && hasModifications ? <div className='r' tabIndex="0" ref={modButton => this.modButton = modButton}>
             <button tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation}
                     onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}>
               <ListModifications/></button>

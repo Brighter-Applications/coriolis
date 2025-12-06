@@ -6,6 +6,7 @@ name: Auto-Deploy 'beta/live' Branch to beta.coliolis.io or coriolis.io
 on:
   push:
     branches:
+      - alpha
       - beta
       - live
 # Figure out the target branch name
@@ -39,10 +40,12 @@ jobs:
           cd ./coriolis-data
           export NVM_DIR=~/.nvm
           source ~/.nvm/nvm.sh
-          npm install 2>&1
+          rm -Rf node_modules package-lock.json
+          npm install --legacy-peer-deps 2>&1
           npm start
           cd ../coriolis
-          npm install 2>&1
+          rm -Rf node_modules package-lock.json
+          npm install --legacy-peer-deps 2>&1
           npm run build 2>&1
       - name: Zip the code
         shell: bash
@@ -99,5 +102,5 @@ jobs:
       - name: Move the build to the web server
         shell: bash
         run: |
-          if [ ${{ env.BRANCH_NAME }} == "beta" ]; then rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/beta.coriolis.io/; else rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/coriolis.io/; fi
+          if [ ${{ env.BRANCH_NAME }} == "beta" ]; then rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/beta.coriolis.io/; elif [ ${{ env.BRANCH_NAME }} == "alpha" ]; then rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/alpha.coriolis.io/; else rsync -av --omit-dir-times --no-perms --delete --exclude='.git/' --exclude='.github/' ./coriolis/build/* /var/www/coriolis.io/; fi
 

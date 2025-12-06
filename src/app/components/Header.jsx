@@ -1,5 +1,6 @@
 import React from 'react';
 import TranslatedComponent from './TranslatedComponent';
+import { AppContext } from '../AppContext';
 import { Languages } from '../i18n/Language';
 import { Insurance } from '../shipyard/Constants';
 import Link from './Link';
@@ -19,7 +20,9 @@ import Announcement from './Announcement';
 import { outfitURL } from '../utils/UrlGenerators';
 
 const SIZE_MIN = 0.65;
-const SIZE_RANGE = 0.55;
+const SIZE_MAX = 1.75;
+const SIZE_RANGE = SIZE_MAX - SIZE_MIN;
+const SIZE_DEFAULT = 1;
 
 /**
  * Normalize percentages to 'clean' values
@@ -55,6 +58,7 @@ function selectAll(e) {
  * Coriolis App Header section / menus
  */
 export default class Header extends TranslatedComponent {
+  static contextType = AppContext;
 
 	/**
 	 * Constructor
@@ -63,7 +67,12 @@ export default class Header extends TranslatedComponent {
 	 */
   constructor(props, context) {
     super(props);
-    this.shipOrder = Object.keys(Ships).sort();
+    // Sort ships by their display name (properties.name) instead of ship ID
+    this.shipOrder = Object.keys(Ships).sort((a, b) => {
+      const nameA = Ships[a].properties.name.toLowerCase();
+      const nameB = Ships[b].properties.name.toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
 
     this._setLanguage = this._setLanguage.bind(this);
     this._setInsurance = this._setInsurance.bind(this);
@@ -80,6 +89,9 @@ export default class Header extends TranslatedComponent {
     this._getAnnouncementsMenu = this._getAnnouncementsMenu.bind(this);
     this._openSettings = this._openMenu.bind(this, 'settings');
     this._showHelp = this._showHelp.bind(this);
+    this._toggleTooltips = this._toggleTooltips.bind(this);
+    this._toggleModuleResistances = this._toggleModuleResistances.bind(this);
+    this._togglePromptCG = this._togglePromptCG.bind(this);
     this.update = this.update.bind(this);
     this.languageOptions = [];
     this.insuranceOptions = [];
@@ -222,6 +234,13 @@ export default class Header extends TranslatedComponent {
    */
   _toggleModuleResistances() {
     Persist.showModuleResistances(!Persist.showModuleResistances());
+  }
+
+  /**
+   * Toggle CG module prompt setting
+   */
+  _togglePromptCG() {
+    Persist.setPromptCG(!Persist.promptCG());
   }
 
   /**
@@ -420,6 +439,7 @@ export default class Header extends TranslatedComponent {
     let tips = Persist.showTooltips();
     let promptCG = Persist.promptCGModules();
     let moduleResistances = Persist.showModuleResistances();
+    let promptCG = Persist.promptCG();
 
     return (
       <div className='menu-list no-wrap cap' onClick={ (e) => e.stopPropagation() }>
@@ -444,6 +464,10 @@ export default class Header extends TranslatedComponent {
             <tr className='cap ptr' onClick={this._toggleModuleResistances} >
               <td>{translate('module resistances')}</td>
               <td className={cn('ri', { disabled: !moduleResistances, 'primary-disabled': moduleResistances })}>{(moduleResistances ? '✓' : '✗')}</td>
+            </tr>
+            <tr className='cap ptr' onClick={this._togglePromptCG} >
+              <td>CG Module Prompts</td>
+              <td className={cn('ri', { disabled: !promptCG, 'primary-disabled': promptCG })}>{(promptCG ? '✓' : '✗')}</td>
             </tr>
             <tr>
               <td>{translate('insurance')}</td>
@@ -499,7 +523,7 @@ export default class Header extends TranslatedComponent {
   /**
    * Add listeners on mount
    */
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     let update = () => this.forceUpdate();
     Persist.addListener('language', update);
     Persist.addListener('insurance', update);
@@ -516,7 +540,7 @@ export default class Header extends TranslatedComponent {
    * @param  {Object} nextProps   Incoming/Next properties
    * @param  {Object} nextContext Incoming/Next conext
    */
-  componentWillReceiveProps(nextProps, nextContext) {
+  UNSAFE_componentWillReceiveProps(nextProps, nextContext) {
     if(this.context.language != nextContext.language) {
       let translate = nextContext.language.translate;
       this.insuranceOptions = [];

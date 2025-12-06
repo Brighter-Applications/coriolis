@@ -5,12 +5,40 @@ import Persist from '../stores/Persist';
 import { ListModifications, Modified, CommunityGoalSmall, TechBrokerSmall } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
-import { getBlueprint, blueprintTooltip } from '../utils/BlueprintFunctions';
+import { blueprintTooltip } from '../utils/BlueprintFunctions';
+import { CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall } from './SvgIcons';
 
 /**
  * Internal Slot
  */
 export default class InternalSlot extends Slot {
+
+  /**
+   * Get the availability icon for a module (CG, Tech Broker, or PowerPlay)
+   * @param  {Object} mod The module
+   * @return {React.Component} Icon component or null
+   */
+  _getAvailabilityIcon(mod) {
+    if (!mod) return null;
+
+    // Check for PowerPlay modules first
+    if (mod.powerplay === 'True' || mod.powerplay === true) {
+      return <PowerPlaySmall className='powerplay' />;
+    }
+
+    // Then check for pre-engineered modules (CG or Tech Broker)
+    if (!mod.preEngineered) return null;
+
+    if (mod.preEngineered.availability === 'CG') {
+      return <CommunityGoalSmall className='community' />;
+    }
+
+    if (typeof mod.preEngineered.availability === 'undefined') {
+      return <TechBrokerSmall className='techbroker' />;
+    }
+
+    return null;
+  }
 
   /**
    * Generate the slot contents
@@ -28,6 +56,8 @@ export default class InternalSlot extends Slot {
       let { termtip, tooltip } = this.context;
       let validMods = (Modifications.modules[m.grp] ? Modifications.modules[m.grp].modifications : []);
       let showModuleResistances = Persist.showModuleResistances();
+      // Show modifications button if there are available modifications OR if module has a blueprint/mods applied
+      let hasModifications = validMods.length > 0 || (m.blueprint && m.blueprint.name) || (m.mods && Object.keys(m.mods).length > 0);
 
       // Modifications tooltip shows blueprint and grade, if available
       let modTT = translate('modified');
@@ -62,16 +92,20 @@ export default class InternalSlot extends Slot {
         }
       }
 
-      let cgmod = null;
-      let spacer = ' ';
       let cgttip = '';
-      if (m.preEngineered && m.preEngineered.availability === 'CG') {
-        cgmod = <CommunityGoalSmall className={'community'}/>;
-        cgttip = 'CG module';
-      }else if (m.preEngineered && typeof(m.preEngineered.availability) === 'undefined') {
-        cgmod = <TechBrokerSmall className={'technomargin'}/>;
-        cgttip = 'Tech Broker module';
+      // Get availability icon (CG, Tech Broker, or PowerPlay)
+      const availabilityIcon = this._getAvailabilityIcon(m);
+      if (m && (m.powerplay === 'True' || m.powerplay === true)) {
+        cgttip = 'PowerPlay Module';
       }
+      else if (availabilityIcon && availabilityIcon === <TechBrokerSmall className='techbroker' />) {
+        cgttip = 'Tech Broker Module';
+      }
+      else if (availabilityIcon && availabilityIcon === <CommunityGoalSmall className='community' />) {
+        cgttip = 'Community Goal Module';
+      }
+
+      let mass = m.getMass() || m.cargo || m.fuel || 0;
 
       const className = cn('details', enabled ? '' : 'disabled');
       let mass = m.getMass() || m.cargo || m.fuel || 0;
@@ -79,9 +113,8 @@ export default class InternalSlot extends Slot {
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
         <div className={'cb'}>
           <div className={'l'}>
-            {cgmod ? <span onMouseOver={termtip.bind(null, cgttip)}
-                                               onMouseOut={tooltip.bind(null, null)}>{cgmod}</span> : ''}
-                                               {classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified /></span> : ''}</div>
+            {availabilityIcon ?  <span onMouseOver={termtip.bind(null, cgttip)}
+                                               onMouseOut={tooltip.bind(null, null)}>{availabilityIcon}</span> : ''}{classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified /></span> : ''}</div>
           <div className={'r'}>{formats.round(mass)}{u.T}</div>
         </div>
         <div className={'cb'}>
@@ -121,7 +154,7 @@ export default class InternalSlot extends Slot {
           { m.getProtection() ? <div className='l'>{translate('protection')}: {formats.rPct(m.getProtection())}</div> : null }
           { m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null }
           { m.getInfo() ? <div className='l'>{translate(m.getInfo())}</div> : null }
-	  { m && validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
+	  { m && hasModifications ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
         </div>
       </div>;
     } else {

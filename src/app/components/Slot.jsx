@@ -3,10 +3,11 @@ import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import cn from 'classnames';
 import AvailableModulesMenu from './AvailableModulesMenu';
+import CategoryMenu from './CategoryMenu';
 import ModificationsMenu from './ModificationsMenu';
 import { diffDetails } from '../utils/SlotFunctions';
 import { wrapCtxMenu } from '../utils/UtilityFunctions';
-import { CSSTransition } from 'react-transition-group';
+import { canMount } from '../utils/SlotFunctions';
 
 /**
  * Abstract Slot
@@ -19,6 +20,7 @@ export default class Slot extends TranslatedComponent {
     onOpen: PropTypes.func.isRequired,
     maxClass: PropTypes.number.isRequired,
     selected: PropTypes.bool,
+    slot: PropTypes.object, // Add slot prop
     m: PropTypes.object,
     enabled: PropTypes.bool.isRequired,
     ship: PropTypes.object.isRequired,
@@ -30,6 +32,29 @@ export default class Slot extends TranslatedComponent {
   };
 
   /**
+   * Default warning function if none provided
+   * @param {object} module The module to check
+   * @return {React.Component|null} Warning icon or null
+   */
+  _warning(module) {
+    // Return null if no warning needed
+    return null;
+  }
+
+  /**
+   * Check if a module is eligible for this slot
+   * Since availableModules() already filters based on slot restrictions,
+   * this function just needs to return true for all modules in the list
+   * @param {object} module The module to check
+   * @return {boolean} Whether the module can be mounted
+   */
+  _eligible(module) {
+    // All modules passed to AvailableModulesMenu are already pre-filtered
+    // by the availableModules() function based on slot.eligible restrictions
+    return true;
+  }
+
+  /**
    * Constructor
    * @param  {Object} props   React Component properties
    */
@@ -37,12 +62,36 @@ export default class Slot extends TranslatedComponent {
     super(props);
 
     this._modificationsSelected = false;
-    this.state = { menuHeight: 'auto' }; // Add state for menu height
+    this._selectedCategory = null;
+    this._showCategoryMenu = false; // Track whether to show category menu
 
     this._contextMenu = wrapCtxMenu(this._contextMenu.bind(this));
     this._getMaxClassLabel = this._getMaxClassLabel.bind(this);
     this._keyDown = this._keyDown.bind(this);
+    this._eligible = this._eligible.bind(this);
+    this._warning = this._warning.bind(this);
+    this._onSelectCategory = this._onSelectCategory.bind(this);
+    this._onBackToCategories = this._onBackToCategories.bind(this);
     this.slotDiv = null;
+  }
+
+  /**
+   * Handle category selection
+   * @param {string} category The selected category
+   */
+  _onSelectCategory(category) {
+    this._selectedCategory = category;
+    this._showCategoryMenu = false; // We've selected a category, so show the modules menu
+    this.forceUpdate();
+  }
+
+  /**
+   * Handle back button to return to category menu
+   */
+  _onBackToCategories() {
+    this._selectedCategory = null;
+    this._showCategoryMenu = true; // User clicked back, so show the category menu
+    this.forceUpdate();
   }
 
   // Must be implemented by subclasses:
@@ -104,8 +153,10 @@ export default class Slot extends TranslatedComponent {
     let missing = false;
 
     if (!selected) {
-      // If not selected then sure that modifications flag is unset
+      // If not selected then sure that modifications and category flags are unset
       this._modificationsSelected = false;
+      this._selectedCategory = null;
+      this._showCategoryMenu = false;
     }
 
     if (m) {
@@ -122,10 +173,8 @@ export default class Slot extends TranslatedComponent {
     }
 
     if (selected) {
-      if (this.props.menu && !this._modificationsSelected) {
-        // A menu has been provided by a parent component (e.g. CategoryMenu from InternalSlotSection), so use it.
-        menu = this.props.menu;
-      } else if (this._modificationsSelected) {
+      if (this._modificationsSelected) {
+        // Show modifications menu
         menu = <ModificationsMenu
           className={this._getClassNames()}
           onChange={onChange}
@@ -134,17 +183,64 @@ export default class Slot extends TranslatedComponent {
           marker={modificationsMarker}
           modButton = {this.modButton}
         />;
-      } else {
+      } else if (this._showCategoryMenu) {
+        // User clicked back or this is an empty slot - show category menu
+        menu = <CategoryMenu
+          className={this._getClassNames()}
+          modules={availableModules()}
+          maxClass={this.props.maxClass}
+          eligible={this._eligible}
+          slot={this.props.slot}
+          onSelectCategory={this._onSelectCategory}
+          onSelectModule={onSelect}
+          m={m}
+          ship={ship}
+          warning={warning || this._warning}
+        />;
+      } else if (this._selectedCategory) {
+        // User selected a specific category - show modules filtered by that category with back button
         menu = <AvailableModulesMenu
           className={this._getClassNames()}
           modules={availableModules()}
           m={m}
           ship={ship}
           onSelect={onSelect}
-          warning={warning}
+          warning={warning || this._warning}
           diffDetails={diffDetails.bind(ship, this.context.language)}
+          eligible={this._eligible}
           slotDiv = {this.slotDiv}
-          activeSlotId={this.props.id}
+          selectedCategory={this._selectedCategory}
+          onBack={this._onBackToCategories}
+        />;
+      } else if (m) {
+        // Module already fitted and no category selected yet - show modules in same category with back button
+        menu = <AvailableModulesMenu
+          className={this._getClassNames()}
+          modules={availableModules()}
+          m={m}
+          ship={ship}
+          onSelect={onSelect}
+          warning={warning || this._warning}
+          diffDetails={diffDetails.bind(ship, this.context.language)}
+          eligible={this._eligible}
+          slotDiv = {this.slotDiv}
+          selectedCategory={'current'}
+          onBack={this._onBackToCategories}
+        />;
+      } else {
+        // Empty slot and no category selected - show category menu
+        this._showCategoryMenu = true; // Ensure the flag is set for empty slots
+        menu = <CategoryMenu
+          className={this._getClassNames()}
+          modules={availableModules()}
+          maxClass={this.props.maxClass}
+          eligible={this._eligible}
+          slot={this.props.slot}
+          onSelectCategory={this._onSelectCategory}
+          onSelectModule={onSelect}
+          m={m}
+          ship={ship}
+          warning={warning || this._warning}
         />;
       }
     }
@@ -160,34 +256,9 @@ export default class Slot extends TranslatedComponent {
           <div className='sz'>{this._getMaxClassLabel(translate)}</div>
             {slotDetails}
           </div>
-        <CSSTransition
-          in={!!menu}
-          classNames="slide"
-          timeout={700}
-          mountOnEnter
-          unmountOnExit
-          addEndListener={(node, done) => {
-            node.addEventListener('transitionend', done, false);
-          }}
-          onEnter={node => {
-            // Capture the height when the menu enters
-            this.setState({ menuHeight: `${node.scrollHeight}px` });
-          }}
-          onEntering={node => {
-            // Animate to the captured height
-            node.style.maxHeight = this.state.menuHeight;
-          }}
-          onExit={node => {
-            // Start the exit animation from the captured height
-            node.style.maxHeight = this.state.menuHeight;
-          }}
-          onExiting={node => {
-            // Animate to zero
-            node.style.maxHeight = '0px';
-          }}
-        >
-          {menu || <div/>}
-        </CSSTransition>
+        <div className={cn('menu-section-wrapper', { open: selected && menu })}>
+          {menu}
+        </div>
       </div>
     );
   }

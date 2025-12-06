@@ -35,7 +35,7 @@ export default class ModalExport extends TranslatedComponent {
   /**
    * If generator is provided, execute on mount
    */
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     if (this.props.generator) {
       this.props.generator((str) => this.setState({ exportJson: str }));
     }

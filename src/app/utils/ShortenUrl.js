@@ -16,7 +16,7 @@ if (!agent) {
  * @param  {function} success   Success callback
  * @param  {function} error     Failure/Error callback
  */
-export default function shortenUrl(url, success, error) {
+export default function shorternUrl(url, success, error) {
   hollowShorten(url, success, error);
 }
 
