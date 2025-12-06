@@ -439,7 +439,6 @@ export default class Header extends TranslatedComponent {
     let tips = Persist.showTooltips();
     let promptCG = Persist.promptCGModules();
     let moduleResistances = Persist.showModuleResistances();
-    let promptCG = Persist.promptCG();
 
     return (
       <div className='menu-list no-wrap cap' onClick={ (e) => e.stopPropagation() }>
