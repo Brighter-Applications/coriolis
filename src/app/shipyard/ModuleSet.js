@@ -54,7 +54,9 @@ export default class ModuleSet {
     this.intClass = {};
 
     this.bulkheads = shipData.bulkheads.map((b, i) => {
-      return Object.assign(new Module(), { grp: 'bh', id: i, name: BulkheadNames[i], index: i, class: '', rating: '' }, b);
+      // Use the bulkhead's own name if it exists, otherwise fall back to standard names
+      const name = b.name || BulkheadNames[i];
+      return Object.assign(new Module(), { grp: 'bh', id: i, index: i, class: '', rating: '' }, b, { name });
     });
 
     this.standard[0] = filter(stnd.pp, maxStandardArr[0], 0, mass);  // Power Plant
