@@ -136,6 +136,19 @@ export default class HardpointSlot extends Slot {
         cgttip = 'Tech Broker Module';
       }
 
+      let cgttip = '';
+      // Get availability icon (CG, Tech Broker, or PowerPlay)
+      const availabilityIcon = this._getAvailabilityIcon(m);
+      if (m && (m.powerplay === 'True' || m.powerplay === true)) {
+        cgttip = 'PowerPlay Module';
+      }
+      else if (m && m.preEngineered && m.preEngineered.availability === 'CG') {
+        cgttip = 'Community Goal Module';
+      }
+      else if (m && m.preEngineered && m.preEngineered.availability === undefined) {
+        cgttip = 'Tech Broker Module';
+      }
+
       const className = cn('details', enabled ? '' : 'disabled');
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
         <div className={'cb'}>

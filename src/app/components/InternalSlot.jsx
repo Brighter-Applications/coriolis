@@ -103,6 +103,14 @@ export default class InternalSlot extends Slot {
       else if (availabilityIcon && availabilityIcon === <CommunityGoalSmall className='community' />) {
         cgttip = 'Community Goal Module';
       }
+      else if (availabilityIcon && availabilityIcon === <TechBrokerSmall className='techbroker' />) {
+        cgttip = 'Tech Broker Module';
+      }
+      else if (availabilityIcon && availabilityIcon === <CommunityGoalSmall className='community' />) {
+        cgttip = 'Community Goal Module';
+      }
+
+      let mass = m.getMass() || m.cargo || m.fuel || 0;
 
       let mass = m.getMass() || m.cargo || m.fuel || 0;
       const className = cn('details', enabled ? '' : 'disabled');
