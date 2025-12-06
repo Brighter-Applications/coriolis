@@ -4,9 +4,11 @@ import InternalSlot from './InternalSlot';
 import * as ModuleUtils from '../shipyard/ModuleUtils';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { canMount } from '../utils/SlotFunctions';
+import AvailableModulesMenu from './AvailableModulesMenu';
+import CategoryMenu from './CategoryMenu';
 
 /**
- * Internal slot section
+ * Internal slots section
  */
 export default class InternalSlotSection extends SlotSection {
 
@@ -230,15 +232,17 @@ export default class InternalSlotSection extends SlotSection {
       let s = internal[i];
       slots.push(<InternalSlot
         key={i}
+        id={s.id}
         maxClass={s.maxClass}
         availableModules={() => availableModules.getInts(ship, s.maxClass, s.eligible)}
         onOpen={this._openMenu.bind(this,s)}
-	onChange={this.props.onChange}
+        onChange={this.props.onChange}
         onSelect={this._selectModule.bind(this, s)}
         selected={currentMenu == s}
         eligible={s.eligible}
         slot={s}
         m={s.m}
+        menu={menu}
         drag={this._drag.bind(this, s)}
         dragOver={this._dragOverSlot.bind(this, s)}
         drop={this._drop}
@@ -315,5 +319,4 @@ export default class InternalSlotSection extends SlotSection {
       </ul>
     </div>;
   }
-
 }

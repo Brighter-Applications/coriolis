@@ -19,9 +19,15 @@ function filter(arr, maxClass, minClass, mass) {
  * @param  {number} maxSize    Maximum allowable size for SCO modules.
  * @return {Array}             Subset of modules filtered based on legal size amd type.
  */
-function sco_filter(arr, maxSize) {
+function sco_filter(arr, slotSize) {
   return arr.filter(module => {
-    return !(module.hasOwnProperty('name') && module['name'] === "Frame Shift Drive (SCO)" && module['class'] < maxSize);
+    // Check if this is an SCO FSD (regular or V1)
+    if (module.hasOwnProperty('name') && (module['name'].includes("(SCO)"))) {
+      // SCO FSDs can only be mounted in slots that exactly match their class size
+      return module['class'] === slotSize;
+    }
+    // For non-SCO modules, use the original logic (prevent undersized SCO modules)
+    return true;
   });
 }
 
@@ -115,6 +121,10 @@ export default class ModuleSet {
       if (eligible && !eligible[key]) {
         continue;
       }
+      // 'crl' (Large Cargo Racks) can only be mounted in special 'Cargo' slots
+      if (key === 'crl' && !eligible) {
+        continue;
+      }
       if (key == 'pcq' && !(ship.luxuryCabins && ship.luxuryCabins  === true)) {
         continue;
       }
@@ -138,7 +148,7 @@ export default class ModuleSet {
   getHps(ship, c, eligible) {
     let o = {};
     for (let key in this.hardpoints) {
-      if (eligible && !eligible[key]) {
+      if (eligible && !eligible[key]) { // If the slot has eligibility restrictions
         continue;
       }
       let data = filter(this.hardpoints[key], c, c ? 1 : 0, this.mass);

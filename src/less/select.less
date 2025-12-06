@@ -51,6 +51,8 @@ select {
   background-color: @bg;
   border: 1px solid @primary;
   text-align: center;
+  overflow: hidden;
+  transition: max-height 0.7s ease-in-out;
 
   // Add smooth transitions for the entire select menu
   transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
@@ -180,6 +182,23 @@ select {
     }
   }
 
+  &.slide-enter {
+    max-height: 0;
+  }
+
+  &.slide-enter-active {
+    /* max-height is set via inline style by the component */
+    max-height: 50vh; /* Fallback */
+  }
+
+  &.slide-exit {
+    /* max-height is set to current height via inline style */
+    max-height: 50vh; /* Fallback */
+  }
+
+  &.slide-exit-active {
+    max-height: 0;
+  }
 }
 
 .compact-module-grid {

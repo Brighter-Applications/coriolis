@@ -18,7 +18,7 @@ import {
 } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
-import { blueprintTooltip } from '../utils/BlueprintFunctions';
+import { getBlueprint, blueprintTooltip } from '../utils/BlueprintFunctions';
 
 /**
  * Hardpoint / Utility Slot
@@ -93,16 +93,44 @@ export default class HardpointSlot extends Slot {
       // Modifications tooltip shows blueprint and grade, if available
       let modTT = translate('modified');
       if (m && m.blueprint && m.blueprint.name) {
-        modTT = translate(m.blueprint.name) + ' ' + translate('grade') + ' ' + m.blueprint.grade;
-        if (m.blueprint.special && m.blueprint.special.id >= 0) {
-          modTT += ', ' + translate(m.blueprint.special.name);
+        if (m.preEngineered && m.preEngineered.blueprints) {
+          const blueprintNames = _.split(m.preEngineered.blueprints, ',');
+          const blueprints = blueprintNames.map(name => getBlueprint(name.trim(), m));
+          const blueprintHeader = blueprints.map(bp => <div className='blueprintList' key={bp.name}>{`Blueprint: ${translate(bp.name)} ${translate('Grade:')} ${m.preEngineered.grade}`}</div>);
+
+          if (m.blueprint.special && m.blueprint.special.id >= 0) {
+            blueprintHeader.push(<div className='blueprintList' key={m.blueprint.special.name}>{`Experimental: ${translate(m.blueprint.special.name)}`}</div>);
+          }
+          const blueprintGrades = blueprints.map(bp => bp.grades[m.preEngineered.grade]);
+          modTT = (
+            <div>
+              {blueprintHeader}
+              {blueprintTooltip(translate, blueprintGrades, null, m.grp, m)}
+            </div>
+          );
+        } else {
+          const blueprintHeader = [];
+          blueprintHeader.push(<div className='blueprintList' key={m.blueprint.name}>{`Blueprint: ${translate(m.blueprint.name)} ${translate('grade')} ${m.blueprint.grade}`}</div>);
+          if (m.blueprint.special && m.blueprint.special.id >= 0) {
+            blueprintHeader.push(<div className='blueprintList' key={m.blueprint.special.name}>{`Experimental: ${translate(m.blueprint.special.name)}`}</div>);
+          }
+          modTT = (
+            <div>
+              {blueprintHeader}
+              {blueprintTooltip(translate, [m.blueprint.grades[m.blueprint.grade]], null, m.grp, m)}
+            </div>
+          );
         }
-        modTT = (
-          <div>
-            <div>{modTT}</div>
-            {blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], null, m.grp, m)}
-          </div>
-        );
+      }
+
+      let cgmod = null;
+      let cgttip = '';
+      if (m.preEngineered && m.preEngineered.availability === 'CG') {
+        cgmod = <CommunityGoalSmall className={'community'}/>;
+        cgttip = 'CG module';
+      }else if (m.preEngineered && typeof(m.preEngineered.availability) === 'undefined') {
+        cgmod = <TechBrokerSmall className={'technomargin'}/>;
+        cgttip = 'Tech Broker module';
       }
 
       let cgttip = '';

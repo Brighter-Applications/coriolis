@@ -124,6 +124,38 @@ const HPTCAT = {
   'mining': ['ml', 'scl', 'sdm', 'abl'],
 };
 
+const INTCAT = {
+  'auto field-maintenance unit': ['am'] ,
+  'cargo racks': ['cr', 'crl'],
+  'fsd interdictor': ['fi'],
+  'fuel': ['ft', 'fs'],
+  'hangars': ['fh', 'pv'],
+  'limpet controllers': ['cc', 'fx', 'hb', 'pc', 'rpl', 'mlc'],
+  'passenger cabins': ['pce', 'pci', 'pcm', 'pcq'],
+  'refineries': ['rf'],
+  'shields': ['sg', 'bsg', 'psg', 'scb'],
+  'structural reinforcement': ['hr', 'mrp'],
+  // Assists
+  'flight assists': ['dc', 'sua'],
+  // Scanners
+  'scanners': ['ss'],
+  // Experimental
+  'experimental': ['rcpl', 'dtl', 'mahr', 'rsl'],
+  // Stabilizers
+  'weapon stabilizers': ['ews'],
+  // Guardian
+  'guardian': ['gsrp', 'gfsb', 'ghrp', 'gmrp'],
+}
+
+const HPTCAT = {
+  'lasers': ['pl', 'ul', 'bl'],
+  'projectiles': ['mc', 'advmc', 'c', 'fc', 'pa', 'rg'],
+  'ordnance': ['mr', 'amr', 'tp', 'nl'],
+  'mining': ['ml', 'scl', 'sdm', 'abl'],
+  'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp','rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'],
+  'guardian': ['gpc', 'ggc', 'gsc'],
+}
+
 /**
  * Available modules menu
  */

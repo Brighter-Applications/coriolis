@@ -10,7 +10,7 @@ import * as ModuleUtils from '../shipyard/ModuleUtils';
 import { ListModifications, Modified } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
-import { blueprintTooltip } from '../utils/BlueprintFunctions';
+import { getBlueprint, blueprintTooltip } from '../utils/BlueprintFunctions';
 
 /**
  * Standard Slot
@@ -87,19 +87,37 @@ export default class StandardSlot extends TranslatedComponent {
     let mass = m.getMass() || m.cargo || m.fuel || 0;
 
     // Modifications tooltip shows blueprint and grade, if available
-    let modTT = translate('modified');
-    if (m && m.blueprint && m.blueprint.name) {
-      modTT = translate(m.blueprint.name) + ' ' + translate('grade') + ' ' + m.blueprint.grade;
-      if (m.blueprint.special && m.blueprint.special.id >= 0) {
-        modTT += ', ' + translate(m.blueprint.special.name);
+      let modTT = translate('modified');
+      if (m && m.blueprint && m.blueprint.name) {
+        if (m.preEngineered && m.preEngineered.blueprints) {
+          const blueprintNames = _.split(m.preEngineered.blueprints, ',');
+          const blueprints = blueprintNames.map(name => getBlueprint(name.trim(), m));
+          const blueprintHeader = blueprints.map(bp => <div className='blueprintList' key={bp.name}>{`Blueprint: ${translate(bp.name)} ${translate('Grade:')} ${m.preEngineered.grade}`}</div>);
+
+          if (m.blueprint.special && m.blueprint.special.id >= 0) {
+            blueprintHeader.push(<div className='blueprintList' key={m.blueprint.special.name}>{`Experimental: ${translate(m.blueprint.special.name)}`}</div>);
+          }
+          const blueprintGrades = blueprints.map(bp => bp.grades[m.preEngineered.grade]);
+          modTT = (
+            <div>
+              {blueprintHeader}
+              {blueprintTooltip(translate, blueprintGrades, null, m.grp, m)}
+            </div>
+          );
+        } else {
+          const blueprintHeader = [];
+          blueprintHeader.push(<div className='blueprintList' key={m.blueprint.name}>{`Blueprint: ${translate(m.blueprint.name)} ${translate('grade')} ${m.blueprint.grade}`}</div>);
+          if (m.blueprint.special && m.blueprint.special.id >= 0) {
+            blueprintHeader.push(<div className='blueprintList' key={m.blueprint.special.name}>{`Experimental: ${translate(m.blueprint.special.name)}`}</div>);
+          }
+          modTT = (
+            <div>
+              {blueprintHeader}
+              {blueprintTooltip(translate, [m.blueprint.grades[m.blueprint.grade]], null, m.grp, m)}
+            </div>
+          );
+        }
       }
-      modTT = (
-          <div>
-            <div>{modTT}</div>
-            {blueprintTooltip(translate, m.blueprint.grades[m.blueprint.grade], null, m.grp, m)}
-          </div>
-        );
-    }
 
     if (!selected) {
       // If not selected then sure that modifications flag is unset
@@ -135,6 +153,7 @@ export default class StandardSlot extends TranslatedComponent {
           eligible={this._eligible}
           slot={slot} // Add this line to pass slot restriction info
           slotDiv = {this.slotDiv}
+          activeSlotId={slot.id}
         />;
       }
     }

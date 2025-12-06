@@ -59,7 +59,7 @@ export default class ModificationsMenu extends TranslatedComponent {
     this._handleModChange = this._handleModChange.bind(this);
 
     this.state = {
-      blueprintMenuOpened: !(props.m.blueprint && props.m.blueprint.name),
+      blueprintMenuOpened: false,
       specialMenuOpened: false
     };
   }
@@ -275,6 +275,11 @@ export default class ModificationsMenu extends TranslatedComponent {
   _blueprintSelected(fdname, grade) {
     this.context.tooltip(null);
     const { m, ship } = this.props;
+
+    if (m.preEngineered && !m.preEngineered.reengineerable) {
+      return; // Prevent Re-engineering of pre-engineered modules
+    }
+
     const blueprint = getBlueprint(fdname, m);
     blueprint.grade = grade;
     ship.setModuleBlueprint(m, blueprint);
@@ -299,6 +304,10 @@ export default class ModificationsMenu extends TranslatedComponent {
   _specialSelected(special) {
     this.context.tooltip(null);
     const { m, ship } = this.props;
+    if (m.preEngineered && !m.preEngineered.canApplyExperimental) {
+      console.log('Cannot apply experimental effects to pre-engineered modules');
+      return; // Prevent applying experimental effects
+    }
 
     if (special === null) {
       ship.clearModuleSpecial(m);
@@ -375,10 +384,19 @@ export default class ModificationsMenu extends TranslatedComponent {
    */
   _reset() {
     const { m, ship } = this.props;
-    ship.clearModifications(m);
-    ship.clearModuleBlueprint(m);
-    this.selectedModId = null;
-    this.selectedSpecialId = null;
+
+    if (m.preEngineered && !m.preEngineered.reengineerable) {
+      // For pre-engineered modules that cannot be re-engineered,
+      // only clear the special effect.
+      ship.clearModuleSpecial(m);
+    } else {
+      // For standard modules, clear everything.
+      ship.clearModifications(m);
+      ship.clearModuleBlueprint(m);
+      this.selectedModId = null;
+      this.selectedSpecialId = null;
+    }
+
     this.props.onChange();
   }
 
@@ -463,21 +481,23 @@ export default class ModificationsMenu extends TranslatedComponent {
     let blueprintCv;
     let bprintSearchName;
 
+    // REMOVE the blueprint object creation from render - this was destroying saved experimentals
+    // The blueprint object is now created once in the constructor
+
     // If the fdname is Weapon_Overcharged, we need to check if it's an MC
     if (m.blueprint && m.blueprint.fdname) {
       // Set the bprintSearchName value to the fdname of the blueprint for this module
       bprintSearchName = m.blueprint.fdname;
       if (m.blueprint.fdname === 'Weapon_Overcharged') {
-        // If the module is a MultiCannon, we need to fix the blueprint search name, else it will find the Laser Weapon_Overcharged Blueprint and not the MC Weapon_Overcharged Blueprint
+        // If the module is a MultiCannon, we need to fix the blueprint search name
         if (m.symbol.match(/MultiCannon/i)) {
-          // console.log(Modifications.modules[m.grp].blueprints['MC_Overcharged']);
-          // console.log(m.blueprint.fdname);
           bprintSearchName = 'MC_Overcharged';
         }
       }
     }
-    // TODO: Fix this to actually find the correct blueprint.
-    if (!m.blueprint || !m.blueprint.name || !m.blueprint.fdname || !Modifications.modules[m.grp].blueprints || !Modifications.modules[m.grp].blueprints[bprintSearchName]) {
+
+    // Only clear blueprint for non-pre-engineered modules
+    if (!m.preEngineered && (!m.blueprint || !m.blueprint.name || !m.blueprint.fdname || !Modifications.modules[m.grp].blueprints || !Modifications.modules[m.grp].blueprints[bprintSearchName])) {
       this.props.ship.clearModuleBlueprint(m);
       this.props.ship.clearModuleSpecial(m);
     }
@@ -514,21 +534,21 @@ export default class ModificationsMenu extends TranslatedComponent {
     }
 
     const specials = this._renderSpecials(this.props, this.context);
-    /**
-     * pnellesen - 05/28/2018 - added additional checks for specials.length below to ensure menus
-     * display correctly in cases where there are no specials (ex: AFMUs.)
-     */
-    const showBlueprintsMenu = blueprintMenuOpened;
-    const showSpecial = haveBlueprint && specials.length && !blueprintMenuOpened;
+
+    // Special logic for pre-engineered modules - they skip blueprint selection and go straight to experimentals
+    const showBlueprintsMenu = blueprintMenuOpened && !m.preEngineered;
+    const showSpecial = haveBlueprint && specials.length && (!blueprintMenuOpened || m.preEngineered);
     const showSpecialsMenu = specialMenuOpened && specials.length;
-    const showRolls = haveBlueprint && !blueprintMenuOpened && (!specialMenuOpened || !specials.length);
+    const showRolls = haveBlueprint && !blueprintMenuOpened && (!specialMenuOpened || !specials.length) && !m.preEngineered;
     const showReset = !blueprintMenuOpened && (!specialMenuOpened || !specials.length) && haveBlueprint;
-    const showMods = !blueprintMenuOpened && (!specialMenuOpened || !specials.length) && haveBlueprint;
+    const showMods = !blueprintMenuOpened && (!specialMenuOpened || !specials.length) && haveBlueprint && !m.preEngineered;
+
     if (haveBlueprint) {
       this.firstBPLabel = blueprintLabel;
     } else {
       this.firstBPLabel = 'selectBP';
     }
+
     return (
       <div
         className={cn('select', this.props.className)}

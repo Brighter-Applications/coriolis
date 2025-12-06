@@ -223,6 +223,13 @@ export default class Header extends TranslatedComponent {
   }
 
   /**
+   * Toggle CG prompt setting
+   */
+  _toggleCGPrompt() {
+    Persist.promptCGModules(!Persist.promptCGModules());
+  }
+
+  /**
    * Toggle module resistances setting
    */
   _toggleModuleResistances() {
@@ -430,6 +437,7 @@ export default class Header extends TranslatedComponent {
   _getSettingsMenu() {
     let translate = this.context.language.translate;
     let tips = Persist.showTooltips();
+    let promptCG = Persist.promptCGModules();
     let moduleResistances = Persist.showModuleResistances();
     let promptCG = Persist.promptCG();
 
@@ -444,6 +452,10 @@ export default class Header extends TranslatedComponent {
                   {this.languageOptions}
                 </select>
               </td>
+            </tr>
+            <tr className='cap ptr' onClick={this._toggleCGPrompt}>
+              <td>{translate('cgprompts')}</td>
+              <td className={cn('ri', { disabled: !promptCG, 'primary-disabled': promptCG })}>{(promptCG ? '✓' : '✗')}</td>
             </tr>
             <tr className='cap ptr' onClick={this._toggleTooltips} >
               <td>{translate('tooltips')}</td>
