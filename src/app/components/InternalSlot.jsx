@@ -111,8 +111,6 @@ export default class InternalSlot extends Slot {
       }
 
       let mass = m.getMass() || m.cargo || m.fuel || 0;
-
-      let mass = m.getMass() || m.cargo || m.fuel || 0;
       const className = cn('details', enabled ? '' : 'disabled');
 
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
