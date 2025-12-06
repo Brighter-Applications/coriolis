@@ -67,7 +67,12 @@ export default class Header extends TranslatedComponent {
 	 */
   constructor(props, context) {
     super(props);
-    this.shipOrder = Object.keys(Ships).sort();
+    // Sort ships by their display name (properties.name) instead of ship ID
+    this.shipOrder = Object.keys(Ships).sort((a, b) => {
+      const nameA = Ships[a].properties.name.toLowerCase();
+      const nameB = Ships[b].properties.name.toLowerCase();
+      return nameA.localeCompare(nameB);
+    });
 
     this._setLanguage = this._setLanguage.bind(this);
     this._setInsurance = this._setInsurance.bind(this);
