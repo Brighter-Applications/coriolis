@@ -74,15 +74,7 @@
   }
 
   .cb {
-    overflow: visible; // Changed to visible to allow button touch targets to extend
-    position: relative; // Ensure proper stacking context for button
-
-    // Use clearfix instead of overflow:hidden to clear floats
-    &::after {
-      content: "";
-      display: table;
-      clear: both;
-    }
+    overflow: hidden;
   }
 
   input.cb:focus {
@@ -100,24 +92,8 @@
   }
 
   .r {
-    position: relative;
-    z-index: 15; // Higher than button's z-index:10 to ensure it's on top
-    min-height: 44px; // Minimum touch target size (Apple's recommendation)
-    display: flex;
-    align-items: center;
-    justify-content: flex-end;
-    pointer-events: auto; // Ensure this area captures pointer events
-
-    // Create an even larger invisible touch zone for the button container
-    &::before {
-      content: '';
-      position: absolute;
-      top: -12px;
-      right: -12px;
-      bottom: -12px;
-      left: -12px;
-      pointer-events: auto; // Ensure the extended area also captures events
-    }
+    // Keep the original float behavior, don't use flex
+    // Just add z-index and minimum touch target via padding on child button
   }
 
   .sz {
