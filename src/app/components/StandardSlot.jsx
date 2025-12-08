@@ -200,12 +200,18 @@ export default class StandardSlot extends TranslatedComponent {
    * @param {SyntheticEvent} event Event (optional)
    */
   _toggleModifications(event) {
-    // Set the modifications flag FIRST, before the event bubbles
-    // This way when the parent re-renders the slot as selected, it will show modifications
+    // Always set the flag to true when button is clicked
     this._modificationsSelected = true;
 
-    // Do NOT call stopPropagation - let the click bubble up normally
-    // The slot's onClick will fire, selecting the slot, and then it will re-render
-    // with _modificationsSelected = true, showing the modifications menu
+    // If slot is already selected, stop propagation and just force update
+    // Otherwise let it bubble to select the slot first
+    if (this.props.selected) {
+      if (event) {
+        event.stopPropagation();
+      }
+      this.forceUpdate();
+    }
+    // If not selected, let the event bubble so slot gets selected
+    // and when it re-renders, _modificationsSelected will be true
   }
 }
