@@ -271,7 +271,6 @@ export default class Slot extends TranslatedComponent {
   _toggleModifications(event) {
     if (event) {
       event.stopPropagation(); // Prevent slot onClick from triggering
-      event.preventDefault();
     }
     this._modificationsSelected = !this._modificationsSelected;
     this.forceUpdate(); // Force re-render to show modifications menu
