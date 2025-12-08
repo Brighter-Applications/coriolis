@@ -152,8 +152,13 @@ export default class Slot extends TranslatedComponent {
     let slotDetails, modificationsMarker, menu;
     let missing = false;
 
-    if (!selected) {
-      // If not selected then sure that modifications and category flags are unset
+    // Only reset flags if we're transitioning from selected to not selected
+    // Track previous selected state to detect transitions
+    const wasSelected = this._wasSelected;
+    this._wasSelected = selected;
+
+    if (!selected && wasSelected) {
+      // Slot was just deselected, reset flags
       this._modificationsSelected = false;
       this._selectedCategory = null;
       this._showCategoryMenu = false;

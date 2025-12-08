@@ -5,6 +5,7 @@ import { MountFixed, MountGimballed, MountTurret } from '../components/SvgIcons'
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import CategoryMenu from './CategoryMenu';
 import AvailableModulesMenu from './AvailableModulesMenu';
+import ModificationsMenu from './ModificationsMenu';
 import * as ModuleUtils from '../shipyard/ModuleUtils';
 
 /**
@@ -78,12 +79,14 @@ export default class HardpointSlotSection extends SlotSection {
     event.stopPropagation();
     event.persist();
 
-    // Don't reset selectedCategory if this is the same slot being re-selected
+    // Don't reset state if this is the same slot being re-selected
     if (this.props.currentMenu === slot) {
       super._openMenu(slot, event);
     } else {
-      // Only reset selectedCategory when opening a different slot
-      this.setState({ selectedCategory: null }, () => {
+      // Reset state when opening a different slot
+      this.setState({
+        selectedCategory: null
+      }, () => {
         super._openMenu(slot, event);
       });
     }
@@ -101,11 +104,9 @@ export default class HardpointSlotSection extends SlotSection {
     const { ship } = this.props;
     const { selectedCategory } = this.state;
     const availableModuleGroups = availableModules.getHps(slot.maxClass);
-    console.log(`Slot: ${slot.m}, Selected Category: ${selectedCategory}, Available Modules:`, availableModuleGroups);
 
     if (slot.m === null && selectedCategory === null) {
       const categoriesForSlot = ModuleUtils.getHpCategoriesForSlot(slot);
-      console.log('Generating CategoryMenu with categories:', categoriesForSlot);
       return <CategoryMenu
         className='hardpoint'
         categories={categoriesForSlot}
@@ -133,9 +134,9 @@ export default class HardpointSlotSection extends SlotSection {
    * @param {string} category The selected category
    */
   _onCategorySelect(onSelect, category) {
-    console.log(`Category selected: ${category}`);
     this.setState({ selectedCategory: category });
   }
+
 
   /**
    * Generate the slot React Components
@@ -150,11 +151,6 @@ export default class HardpointSlotSection extends SlotSection {
 
     for (let i = 0, l = hardpoints.length; i < l; i++) {
       let h = hardpoints[i];
-      let menu;
-      if (currentMenu === h) {
-        // Pass the availableModules object to _getMenu
-        menu = this._getMenu(h, this._selectModule.bind(this, h), null, availableModules);
-      }
 
       if (h.maxClass) { // Only show hardpoints, not utility mounts
         slots.push(<HardpointSlot
