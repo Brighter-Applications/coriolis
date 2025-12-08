@@ -78,9 +78,11 @@ export default class HardpointSlotSection extends SlotSection {
     event.stopPropagation();
     event.persist();
 
+    // Don't reset selectedCategory if this is the same slot being re-selected
     if (this.props.currentMenu === slot) {
       super._openMenu(slot, event);
     } else {
+      // Only reset selectedCategory when opening a different slot
       this.setState({ selectedCategory: null }, () => {
         super._openMenu(slot, event);
       });
