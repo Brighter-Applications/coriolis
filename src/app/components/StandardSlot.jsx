@@ -184,7 +184,7 @@ export default class StandardSlot extends TranslatedComponent {
                 { showModuleResistances && m.getThermalResistance() ? <div className='l'>{translate('thermres')}: {formats.pct(m.getThermalResistance())}</div> : null }
                 { m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null }
                 { m.getInfo() ? <div className='l'>{translate(m.getInfo())}</div> : null }
-	        { m.getInfo() ? <div className='r'></div> : validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button  tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
+	        { m.getInfo() ? <div className='r'></div> : validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button  tabIndex="-1" onClick={(e) => this._toggleModifications(e)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
             </div>
           </div>
         </div>
@@ -197,8 +197,21 @@ export default class StandardSlot extends TranslatedComponent {
 
   /**
    * Toggle the modifications flag when selecting the modifications icon
+   * @param {SyntheticEvent} event Event (optional)
    */
-  _toggleModifications() {
-    this._modificationsSelected = !this._modificationsSelected;
+  _toggleModifications(event) {
+    // Always set the flag to true when button is clicked
+    this._modificationsSelected = true;
+
+    // If slot is already selected, stop propagation and just force update
+    // Otherwise let it bubble to select the slot first
+    if (this.props.selected) {
+      if (event) {
+        event.stopPropagation();
+      }
+      this.forceUpdate();
+    }
+    // If not selected, let the event bubble so slot gets selected
+    // and when it re-renders, _modificationsSelected will be true
   }
 }

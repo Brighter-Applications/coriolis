@@ -152,8 +152,13 @@ export default class Slot extends TranslatedComponent {
     let slotDetails, modificationsMarker, menu;
     let missing = false;
 
-    if (!selected) {
-      // If not selected then sure that modifications and category flags are unset
+    // Only reset flags if we're transitioning from selected to not selected
+    // Track previous selected state to detect transitions
+    const wasSelected = this._wasSelected;
+    this._wasSelected = selected;
+
+    if (!selected && wasSelected) {
+      // Slot was just deselected, reset flags
       this._modificationsSelected = false;
       this._selectedCategory = null;
       this._showCategoryMenu = false;
@@ -266,8 +271,21 @@ export default class Slot extends TranslatedComponent {
 
   /**
    * Toggle the modifications flag when selecting the modifications icon
+   * @param {SyntheticEvent} event Event (optional)
    */
-  _toggleModifications() {
-    this._modificationsSelected = !this._modificationsSelected;
+  _toggleModifications(event) {
+    // Always set the flag to true when button is clicked
+    this._modificationsSelected = true;
+
+    // If slot is already selected, stop propagation and just force update
+    // Otherwise let it bubble to select the slot first
+    if (this.props.selected) {
+      if (event) {
+        event.stopPropagation();
+      }
+      this.forceUpdate();
+    }
+    // If not selected, let the event bubble so slot gets selected
+    // and when it re-renders, _modificationsSelected will be true
   }
 }
