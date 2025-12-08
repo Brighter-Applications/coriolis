@@ -203,7 +203,17 @@ export default class StandardSlot extends TranslatedComponent {
     if (event) {
       event.stopPropagation(); // Prevent slot onClick from triggering
     }
-    this._modificationsSelected = !this._modificationsSelected;
-    this.forceUpdate(); // Force re-render to show modifications menu
+
+    // If slot is not selected, we need to select it first before toggling modifications
+    if (!this.props.selected) {
+      // Open the slot first, which will select it
+      this.props.onOpen(event);
+      // Set the flag so when it re-renders as selected, it shows modifications
+      this._modificationsSelected = true;
+    } else {
+      // Slot is already selected, just toggle the modifications flag
+      this._modificationsSelected = !this._modificationsSelected;
+      this.forceUpdate();
+    }
   }
 }
