@@ -69,7 +69,15 @@
   }
 
   .cb {
-    overflow: hidden;
+    overflow: visible; // Changed to visible to allow button touch targets to extend
+    position: relative; // Ensure proper stacking context for button
+
+    // Use clearfix instead of overflow:hidden to clear floats
+    &::after {
+      content: "";
+      display: table;
+      clear: both;
+    }
   }
 
   input.cb:focus {
@@ -84,6 +92,15 @@
   .l {
     text-transform: capitalize;
     margin-right: 0.8em;
+  }
+
+  .r {
+    position: relative;
+    z-index: 15; // Higher than button's z-index:10 to ensure it's on top
+    min-height: 44px; // Minimum touch target size (Apple's recommendation)
+    display: flex;
+    align-items: center;
+    justify-content: flex-end;
   }
 
   .sz {
