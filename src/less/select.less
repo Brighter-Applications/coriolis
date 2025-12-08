@@ -653,11 +653,13 @@ select {
   max-height: 0;
   opacity: 0;
   margin: 0;
+  pointer-events: none; // Prevent closed menu from capturing touch events
 
   &.open {
     max-height: 2000px; // Large enough to accommodate content
     opacity: 1;
     margin: 0.5em 0;
+    pointer-events: auto; // Re-enable touch events when menu is open
   }
 
   // Slightly faster collapse (but still slower than before)
