@@ -205,7 +205,7 @@ export default class HardpointSlot extends Slot {
           {m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null}
           {m.getInfo() ? <div className='l'>{translate(m.getInfo())}</div> : null}
           {m && hasModifications ? <div className='r' tabIndex="0" ref={modButton => this.modButton = modButton}>
-            <button tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation}
+            <button tabIndex="-1" onClick={(e) => this._toggleModifications(e)} onContextMenu={stopCtxPropagation}
                     onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}>
               <ListModifications/></button>
           </div> : null}

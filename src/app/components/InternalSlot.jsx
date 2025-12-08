@@ -5,7 +5,8 @@ import Persist from '../stores/Persist';
 import { ListModifications, Modified, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
-import { blueprintTooltip } from '../utils/BlueprintFunctions';
+import { getBlueprint, blueprintTooltip } from '../utils/BlueprintFunctions';
+import * as _ from 'lodash';
 
 /**
  * Internal Slot
@@ -157,7 +158,7 @@ export default class InternalSlot extends Slot {
           { m.getProtection() ? <div className='l'>{translate('protection')}: {formats.rPct(m.getProtection())}</div> : null }
           { m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null }
           { m.getInfo() ? <div className='l'>{translate(m.getInfo())}</div> : null }
-	  { m && hasModifications ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button tabIndex="-1" onClick={this._toggleModifications.bind(this)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
+	  { m && hasModifications ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button tabIndex="-1" onClick={(e) => this._toggleModifications(e)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
         </div>
       </div>;
     } else {
