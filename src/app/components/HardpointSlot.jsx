@@ -25,6 +25,7 @@ import { getBlueprint, blueprintTooltip } from '../utils/BlueprintFunctions';
  */
 export default class HardpointSlot extends Slot {
 
+
   /**
    * Get the CSS class name for the slot.
    * @return {string} CSS Class name
@@ -215,5 +216,6 @@ export default class HardpointSlot extends Slot {
       return <div className={'empty'}>{translate('empty')}</div>;
     }
   }
+
 
 }

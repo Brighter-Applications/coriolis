@@ -152,11 +152,19 @@ export default class Slot extends TranslatedComponent {
     let slotDetails, modificationsMarker, menu;
     let missing = false;
 
-    if (!selected) {
-      // If not selected then sure that modifications and category flags are unset
+    // Only reset flags if we're transitioning from selected to not selected
+    // Track previous selected state to detect transitions
+    const wasSelected = this._wasSelected;
+    this._wasSelected = selected;
+
+    if (!selected && wasSelected) {
+      // Slot was just deselected, reset flags
+      console.log('Slot transitioned to NOT selected, resetting _modificationsSelected');
       this._modificationsSelected = false;
       this._selectedCategory = null;
       this._showCategoryMenu = false;
+    } else if (selected) {
+      console.log('Slot IS selected, _modificationsSelected:', this._modificationsSelected);
     }
 
     if (m) {
@@ -173,7 +181,9 @@ export default class Slot extends TranslatedComponent {
     }
 
     if (selected) {
+      console.log('Slot render - selected, checking _modificationsSelected:', this._modificationsSelected, 'className:', this._getClassNames());
       if (this._modificationsSelected) {
+        console.log('Showing ModificationsMenu');
         // Show modifications menu
         menu = <ModificationsMenu
           className={this._getClassNames()}
@@ -269,18 +279,14 @@ export default class Slot extends TranslatedComponent {
    * @param {SyntheticEvent} event Event (optional)
    */
   _toggleModifications(event) {
-    // Always set the flag to true when button is clicked
+    // Set the modifications flag FIRST, before the event bubbles
+    // This way when the parent re-renders the slot as selected, it will show modifications
+    console.log('_toggleModifications called, setting _modificationsSelected = true');
     this._modificationsSelected = true;
+    console.log('_modificationsSelected is now:', this._modificationsSelected);
 
-    // If slot is already selected, stop propagation and just force update
-    // Otherwise let it bubble to select the slot first
-    if (this.props.selected) {
-      if (event) {
-        event.stopPropagation();
-      }
-      this.forceUpdate();
-    }
-    // If not selected, let the event bubble so slot gets selected
-    // and when it re-renders, _modificationsSelected will be true
+    // Do NOT call stopPropagation - let the click bubble up normally
+    // The slot's onClick will fire, selecting the slot, and then it will re-render
+    // with _modificationsSelected = true, showing the modifications menu
   }
 }

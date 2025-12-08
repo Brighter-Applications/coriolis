@@ -5,6 +5,7 @@ import { MountFixed, MountGimballed, MountTurret } from '../components/SvgIcons'
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import CategoryMenu from './CategoryMenu';
 import AvailableModulesMenu from './AvailableModulesMenu';
+import ModificationsMenu from './ModificationsMenu';
 import * as ModuleUtils from '../shipyard/ModuleUtils';
 
 /**
@@ -78,12 +79,14 @@ export default class HardpointSlotSection extends SlotSection {
     event.stopPropagation();
     event.persist();
 
-    // Don't reset selectedCategory if this is the same slot being re-selected
+    // Don't reset state if this is the same slot being re-selected
     if (this.props.currentMenu === slot) {
       super._openMenu(slot, event);
     } else {
-      // Only reset selectedCategory when opening a different slot
-      this.setState({ selectedCategory: null }, () => {
+      // Reset state when opening a different slot
+      this.setState({
+        selectedCategory: null
+      }, () => {
         super._openMenu(slot, event);
       });
     }
@@ -137,6 +140,7 @@ export default class HardpointSlotSection extends SlotSection {
     this.setState({ selectedCategory: category });
   }
 
+
   /**
    * Generate the slot React Components
    * @return {Array} Array of Slots
@@ -150,11 +154,6 @@ export default class HardpointSlotSection extends SlotSection {
 
     for (let i = 0, l = hardpoints.length; i < l; i++) {
       let h = hardpoints[i];
-      let menu;
-      if (currentMenu === h) {
-        // Pass the availableModules object to _getMenu
-        menu = this._getMenu(h, this._selectModule.bind(this, h), null, availableModules);
-      }
 
       if (h.maxClass) { // Only show hardpoints, not utility mounts
         slots.push(<HardpointSlot
