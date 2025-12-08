@@ -104,11 +104,9 @@ export default class HardpointSlotSection extends SlotSection {
     const { ship } = this.props;
     const { selectedCategory } = this.state;
     const availableModuleGroups = availableModules.getHps(slot.maxClass);
-    console.log(`Slot: ${slot.m}, Selected Category: ${selectedCategory}, Available Modules:`, availableModuleGroups);
 
     if (slot.m === null && selectedCategory === null) {
       const categoriesForSlot = ModuleUtils.getHpCategoriesForSlot(slot);
-      console.log('Generating CategoryMenu with categories:', categoriesForSlot);
       return <CategoryMenu
         className='hardpoint'
         categories={categoriesForSlot}
@@ -136,7 +134,6 @@ export default class HardpointSlotSection extends SlotSection {
    * @param {string} category The selected category
    */
   _onCategorySelect(onSelect, category) {
-    console.log(`Category selected: ${category}`);
     this.setState({ selectedCategory: category });
   }
 

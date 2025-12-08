@@ -159,12 +159,9 @@ export default class Slot extends TranslatedComponent {
 
     if (!selected && wasSelected) {
       // Slot was just deselected, reset flags
-      console.log('Slot transitioned to NOT selected, resetting _modificationsSelected');
       this._modificationsSelected = false;
       this._selectedCategory = null;
       this._showCategoryMenu = false;
-    } else if (selected) {
-      console.log('Slot IS selected, _modificationsSelected:', this._modificationsSelected);
     }
 
     if (m) {
@@ -181,9 +178,7 @@ export default class Slot extends TranslatedComponent {
     }
 
     if (selected) {
-      console.log('Slot render - selected, checking _modificationsSelected:', this._modificationsSelected, 'className:', this._getClassNames());
       if (this._modificationsSelected) {
-        console.log('Showing ModificationsMenu');
         // Show modifications menu
         menu = <ModificationsMenu
           className={this._getClassNames()}
@@ -281,9 +276,7 @@ export default class Slot extends TranslatedComponent {
   _toggleModifications(event) {
     // Set the modifications flag FIRST, before the event bubbles
     // This way when the parent re-renders the slot as selected, it will show modifications
-    console.log('_toggleModifications called, setting _modificationsSelected = true');
     this._modificationsSelected = true;
-    console.log('_modificationsSelected is now:', this._modificationsSelected);
 
     // Do NOT call stopPropagation - let the click bubble up normally
     // The slot's onClick will fire, selecting the slot, and then it will re-render
