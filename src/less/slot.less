@@ -23,6 +23,11 @@
     height: 100%;
     cursor: pointer;
     text-transform: none;
+
+    // Prevent clicks on buttons from bubbling up to slot
+    button {
+      pointer-events: auto;
+    }
   }
 
   .details {
@@ -101,6 +106,18 @@
     display: flex;
     align-items: center;
     justify-content: flex-end;
+    pointer-events: auto; // Ensure this area captures pointer events
+
+    // Create an even larger invisible touch zone for the button container
+    &::before {
+      content: '';
+      position: absolute;
+      top: -12px;
+      right: -12px;
+      bottom: -12px;
+      left: -12px;
+      pointer-events: auto; // Ensure the extended area also captures events
+    }
   }
 
   .sz {
