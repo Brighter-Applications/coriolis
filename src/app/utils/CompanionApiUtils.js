@@ -100,6 +100,7 @@ export const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
   'FerDeLance': 'fer_de_lance',
   'Hauler': 'hauler',
   'Independant_Trader': 'keelback',
+  'smallcombat01_nx': 'kestrel',
   'Krait_MkII': 'krait_mkii',
   'Mamba': 'mamba',
   'Mandalay': 'mandalay',
