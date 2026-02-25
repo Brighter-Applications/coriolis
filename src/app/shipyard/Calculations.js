@@ -91,8 +91,8 @@ export function speed(mass, baseSpeed, thrusters, engpip) {
   const optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
   const maxMass = thrusters instanceof Module ? thrusters.getMaxMass() : thrusters.maxmass;
   const minMul = thrusters instanceof Module ? thrusters.getMinMul('speed') : (thrusters.minmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.minmulspeed : thrusters.minmul);
+  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.optmulspeed : thrusters.optmul);
+  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.maxmulspeed : thrusters.maxmul);
 
   let results = normValues(minMass, optMass, maxMass, minMul, optMul, maxMul, mass, baseSpeed, engpip);
 
@@ -241,8 +241,8 @@ export function calcSpeed(mass, baseSpeed, thrusters, engpip, eng, boostFactor, 
   const optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
   const maxMass = thrusters instanceof Module ? thrusters.getMaxMass() : thrusters.maxmass;
   const minMul = thrusters instanceof Module ? thrusters.getMinMul('speed') : (thrusters.minmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.minmulspeed : thrusters.minmul);
+  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.optmulspeed : thrusters.optmul);
+  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.maxmulspeed : thrusters.maxmul);
 
   let result = calcValue(minMass, optMass, maxMass, minMul, optMul, maxMul, mass, baseSpeed, engpip, eng);
   if (boost == true) {
