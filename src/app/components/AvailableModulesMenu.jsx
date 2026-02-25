@@ -366,6 +366,11 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     // Filter out modules with invalid/missing critical properties for their type
     if (!mod.class && !mod.rating && !mod.name && mod.id.length < 3) return false;
 
+    // Filter out ship-specific thrusters that don't match the current ship
+    if (mod.ship && this.props.ship && mod.ship !== this.props.ship.id) {
+      return false;
+    }
+
     return true;
   }
 
