@@ -63,10 +63,13 @@ const GRPCAT = {
   'kw': 'scanners',
   'ws': 'scanners',
   'xs': 'scanners',
+  'sb': 'defence',
   'ch': 'defence',
   'po': 'defence',
   'ec': 'defence',
   'sfn': 'defence',
+  'hs': 'system',
+  'csl': 'system',
   'gpp': 'guardian',
   'gpc': 'guardian',
   'gsrp': 'guardian',
@@ -109,6 +112,8 @@ const HPTCAT = {
   'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp','rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'],
   'guardian': ['gpc', 'ggc', 'gsc'],
   'mining': ['ml', 'scl', 'sdm', 'abl'],
+  'system': ['hs', 'csl'],
+  'defence': ['sb', 'ch', 'po', 'ec'],
 };
 
 /**
@@ -239,6 +244,7 @@ export default class CategoryMenu extends TranslatedComponent {
       'hardpoint-experimental': 'Experimental',
       'hardpoint-guardian': 'Guardian',
       'mining': 'Mining',
+      'system': 'System',
       'defence': 'Defence',
       'other': 'Other Modules'
     };
@@ -281,6 +287,7 @@ export default class CategoryMenu extends TranslatedComponent {
       'hardpoint-experimental',
       'hardpoint-guardian',
       'mining',
+      'system',
       'defence',
       'cargo racks',
       'fuel',
