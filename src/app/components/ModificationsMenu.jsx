@@ -58,8 +58,12 @@ export default class ModificationsMenu extends TranslatedComponent {
     this.modValDidChange = false;
     this._handleModChange = this._handleModChange.bind(this);
 
+    // Check if module has a blueprint - if not, open blueprints menu by default
+    const { m } = props;
+    const hasBlueprint = m.blueprint && m.blueprint.name;
+
     this.state = {
-      blueprintMenuOpened: false,
+      blueprintMenuOpened: !hasBlueprint, // Open blueprints menu if no blueprint exists
       specialMenuOpened: false
     };
   }
