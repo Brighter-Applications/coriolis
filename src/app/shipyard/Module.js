@@ -678,16 +678,8 @@ export default class Module {
    * @return {Number} the minimum mass of this module
    */
   getMinMass(modified = true) {
-    // Modifier is optmass
-    let result = 0;
-    if (this['minmass']) {
-      result = this['minmass'];
-      if (result && modified) {
-        let mult = this.getModValue('optmass') / 10000;
-        if (mult) { result = result * (1 + mult); }
-      }
-    }
-    return result;
+    // minmass is never modified by engineering
+    return this['minmass'] || 0;
   }
 
   /**
@@ -705,16 +697,8 @@ export default class Module {
    * @return {Number} the maximum mass of this module
    */
   getMaxMass(modified = true) {
-    // Modifier is optmass
-    let result = 0;
-    if (this['maxmass']) {
-      result = this['maxmass'];
-      if (result && modified && !ModuleUtils.isShieldGenerator(this['grp'])) {
-        let mult = this.getModValue('optmass') / 10000;
-        if (mult) { result = result * (1 + mult); }
-      }
-    }
-    return result;
+    // maxmass is never modified by engineering
+    return this['maxmass'] || 0;
   }
 
   /**
@@ -726,8 +710,9 @@ export default class Module {
   getMinMul(type = null, modified = true) {
     // Modifier is optmul
     let result = 0;
-    if (this['minmul' + type]) {
-      result = this['minmul' + type];
+    const propName = 'minmul' + (type || '');
+    if (type && this[propName]) {
+      result = this[propName];
     } else if (this['minmul']) {
       result = this['minmul'];
     }
@@ -747,8 +732,9 @@ export default class Module {
   getOptMul(type = null, modified = true) {
     // Modifier is optmul
     let result = 0;
-    if (this['optmul' + type]) {
-      result = this['optmul' + type];
+    const propName = 'optmul' + (type || '');
+    if (type && this[propName]) {
+      result = this[propName];
     } else if (this['optmul']) {
       result = this['optmul'];
     }
@@ -768,15 +754,19 @@ export default class Module {
   getMaxMul(type = null, modified = true) {
     // Modifier is optmul
     let result = 0;
-    if (this['maxmul' + type]) {
-      result = this['maxmul' + type];
+    const propName = 'maxmul' + (type || '');
+
+    if (type && this[propName]) {
+      result = this[propName];
     } else if (this['maxmul']) {
       result = this['maxmul'];
     }
+
     if (result && modified) {
       let mult = this.getModValue('optmul') / 10000;
       if (mult) { result = result * (1 + mult); }
     }
+
     return result;
   }
 
