@@ -82,19 +82,33 @@ export function shieldStrength(mass, baseShield, sg, multiplier) {
  * @param {number}   baseSpeed  base speed m/s for ship
  * @param {object}   thrusters  The ship's thrusters
  * @param {number}   engpip     the multiplier per pip to engines
+ * @param {number}   minthrust  the minimum thrust percentage (0-100)
  * @return {array}             Speed by pips
  */
-export function speed(mass, baseSpeed, thrusters, engpip) {
+export function speed(mass, baseSpeed, thrusters, engpip, minthrust) {
   if (!thrusters) { return [0, 0, 0, 0, 0]; }
   // thrusters might be a module or a template; handle either here
-  const minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
-  const optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
-  const maxMass = thrusters instanceof Module ? thrusters.getMaxMass() : thrusters.maxmass;
+  // Normal speed uses UNMODIFIED optmass (only boost uses modified optmass from Drag Drives)
+  const minMass = thrusters instanceof Module ? thrusters.getMinMass(false) : thrusters.minmass;
+  const optMass = thrusters instanceof Module ? thrusters.getOptMass(false) : thrusters.optmass;
+  const maxMass = thrusters instanceof Module ? thrusters.getMaxMass(false) : thrusters.maxmass;
   const minMul = thrusters instanceof Module ? thrusters.getMinMul('speed') : (thrusters.minmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.minmulspeed : thrusters.minmul);
+  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.optmulspeed : thrusters.optmul);
+  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.maxmulspeed : thrusters.maxmul);
 
-  let results = normValues(minMass, optMass, maxMass, minMul, optMul, maxMul, mass, baseSpeed, engpip);
+  // Calculate mass curve multiplier (same as EDSY's getMassCurveMultiplier)
+  const xnorm = Math.min(1, (maxMass - mass) / (maxMass - minMass));
+  const exponent = Math.log((optMul - minMul) / (maxMul - minMul)) / Math.log(Math.min(1, (maxMass - optMass) / (maxMass - minMass)));
+  const ynorm = Math.pow(xnorm, exponent);
+  const curNavSpdMul = minMul + ynorm * (maxMul - minMul);
+
+  // Apply EDSY formula: curNavSpdMul * topspd * (powerdistEngMul + minthrust * (1 - powerdistEngMul))
+  const minthrust_pct = (minthrust || 0) / 100;
+  let results = [];
+  for (let eng = 0; eng <= 4; eng++) {
+    const powerdistEngMul = eng / 4;
+    results.push(curNavSpdMul * baseSpeed * (powerdistEngMul + minthrust_pct * (1 - powerdistEngMul)));
+  }
 
   return results;
 }
@@ -228,28 +242,40 @@ function calcValue(minMass, optMass, maxMass, minMul, optMul, maxMul, mass, base
  * @param {number}   mass         the mass of the ship
  * @param {number}   baseSpeed    the base speed of the ship
  * @param {object}   thrusters    the thrusters of the ship
- * @param {number}   engpip       the multiplier per pip to engines
+ * @param {number}   minthrust    the minimum thrust percentage (0-100)
  * @param {number}   eng          the pips to engines
  * @param {number}   boostFactor  the boost factor for ths ship
  * @param {boolean}  boost        true if the boost is activated
  * @returns {number}              the resultant speed
  */
-export function calcSpeed(mass, baseSpeed, thrusters, engpip, eng, boostFactor, boost) {
+export function calcSpeed(mass, baseSpeed, thrusters, minthrust, eng, boostFactor, boost) {
   if (!thrusters) { return 0; }
   // thrusters might be a module or a template; handle either here
-  const minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
-  const optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
-  const maxMass = thrusters instanceof Module ? thrusters.getMaxMass() : thrusters.maxmass;
+  // Use MODIFIED mass values (experimental effects like Drag Drives modify optmass)
+  const minMass = thrusters instanceof Module ? thrusters.getMinMass(true) : thrusters.minmass;
+  const optMass = thrusters instanceof Module ? thrusters.getOptMass(true) : thrusters.optmass;
+  const maxMass = thrusters instanceof Module ? thrusters.getMaxMass(true) : thrusters.maxmass;
   const minMul = thrusters instanceof Module ? thrusters.getMinMul('speed') : (thrusters.minmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.minmulspeed : thrusters.minmul);
+  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.optmulspeed : thrusters.optmul);
+  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.maxmulspeed : thrusters.maxmul);
 
-  let result = calcValue(minMass, optMass, maxMass, minMul, optMul, maxMul, mass, baseSpeed, engpip, eng);
+  // Calculate mass curve multiplier (same as EDSY's getMassCurveMultiplier)
+  const xnorm = Math.min(1, (maxMass - mass) / (maxMass - minMass));
+  const exponent = Math.log((optMul - minMul) / (maxMul - minMul)) / Math.log(Math.min(1, (maxMass - optMass) / (maxMass - minMass)));
+  const ynorm = Math.pow(xnorm, exponent);
+  const curNavSpdMul = minMul + ynorm * (maxMul - minMul);
+
+
   if (boost == true) {
-    result *= boostFactor;
+    // EDSY boost formula: curNavSpdMul * bstspd (no power distribution)
+    // boostFactor is actually (base boost speed / base speed), so multiply back
+    return curNavSpdMul * baseSpeed * boostFactor;
+  } else {
+    // EDSY normal speed formula: curNavSpdMul * topspd * (powerdistEngMul + minthrust * (1 - powerdistEngMul))
+    const minthrust_pct = (minthrust || 0) / 100;
+    const powerdistEngMul = eng / 4;
+    return curNavSpdMul * baseSpeed * (powerdistEngMul + minthrust_pct * (1 - powerdistEngMul));
   }
-
-  return result;
 }
 
 /**
