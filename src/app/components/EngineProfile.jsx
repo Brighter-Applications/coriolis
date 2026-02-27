@@ -55,7 +55,7 @@ export default class EngineProfile extends TranslatedComponent {
    */
   calcMaxSpeed(ship, eng, boost, mass) {
     // Obtain the top speed
-    return Calc.calcSpeed(mass, ship.speed, ship.standard[1].m, ship.pipSpeed, eng, ship.boost / ship.speed, boost);
+    return Calc.calcSpeed(mass, ship.speed, ship.standard[1].m, ship.minthrust, eng, ship.boost / ship.speed, boost);
   }
 
   /**
@@ -71,9 +71,9 @@ export default class EngineProfile extends TranslatedComponent {
     const thrusters = ship.standard[1].m;
     const minMass = ship.calcLowestPossibleMass({ th: thrusters });
     const maxMass = thrusters.getMaxMass();
-    const mass = ship.unladenMass + fuel + cargo;
-    const minSpeed = Calc.calcSpeed(maxMass, ship.speed, thrusters, ship.pipSpeed, 0, ship.boost / ship.speed, false);
-    const maxSpeed = Calc.calcSpeed(minMass, ship.speed, thrusters, ship.pipSpeed, 4, ship.boost / ship.speed, true);
+    const mass = ship.dryMass + fuel + cargo;
+    const minSpeed = Calc.calcSpeed(maxMass, ship.speed, thrusters, ship.minthrust, 0, ship.boost / ship.speed, false);
+    const maxSpeed = Calc.calcSpeed(minMass, ship.speed, thrusters, ship.minthrust, 4, ship.boost / ship.speed, true);
     // Add a mark at our current mass
     const mark = Math.min(mass, maxMass);
 

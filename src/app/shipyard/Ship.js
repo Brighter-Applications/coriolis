@@ -85,6 +85,11 @@ export default class Ship {
 
     for (let p in properties) { this[p] = properties[p]; }  // Copy all base properties from shipData
 
+    // DEBUG
+    if (id === 'imperial_courier') {
+      console.log('Imperial Courier constructor - minthrust:', this.minthrust, 'properties.minthrust:', properties.minthrust);
+    }
+
     for (let slotType in slots) {   // Initialize all slots
       // small counter to keep track of the slot indexes
       const slotCounter = new Map();
@@ -174,7 +179,7 @@ export default class Ship {
     }
 
     return this.getSlotStatus(this.standard[1]) == 3 &&   // Thrusters are powered
-        this.unladenMass + cargo + fuel < this.standard[1].m.getMaxMass(); // Max mass not exceeded
+        this.dryMass + (cargo || 0) + (fuel || 0) < this.standard[1].m.getMaxMass(); // Max mass not exceeded
   }
 
   /**
@@ -224,7 +229,8 @@ export default class Ship {
    * @return {array}       Speed at pip settings
    */
   calcSpeedsWith(fuel, cargo) {
-    return Calc.speed(this.unladenMass + fuel + cargo, this.speed, this.standard[1].m, this.pipSpeed);
+    const reserveFuelMass = this.reserveFuelCapacity || 0;
+    return Calc.speed(this.dryMass + fuel + cargo + reserveFuelMass, this.speed, this.standard[1].m, this.minthrust);
   }
 
   /**
@@ -236,7 +242,8 @@ export default class Ship {
    * @return {Number}        Speed
    */
   calcSpeed(eng, fuel, cargo, boost) {
-    return Calc.calcSpeed(this.unladenMass + fuel + cargo, this.speed, this.standard[1].m, this.pipSpeed, eng, this.boost / this.speed, boost);
+    const reserveFuelMass = this.reserveFuelCapacity || 0;
+    return Calc.calcSpeed(this.dryMass + fuel + cargo + reserveFuelMass, this.speed, this.standard[1].m, this.minthrust, eng, this.boost / this.speed, boost);
   }
 
   /**
@@ -248,7 +255,8 @@ export default class Ship {
    * @return {Number}        Pitch
    */
   calcPitch(eng, fuel, cargo, boost) {
-    return Calc.calcPitch(this.unladenMass + fuel + cargo, this.pitch, this.standard[1].m, this.pipSpeed, eng, this.boost / this.speed, boost);
+    const reserveFuelMass = this.reserveFuelCapacity || 0;
+    return Calc.calcPitch(this.dryMass + fuel + cargo + reserveFuelMass, this.pitch, this.standard[1].m, this.pipSpeed, eng, this.boost / this.speed, boost);
   }
 
   /**
@@ -260,7 +268,9 @@ export default class Ship {
    * @return {Number}        Roll
    */
   calcRoll(eng, fuel, cargo, boost) {
-    return Calc.calcRoll(this.unladenMass + fuel + cargo, this.roll, this.standard[1].m, this.pipSpeed, eng, this.boost / this.speed, boost);
+    const reserveFuelMass = this.reserveFuelCapacity || 0;
+    const scaledReserveFuel = reserveFuelMass * 3.41;
+    return Calc.calcRoll(this.dryMass + fuel + cargo + scaledReserveFuel, this.roll, this.standard[1].m, this.pipSpeed, eng, this.boost / this.speed, boost);
   }
 
   /**
@@ -272,7 +282,9 @@ export default class Ship {
    * @return {Number}        Yaw
    */
   calcYaw(eng, fuel, cargo, boost) {
-    return Calc.calcYaw(this.unladenMass + fuel + cargo, this.yaw, this.standard[1].m, this.pipSpeed, eng, this.boost / this.speed, boost);
+    const reserveFuelMass = this.reserveFuelCapacity || 0;
+    const scaledReserveFuel = reserveFuelMass * 3.41;
+    return Calc.calcYaw(this.dryMass + fuel + cargo + scaledReserveFuel, this.yaw, this.standard[1].m, this.pipSpeed, eng, this.boost / this.speed, boost);
   }
 
   /**
@@ -750,6 +762,7 @@ export default class Ship {
     this.shield = this.baseShieldStrength;
     this.shieldCells = 0;
     this.totalCost = this.m.incCost ? this.m.discountedCost : 0;
+    this.dryMass = this.hullMass;
     this.unladenMass = this.hullMass;
     this.totalDpe = 0;
     this.totalAbsDpe = 0;
@@ -1588,7 +1601,8 @@ export default class Ship {
       .value();
 
     // Update global stats
-    this.unladenMass = unladenMass + fuelCapacity;
+    this.dryMass = unladenMass;                          // Hull + modules (no fuel, no cargo)
+    this.unladenMass = unladenMass + fuelCapacity;       // Hull + modules + fuel (displayed in UI)
     this.cargoCapacity = cargoCapacity;
     this.fuelCapacity = fuelCapacity;
     this.passengerCapacity = passengerCapacity;
@@ -1601,17 +1615,38 @@ export default class Ship {
    * @return {this} The ship instance (for chaining operations)
    */
   updateMovement() {
-    this.speeds = Calc.speed(this.unladenMass + this.fuelCapacity, this.speed, this.standard[1].m, this.pipSpeed);
-    this.topSpeed = this.speeds[4];
-    this.topBoost = this.canBoost(0, 0) ? this.speeds[4] * this.boost / this.speed : 0;
+    // dryMass = hull + modules (no fuel/cargo). Add fuelCapacity + reserveFuelCapacity for movement calculations.
+    // Reserve fuel must be included to match in-game and EDSY behavior.
+    const reserveFuelMass = this.reserveFuelCapacity || 0;
+    const movementMass = this.dryMass + this.fuelCapacity + reserveFuelMass;
 
-    this.pitches = Calc.pitch(this.unladenMass + this.fuelCapacity, this.pitch, this.standard[1].m, this.pipSpeed);
+    // DEBUG for Imperial Courier
+    if (this.id === 'imperial_courier' && this.standard && this.standard[1] && this.standard[1].m) {
+      console.log('updateMovement():');
+      console.log('  dryMass:', this.dryMass);
+      console.log('  fuelCapacity:', this.fuelCapacity);
+      console.log('  reserveFuelCapacity:', this.reserveFuelCapacity || 0);
+      console.log('  movementMass:', movementMass);
+      console.log('  thrusters:', this.standard[1].m.name, this.standard[1].m.class + this.standard[1].m.rating);
+    }
+
+    this.speeds = Calc.speed(movementMass, this.speed, this.standard[1].m, this.minthrust);
+    this.topSpeed = this.speeds[4];
+    this.topBoost = this.canBoost(0, this.fuelCapacity) ? this.speeds[4] * this.boost / this.speed : 0;
+
+    // DEBUG for Imperial Courier
+    if (this.id === 'imperial_courier') {
+      console.log('  topSpeed:', this.topSpeed.toFixed(1), 'm/s');
+      console.log('  topBoost:', this.topBoost.toFixed(1), 'm/s');
+    }
+
+    this.pitches = Calc.pitch(movementMass, this.pitch, this.standard[1].m, this.pipSpeed);
     this.topPitch = this.pitches[4];
 
-    this.rolls = Calc.roll(this.unladenMass + this.fuelCapacity, this.roll, this.standard[1].m, this.pipSpeed);
+    this.rolls = Calc.roll(movementMass, this.roll, this.standard[1].m, this.pipSpeed);
     this.topRoll = this.rolls[4];
 
-    this.yaws = Calc.yaw(this.unladenMass + this.fuelCapacity, this.yaw, this.standard[1].m, this.pipSpeed);
+    this.yaws = Calc.yaw(movementMass, this.yaw, this.standard[1].m, this.pipSpeed);
     this.topYaw = this.yaws[4];
 
     return this;
