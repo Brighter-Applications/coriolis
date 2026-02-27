@@ -9,9 +9,10 @@ on:
       - alpha
       - beta
       - live
-# Figure out the target branch name
+# Always use the branch that received the push event.
+# This works for both direct pushes and PR merges.
 env:
-  BRANCH_NAME: ${{ github.base_ref || github.ref_name }}
+  BRANCH_NAME: ${{ github.ref_name }}
   TARGET_ZIP: build.zip
   BUCKET_FOLDER: build
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
