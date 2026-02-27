@@ -269,8 +269,7 @@ export default class Ship {
    */
   calcRoll(eng, fuel, cargo, boost) {
     const reserveFuelMass = this.reserveFuelCapacity || 0;
-    const scaledReserveFuel = reserveFuelMass * 3.41;
-    return Calc.calcRoll(this.dryMass + fuel + cargo + scaledReserveFuel, this.roll, this.standard[1].m, this.pipSpeed, eng, this.boost / this.speed, boost);
+    return Calc.calcRoll(this.dryMass + fuel + cargo + reserveFuelMass, this.roll, this.standard[1].m, this.pipSpeed, eng, this.boost / this.speed, boost);
   }
 
   /**
@@ -283,8 +282,7 @@ export default class Ship {
    */
   calcYaw(eng, fuel, cargo, boost) {
     const reserveFuelMass = this.reserveFuelCapacity || 0;
-    const scaledReserveFuel = reserveFuelMass * 3.41;
-    return Calc.calcYaw(this.dryMass + fuel + cargo + scaledReserveFuel, this.yaw, this.standard[1].m, this.pipSpeed, eng, this.boost / this.speed, boost);
+    return Calc.calcYaw(this.dryMass + fuel + cargo + reserveFuelMass, this.yaw, this.standard[1].m, this.pipSpeed, eng, this.boost / this.speed, boost);
   }
 
   /**
