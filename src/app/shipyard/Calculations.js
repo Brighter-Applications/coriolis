@@ -85,16 +85,25 @@ export function shieldStrength(mass, baseShield, sg, multiplier) {
  * @param {number}   minthrust  the minimum thrust percentage (0-100)
  * @return {array}             Speed by pips
  */
-export function speed(mass, baseSpeed, thrusters, engpip, minthrust) {
+export function speed(mass, baseSpeed, thrusters, minthrust) {
   if (!thrusters) { return [0, 0, 0, 0, 0]; }
   // thrusters might be a module or a template; handle either here
-  // Normal speed uses UNMODIFIED optmass (only boost uses modified optmass from Drag Drives)
-  const minMass = thrusters instanceof Module ? thrusters.getMinMass(false) : thrusters.minmass;
-  const optMass = thrusters instanceof Module ? thrusters.getOptMass(false) : thrusters.optmass;
-  const maxMass = thrusters instanceof Module ? thrusters.getMaxMass(false) : thrusters.maxmass;
+  // Use modified masses: engineering modifies optmass and the related modifier
+  // propagates to minmass/maxmass, matching EDSY's mass curve behavior
+  const minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
+  const optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
+  const maxMass = thrusters instanceof Module ? thrusters.getMaxMass() : thrusters.maxmass;
   const minMul = thrusters instanceof Module ? thrusters.getMinMul('speed') : (thrusters.minmulspeed ? thrusters.minmulspeed : thrusters.minmul);
   const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.optmulspeed : thrusters.optmul);
   const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.maxmulspeed : thrusters.maxmul);
+
+  // DEBUG LOGGING
+  if (thrusters instanceof Module && thrusters.name === 'Enhanced Performance') {
+    console.log('EPT Speed Calculation Debug:');
+    console.log('  Mass:', mass, 'Base Speed:', baseSpeed, 'MinThrust:', minthrust);
+    console.log('  Masses: min=', minMass, 'opt=', optMass, 'max=', maxMass);
+    console.log('  Muls: min=', minMul, 'opt=', optMul, 'max=', maxMul);
+  }
 
   // Calculate mass curve multiplier (same as EDSY's getMassCurveMultiplier)
   const xnorm = Math.min(1, (maxMass - mass) / (maxMass - minMass));
@@ -102,12 +111,22 @@ export function speed(mass, baseSpeed, thrusters, engpip, minthrust) {
   const ynorm = Math.pow(xnorm, exponent);
   const curNavSpdMul = minMul + ynorm * (maxMul - minMul);
 
+  // DEBUG LOGGING
+  if (thrusters instanceof Module && thrusters.name === 'Enhanced Performance') {
+    console.log('  Curve: xnorm=', xnorm.toFixed(4), 'exponent=', exponent.toFixed(4), 'ynorm=', ynorm.toFixed(4), 'speedMul=', curNavSpdMul.toFixed(4));
+  }
+
   // Apply EDSY formula: curNavSpdMul * topspd * (powerdistEngMul + minthrust * (1 - powerdistEngMul))
   const minthrust_pct = (minthrust || 0) / 100;
   let results = [];
   for (let eng = 0; eng <= 4; eng++) {
     const powerdistEngMul = eng / 4;
     results.push(curNavSpdMul * baseSpeed * (powerdistEngMul + minthrust_pct * (1 - powerdistEngMul)));
+  }
+
+  // DEBUG LOGGING
+  if (thrusters instanceof Module && thrusters.name === 'Enhanced Performance') {
+    console.log('  Results (0-4 pips):', results.map(r => r.toFixed(1)));
   }
 
   return results;
@@ -259,22 +278,42 @@ export function calcSpeed(mass, baseSpeed, thrusters, minthrust, eng, boostFacto
   const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.optmulspeed : thrusters.optmul);
   const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.maxmulspeed : thrusters.maxmul);
 
+  // DEBUG for EPT
+  const isEPT = thrusters instanceof Module && thrusters.name === 'Enhanced Performance';
+  if (isEPT && mass > 65) {
+    console.log('*** calcSpeed() called for EPT ***');
+    console.log('  mass:', mass, 'baseSpeed:', baseSpeed, 'minthrust:', minthrust, 'eng:', eng, 'boost:', boost);
+    console.log('  Masses:', minMass, '/', optMass, '/', maxMass);
+    console.log('  Muls:', minMul, '/', optMul, '/', maxMul);
+  }
+
   // Calculate mass curve multiplier (same as EDSY's getMassCurveMultiplier)
   const xnorm = Math.min(1, (maxMass - mass) / (maxMass - minMass));
   const exponent = Math.log((optMul - minMul) / (maxMul - minMul)) / Math.log(Math.min(1, (maxMass - optMass) / (maxMass - minMass)));
   const ynorm = Math.pow(xnorm, exponent);
   const curNavSpdMul = minMul + ynorm * (maxMul - minMul);
 
+  if (isEPT && mass > 65) {
+    console.log('  speedMul:', curNavSpdMul.toFixed(6));
+  }
 
   if (boost == true) {
     // EDSY boost formula: curNavSpdMul * bstspd (no power distribution)
     // boostFactor is actually (base boost speed / base speed), so multiply back
-    return curNavSpdMul * baseSpeed * boostFactor;
+    const result = curNavSpdMul * baseSpeed * boostFactor;
+    if (isEPT && mass > 65) {
+      console.log('  BOOST result:', result.toFixed(1), 'm/s');
+    }
+    return result;
   } else {
     // EDSY normal speed formula: curNavSpdMul * topspd * (powerdistEngMul + minthrust * (1 - powerdistEngMul))
     const minthrust_pct = (minthrust || 0) / 100;
     const powerdistEngMul = eng / 4;
-    return curNavSpdMul * baseSpeed * (powerdistEngMul + minthrust_pct * (1 - powerdistEngMul));
+    const result = curNavSpdMul * baseSpeed * (powerdistEngMul + minthrust_pct * (1 - powerdistEngMul));
+    if (isEPT && mass > 65) {
+      console.log('  TOP SPEED result:', result.toFixed(1), 'm/s');
+    }
+    return result;
   }
 }
 
