@@ -45,6 +45,7 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
     const sgClassNames = cn({ warning: shieldGenerator && !ship.shield, muted: !shieldGenerator });
     const sgTooltip = shieldGenerator ? 'TT_SUMMARY_SHIELDS' : 'TT_SUMMARY_SHIELDS_NONFUNCTIONAL';
     const timeToDrain = Calc.timeToDrainWep(ship, 4);
+
     const currTimeToDrain = Calc.timeToDrainWep(ship, pips.wep);
     const canThrust = ship.canThrust(cargo, ship.fuelCapacity);
     const speedTooltip = canThrust ? 'TT_SUMMARY_SPEED' : 'TT_SUMMARY_SPEED_NONFUNCTIONAL';
