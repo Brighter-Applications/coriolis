@@ -258,6 +258,12 @@ export class OrbisIcon extends SvgIcon {
  */
 export class MatIcon extends SvgIcon {
   /**
+   * Overriden view box
+   * @return {String} view box
+   */
+  viewBox() { return '0 0 39 32'; }
+
+  /**
    * Generate the SVG
    * @return {React.Component} SVG Contents
    */
