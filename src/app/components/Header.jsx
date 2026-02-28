@@ -91,6 +91,7 @@ export default class Header extends TranslatedComponent {
     this._showHelp = this._showHelp.bind(this);
     this._toggleTooltips = this._toggleTooltips.bind(this);
     this._toggleModuleResistances = this._toggleModuleResistances.bind(this);
+    this._toggleAnimations = this._toggleAnimations.bind(this);
     this._togglePromptCG = this._togglePromptCG.bind(this);
     this.update = this.update.bind(this);
     this.languageOptions = [];
@@ -234,6 +235,13 @@ export default class Header extends TranslatedComponent {
    */
   _toggleModuleResistances() {
     Persist.showModuleResistances(!Persist.showModuleResistances());
+  }
+
+  /**
+   * Toggle animations setting
+   */
+  _toggleAnimations() {
+    Persist.showAnimations(!Persist.showAnimations());
   }
 
   /**
@@ -439,6 +447,7 @@ export default class Header extends TranslatedComponent {
     let tips = Persist.showTooltips();
     let promptCG = Persist.promptCGModules();
     let moduleResistances = Persist.showModuleResistances();
+    let animations = Persist.showAnimations();
 
     return (
       <div className='menu-list no-wrap cap' onClick={ (e) => e.stopPropagation() }>
@@ -464,9 +473,9 @@ export default class Header extends TranslatedComponent {
               <td>{translate('module resistances')}</td>
               <td className={cn('ri', { disabled: !moduleResistances, 'primary-disabled': moduleResistances })}>{(moduleResistances ? '✓' : '✗')}</td>
             </tr>
-            <tr className='cap ptr' onClick={this._togglePromptCG} >
-              <td>CG Module Prompts</td>
-              <td className={cn('ri', { disabled: !promptCG, 'primary-disabled': promptCG })}>{(promptCG ? '✓' : '✗')}</td>
+            <tr className='cap ptr' onClick={this._toggleAnimations} >
+              <td>{translate('animations')}</td>
+              <td className={cn('ri', { disabled: !animations, 'primary-disabled': animations })}>{(animations ? '✓' : '✗')}</td>
             </tr>
             <tr>
               <td>{translate('insurance')}</td>
@@ -531,6 +540,7 @@ export default class Header extends TranslatedComponent {
     Persist.addListener('builds', update);
     Persist.addListener('tooltips', update);
     Persist.addListener('moduleresistances', update);
+    Persist.addListener('animations', update);
     Persist.addListener('promptCG', update);
   }
 

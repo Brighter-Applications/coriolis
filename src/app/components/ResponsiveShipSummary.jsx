@@ -119,15 +119,24 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                 </tr>
                 <tr>
                   <td className='label'>
+<<<<<<< feature/improve_stats_ui
+                    <span className='label-full'>CURRENT SPEED</span>
+                    <span className='label-abbr'>Curr SPD</span>
+=======
                     <span className='label-full'>SPEED 1 PIP</span>
                     <span className='label-abbr'>SPEED 1PIP</span>
+>>>>>>> alpha
                   </td>
                   <td
                     className='value'
                     onMouseEnter={termtip.bind(null, canThrust ? 'TT_SUMMARY_SPEED_1PIP' : 'TT_SUMMARY_SPEED_NONFUNCTIONAL', { cap: 0 })}
                     onMouseLeave={hide}
                   >
+<<<<<<< feature/improve_stats_ui
+                    {canThrust ? <span>{int(ship.calcSpeed(pips.eng, ship.fuelCapacity, 0, false))}{u['m/s']}</span> : <span className='warning'>0 <Warning/></span>}
+=======
                     {canThrust ? <span>{int(ship.calcSpeed(1, ship.fuelCapacity, 0, false))}{u['m/s']}</span> : <span className='warning'>0 <Warning/></span>}
+>>>>>>> alpha
                   </td>
                 </tr>
                 <tr>

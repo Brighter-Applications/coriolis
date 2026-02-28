@@ -631,7 +631,7 @@
   &.selected {
     z-index: 1;
     h1 {
-      background-color: @primary;
+      background-color: lighten(@primary, 10%);
     }
   }
 
@@ -732,10 +732,11 @@
   &, th {
     cursor: pointer;
     border-collapse: collapse;
-    color: @primary-disabled;
+    color: @primary;
     background-color: @primary-bg;
-    border: 1px solid @primary-disabled;
+    border: 1px solid @primary;
     padding-top: 1px;
+    font-weight: bold;
   }
 
   .tab-label-abbr {
@@ -758,7 +759,7 @@
 
   .active {
     color: @primary-bg;
-    background-color: @primary-disabled;
+    background-color: @primary;
   }
 
 }
@@ -791,14 +792,16 @@
 
   h1 {
     font-family: @fStandard;
-    color: @bgBlack;
-    background-color: @primary-disabled;
+    color: @primary-bg;
+    background-color: @primary;
     text-transform: uppercase;
     margin: 0;
-    padding-top: 2px;
-    font-size: 1em;
+    padding: 0.4em 0.6em;
+    font-size: 0.95em;
     line-height: 1.3em;
-    font-weight: normal;
+    font-weight: bold;
+    text-align: center;
+    border-radius: 4px 4px 0 0;
   }
 
   .smallTablet({
