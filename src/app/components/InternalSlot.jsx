@@ -56,8 +56,11 @@ export default class InternalSlot extends Slot {
       let { termtip, tooltip } = this.context;
       let validMods = (Modifications.modules[m.grp] ? Modifications.modules[m.grp].modifications : []);
       let showModuleResistances = Persist.showModuleResistances();
+      // Check if module has engineering disabled
+      let canBeEngineered = m.engineering !== false && m.engineering !== 'False';
       // Show modifications button if there are available modifications OR if module has a blueprint/mods applied
-      let hasModifications = validMods.length > 0 || (m.blueprint && m.blueprint.name) || (m.mods && Object.keys(m.mods).length > 0);
+      // But only if engineering is not explicitly disabled for this module
+      let hasModifications = canBeEngineered && (validMods.length > 0 || (m.blueprint && m.blueprint.name) || (m.mods && Object.keys(m.mods).length > 0));
 
       // Modifications tooltip shows blueprint and grade, if available
       let modTT = translate('modified');

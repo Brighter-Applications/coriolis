@@ -274,7 +274,19 @@ export default class Slot extends TranslatedComponent {
    * @param {SyntheticEvent} event Event (optional)
    */
   _toggleModifications(event) {
-    // Always set the flag to true when button is clicked
+    // Clear any lingering tooltip (e.g. from experimental effects)
+    if (this.context.tooltip) {
+      this.context.tooltip(null);
+    }
+
+    if (this.props.selected && this._modificationsSelected) {
+      // Closing engineering menu — reset the flag and let the click
+      // bubble up to onOpen, which will deselect the slot entirely
+      this._modificationsSelected = false;
+      return;
+    }
+
+    // Opening engineering menu
     this._modificationsSelected = true;
 
     // If slot is already selected, stop propagation and just force update

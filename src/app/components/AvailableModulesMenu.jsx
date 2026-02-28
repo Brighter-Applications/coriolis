@@ -86,6 +86,8 @@ const GRPCAT = {
   'scl': 'mining',
   'pwa': 'mining',
   'sdm': 'mining',
+  'mvr': 'mining',
+  'abl': 'mining',
   'dc': 'flight assists',
   'sua': 'flight assists',
   'pas': 'flight assists',
@@ -124,7 +126,7 @@ const HPTCAT = {
   'ordnance': ['mr', 'amr', 'tp', 'nl'],
   'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp','rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'],
   'guardian': ['gpc', 'ggc', 'gsc'],
-  'mining': ['ml', 'scl', 'sdm', 'abl'],
+  'mining': ['ml', 'scl', 'sdm', 'abl', 'mvr', 'pwa'],
   'system': ['hs', 'csl'],
   'defence': ['sb', 'ch', 'po', 'ec'],
 };
@@ -971,6 +973,8 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       'scl': 'Seismic Charge Launcher',
       'sdm': 'Sub-Surface Displacement Missile',
       'abl': 'Abrasion Blaster',
+      'mvr': 'Mining Volley Repeater',
+      'pwa': 'Pulse Wave Analyser',
       'axmc': 'AX Multi-Cannon',
       'axmce': 'AX Multi-Cannon (Enhanced)',
       'axmr': 'AX Missile Rack',
@@ -1062,7 +1066,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     switch (restriction) {
       case 'mining':
         // Mining hardpoints can only use mining equipment
-        return ['ml', 'scl', 'sdm', 'abl'].includes(grp) ||
+        return ['ml', 'scl', 'sdm', 'abl', 'mvr', 'pwa'].includes(grp) ||
                name.includes('mining') ||
                name.includes('abrasion') ||
                name.includes('seismic') ||

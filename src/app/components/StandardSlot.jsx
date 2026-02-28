@@ -77,6 +77,8 @@ export default class StandardSlot extends TranslatedComponent {
     let classRating = m.class + m.rating;
     let menu;
     let validMods = m == null || !Modifications.modules[m.grp] ? [] : (Modifications.modules[m.grp].modifications || []);
+    // Check if module has engineering disabled
+    let canBeEngineered = m && m.engineering !== false && m.engineering !== 'False';
     if (m && m.name && m.name === 'Guardian Hybrid Power Plant') {
       validMods = [];
     }
@@ -184,7 +186,7 @@ export default class StandardSlot extends TranslatedComponent {
                 { showModuleResistances && m.getThermalResistance() ? <div className='l'>{translate('thermres')}: {formats.pct(m.getThermalResistance())}</div> : null }
                 { m.getIntegrity() ? <div className='l'>{translate('integrity')}: {formats.int(m.getIntegrity())}</div> : null }
                 { m.getInfo() ? <div className='l'>{translate(m.getInfo())}</div> : null }
-	        { m.getInfo() ? <div className='r'></div> : validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button  tabIndex="-1" onClick={(e) => this._toggleModifications(e)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
+	        { m.getInfo() ? <div className='r'></div> : canBeEngineered && validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button  tabIndex="-1" onClick={(e) => this._toggleModifications(e)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
             </div>
           </div>
         </div>
@@ -200,7 +202,19 @@ export default class StandardSlot extends TranslatedComponent {
    * @param {SyntheticEvent} event Event (optional)
    */
   _toggleModifications(event) {
-    // Always set the flag to true when button is clicked
+    // Clear any lingering tooltip (e.g. from experimental effects)
+    if (this.context.tooltip) {
+      this.context.tooltip(null);
+    }
+
+    if (this.props.selected && this._modificationsSelected) {
+      // Closing engineering menu — reset the flag and let the click
+      // bubble up to onOpen, which will deselect the slot entirely
+      this._modificationsSelected = false;
+      return;
+    }
+
+    // Opening engineering menu
     this._modificationsSelected = true;
 
     // If slot is already selected, stop propagation and just force update

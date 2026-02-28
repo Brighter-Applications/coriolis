@@ -479,6 +479,18 @@ export default class ModificationsMenu extends TranslatedComponent {
     const canReengineer = isPreEngineered ? m.preEngineered.reengineerable : true;
     const canApplyExperimental = isPreEngineered ? m.preEngineered.canApplyExperimental : true;
 
+    // Check if module has engineering explicitly disabled
+    const engineeringDisabled = m.engineering === false || m.engineering === 'False';
+    if (engineeringDisabled) {
+      return (
+        <div className={cn('select', this.props.className)} onClick={(e) => e.stopPropagation()}>
+          <div className="section-menu disabled" style={{ cursor: 'not-allowed', textAlign: 'center', padding: '10px' }}>
+            {translate('PHRASE_ENGINEERING_DISABLED')}
+          </div>
+        </div>
+      );
+    }
+
     let blueprintLabel;
     let haveBlueprint = false;
     let blueprintTt;

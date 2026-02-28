@@ -39,6 +39,13 @@ body {
   padding: 0;
   font-family: @fStandard;
   letter-spacing: 0.05em;
+
+  &.no-animations {
+    *, *::before, *::after {
+      transition: none !important;
+      animation: none !important;
+    }
+  }
 }
 
 div, a, li {

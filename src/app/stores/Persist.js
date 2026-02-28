@@ -16,6 +16,7 @@ const LS_KEY_TOOLTIPS = 'tooltips';
 const LS_KEY_MODULE_RESISTANCES = 'moduleResistances';
 const LS_KEY_ROLLS = 'matsPerGrade';
 const LS_KEY_PROMPT_CG = 'promptCG';
+const LS_KEY_ANIMATIONS = 'animations';
 
 let LS;
 
@@ -118,6 +119,13 @@ export class Persist extends EventEmitter {
     this.tooltipsEnabled = tips === null ? true : tips;
     this.moduleResistancesEnabled = moduleResistances === null ? true : moduleResistances;
     this._promptCG = promptCG === null ? true : promptCG;
+
+    let animations = _get(LS_KEY_ANIMATIONS);
+    this.animationsEnabled = animations === null ? true : animations;
+    // Apply body class on startup
+    if (!this.animationsEnabled && typeof document !== 'undefined') {
+      document.body.classList.add('no-animations');
+    }
 
     if (LS) {
       window.addEventListener('storage', this.onStorageChange);
@@ -249,6 +257,28 @@ export class Persist extends EventEmitter {
     }
 
     return this.moduleResistancesEnabled;
+  }
+
+  /**
+   * Animations setting
+   * @param  {boolean} show Optional - update setting
+   * @return {boolean} True if animations are enabled
+   */
+  showAnimations(show) {
+    if (show !== undefined) {
+      this.animationsEnabled = !!show;
+      _put(LS_KEY_ANIMATIONS, this.animationsEnabled);
+      if (typeof document !== 'undefined') {
+        if (this.animationsEnabled) {
+          document.body.classList.remove('no-animations');
+        } else {
+          document.body.classList.add('no-animations');
+        }
+      }
+      this.emit('animations', this.animationsEnabled);
+    }
+
+    return this.animationsEnabled;
   }
 
   /**

@@ -81,6 +81,8 @@ const GRPCAT = {
   'scl': 'mining',
   'pwa': 'mining',
   'sdm': 'mining',
+  'mvr': 'mining',
+  'abl': 'mining',
   'dc': 'flight assists',
   'sua': 'flight assists',
   'pas': 'flight assists',
@@ -111,7 +113,7 @@ const HPTCAT = {
   'ordnance': ['mr', 'amr', 'tp', 'nl'],
   'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp','rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'],
   'guardian': ['gpc', 'ggc', 'gsc'],
-  'mining': ['ml', 'scl', 'sdm', 'abl'],
+  'mining': ['ml', 'scl', 'sdm', 'abl', 'mvr', 'pwa'],
   'system': ['hs', 'csl'],
   'defence': ['sb', 'ch', 'po', 'ec'],
 };

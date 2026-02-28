@@ -6,7 +6,7 @@ import { Insurance } from '../shipyard/Constants';
 import Link from './Link';
 import ActiveLink from './ActiveLink';
 import cn from 'classnames';
-import { Cogs, CoriolisLogo, Hammer, Help, Rocket, StatsBars } from './SvgIcons';
+import { Cogs, CoriolisLogo, Hammer, Heart, Help, Rocket, StatsBars } from './SvgIcons';
 import { Ships } from 'coriolis-data/dist';
 import Persist from '../stores/Persist';
 import { toDetailedExport } from '../shipyard/Serializer';
@@ -91,6 +91,7 @@ export default class Header extends TranslatedComponent {
     this._showHelp = this._showHelp.bind(this);
     this._toggleTooltips = this._toggleTooltips.bind(this);
     this._toggleModuleResistances = this._toggleModuleResistances.bind(this);
+    this._toggleAnimations = this._toggleAnimations.bind(this);
     this._togglePromptCG = this._togglePromptCG.bind(this);
     this.update = this.update.bind(this);
     this.languageOptions = [];
@@ -234,6 +235,13 @@ export default class Header extends TranslatedComponent {
    */
   _toggleModuleResistances() {
     Persist.showModuleResistances(!Persist.showModuleResistances());
+  }
+
+  /**
+   * Toggle animations setting
+   */
+  _toggleAnimations() {
+    Persist.showAnimations(!Persist.showAnimations());
   }
 
   /**
@@ -439,6 +447,7 @@ export default class Header extends TranslatedComponent {
     let tips = Persist.showTooltips();
     let promptCG = Persist.promptCGModules();
     let moduleResistances = Persist.showModuleResistances();
+    let animations = Persist.showAnimations();
 
     return (
       <div className='menu-list no-wrap cap' onClick={ (e) => e.stopPropagation() }>
@@ -464,9 +473,9 @@ export default class Header extends TranslatedComponent {
               <td>{translate('module resistances')}</td>
               <td className={cn('ri', { disabled: !moduleResistances, 'primary-disabled': moduleResistances })}>{(moduleResistances ? '✓' : '✗')}</td>
             </tr>
-            <tr className='cap ptr' onClick={this._togglePromptCG} >
-              <td>CG Module Prompts</td>
-              <td className={cn('ri', { disabled: !promptCG, 'primary-disabled': promptCG })}>{(promptCG ? '✓' : '✗')}</td>
+            <tr className='cap ptr' onClick={this._toggleAnimations} >
+              <td>{translate('animations')}</td>
+              <td className={cn('ri', { disabled: !animations, 'primary-disabled': animations })}>{(animations ? '✓' : '✗')}</td>
             </tr>
             <tr>
               <td>{translate('insurance')}</td>
@@ -531,6 +540,7 @@ export default class Header extends TranslatedComponent {
     Persist.addListener('builds', update);
     Persist.addListener('tooltips', update);
     Persist.addListener('moduleresistances', update);
+    Persist.addListener('animations', update);
     Persist.addListener('promptCG', update);
   }
 
@@ -626,16 +636,24 @@ export default class Header extends TranslatedComponent {
         }
 
         <div className='r menu'>
+          <div className={cn('menu-header')} onClick={this._showHelp}>
+            <Help className='xl warning'/>
+          </div>
+        </div>
+
+        <div className='r menu'>
+          <a href="https://github.com/sponsors/Brighter-Applications" target="_blank" rel="noopener noreferrer">
+            <div className={cn('menu-header')}>
+              <Heart className='xl warning'/><span className='menu-item-label'>{translate('donate')}</span>
+            </div>
+          </a>
+        </div>
+
+        <div className='r menu'>
           <div className={cn('menu-header', { selected: openedMenu == 'settings' })} onClick={this._openSettings}>
             <Cogs className='xl warning'/><span className='menu-item-label'>{translate('settings')}</span>
           </div>
           {openedMenu == 'settings' ? this._getSettingsMenu() : null}
-        </div>
-
-        <div className='r menu'>
-          <div className={cn('menu-header')} onClick={this._showHelp}>
-            <Help className='xl warning'/>
-          </div>
         </div>
       </header>
     );
