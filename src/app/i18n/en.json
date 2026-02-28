@@ -88,6 +88,7 @@
     "TT_SUMMARY_DPS": "Damage per second with all weapons firing",
     "TT_SUMMARY_EPS": "WEP capacitor consumed per second with all weapons firing",
     "TT_SUMMARY_TTD": "Time to drain WEP capacitor with all weapons firing and 4 pips to WEP",
+    "TT_SUMMARY_CURR_TTD": "Time to drain WEP capacitor with all weapons firing and current pips to WEP",
     "TT_SUMMARY_MAX_SINGLE_JUMP": "Farthest possible jump range with no cargo and only enough fuel for the jump itself",
     "TT_SUMMARY_UNLADEN_SINGLE_JUMP": "Farthest possible jump range with no cargo and a full fuel tank",
     "TT_SUMMARY_LADEN_SINGLE_JUMP": "Farthest possible jump range with full cargo and a full fuel tank",
