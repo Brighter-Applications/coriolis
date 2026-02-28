@@ -779,6 +779,25 @@ export class Help extends SvgIcon {
 }
 
 /**
+ * Heart (for donations/sponsors)
+ */
+export class Heart extends SvgIcon {
+  /**
+   * Overriden view box
+   * @return {String} view box
+   */
+  viewBox() { return '0 0 32 32'; }
+
+  /**
+   * Generate the SVG
+   * @return {React.Component} SVG Contents
+   */
+  svg() {
+    return <path d="M16 28.72l-1.68-1.52C6.4 20.16 2 16.16 2 11.2 2 7.2 5.2 4 9.2 4c2.24 0 4.4 1.04 5.8 2.68L16 7.76l1-1.08C18.4 5.04 20.56 4 22.8 4 26.8 4 30 7.2 30 11.2c0 4.96-4.4 8.96-12.32 15.96L16 28.72z"/>;
+  }
+}
+
+/**
  * ListModifications (engineers)
  */
 export class ListModifications extends SvgIcon {
