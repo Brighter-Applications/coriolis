@@ -119,6 +119,7 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                 </tr>
                 <tr>
                   <td className='label'>
+
                     <span className='label-full'>CURRENT SPEED</span>
                     <span className='label-abbr'>Curr SPD</span>
                   </td>
