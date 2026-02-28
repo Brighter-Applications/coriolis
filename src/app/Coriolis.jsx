@@ -254,7 +254,7 @@ export default class Coriolis extends React.Component {
   _tooltip(content, rect, opts) {
     if (!content && this.state.tooltip) {
       this.setState({ tooltip: null });
-    } else if (content && Persist.showTooltips()) {
+    } else if (content && Persist.showTooltips() && this.state.noTouch) {
       this.setState({ tooltip: <Tooltip rect={rect} options={opts}>{content}</Tooltip> });
     }
   }
@@ -384,7 +384,7 @@ export default class Coriolis extends React.Component {
 
     return (
       <AppContext.Provider value={contextValue}>
-        <div style={{ minHeight: '100%' }} onClick={this._closeMenu}
+        <div style={{ minHeight: '100%' }} onClick={() => { this._closeMenu(); this._tooltip(); }}
              className={this.state.noTouch ? 'no-touch' : null}>
           <Header announcements={this.state.announcements} appCacheUpdate={this.state.appCacheUpdate}
                   currentMenu={currentMenu}/>
