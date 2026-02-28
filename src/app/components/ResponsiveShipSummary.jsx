@@ -45,6 +45,7 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
     const sgClassNames = cn({ warning: shieldGenerator && !ship.shield, muted: !shieldGenerator });
     const sgTooltip = shieldGenerator ? 'TT_SUMMARY_SHIELDS' : 'TT_SUMMARY_SHIELDS_NONFUNCTIONAL';
     const timeToDrain = Calc.timeToDrainWep(ship, 4);
+    const currTimeToDrain = Calc.timeToDrainWep(ship, pips.wep);
     const canThrust = ship.canThrust(cargo, ship.fuelCapacity);
     const speedTooltip = canThrust ? 'TT_SUMMARY_SPEED' : 'TT_SUMMARY_SPEED_NONFUNCTIONAL';
     const canBoost = ship.canBoost(cargo, ship.fuelCapacity);
@@ -300,6 +301,19 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                     onMouseLeave={hide}
                   >
                     {timeToDrain === Infinity ? '∞' : time(timeToDrain)}
+                  </td>
+                </tr>
+                <tr>
+                  <td className='label'>
+                    <span className='label-full'>CURRENT TTD</span>
+                    <span className='label-abbr'>Curr TTD</span>
+                  </td>
+                  <td
+                    className='value'
+                    onMouseEnter={termtip.bind(null, 'TT_SUMMARY_CURR_TTD', { cap: 0 })}
+                    onMouseLeave={hide}
+                  >
+                    {currTimeToDrain === Infinity ? '∞' : time(currTimeToDrain)}
                   </td>
                 </tr>
               </tbody>
