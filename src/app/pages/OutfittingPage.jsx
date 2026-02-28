@@ -7,7 +7,7 @@ import Persist from '../stores/Persist';
 import * as Utils from '../utils/UtilityFunctions';
 import Ship from '../shipyard/Ship';
 import * as _ from 'lodash';
-import { toDetailedBuild } from '../shipyard/Serializer';
+import { toDetailedBuild, toSLEF } from '../shipyard/Serializer';
 import { outfitURL } from '../utils/UrlGenerators';
 import {
   FloppyDisk,
@@ -560,7 +560,16 @@ export default class OutfittingPage extends Page {
       <ModalExport
         title={(buildName || ship.name) + ' ' + translate('export')}
         description={translate('PHRASE_EXPORT_DESC')}
-        data={toDetailedBuild(buildName, ship, ship.toString())}
+        formats={[
+          {
+            name: 'JSON',
+            data: toDetailedBuild(buildName, ship, ship.toString())
+          },
+          {
+            name: 'SLEF',
+            data: toSLEF(buildName, ship)
+          }
+        ]}
       />
     );
   }
