@@ -21,6 +21,7 @@ import {
 } from '../components/SvgIcons';
 import LZString from 'lz-string';
 import ShipSummaryTable from '../components/ShipSummaryTable';
+import ResponsiveShipSummary from '../components/ResponsiveShipSummary';
 import StandardSlotSection from '../components/StandardSlotSection';
 import HardpointSlotSection from '../components/HardpointSlotSection';
 import InternalSlotSection from '../components/InternalSlotSection';
@@ -66,6 +67,8 @@ export default class OutfittingPage extends Page {
     this._fuelUpdated = this._fuelUpdated.bind(this);
     this._opponentUpdated = this._opponentUpdated.bind(this);
     this._engagementRangeUpdated = this._engagementRangeUpdated.bind(this);
+    this._toggleSummaryView = this._toggleSummaryView.bind(this);
+    this._toggleStatBar = this._toggleStatBar.bind(this);
     this._sectionMenuRefs = {};
   }
 
@@ -112,6 +115,10 @@ export default class OutfittingPage extends Page {
       opponentWep,
       engagementRange
     } = this._obtainControlFromCode(ship, code);
+
+    // Get summary view preference from localStorage, default to responsive (true)
+    const useResponsiveSummary = localStorage.getItem('summaryView') !== 'classic';
+
     return {
       error: null,
       title: this._getTitle(buildName),
@@ -136,7 +143,9 @@ export default class OutfittingPage extends Page {
       opponentSys,
       opponentEng,
       opponentWep,
-      engagementRange
+      engagementRange,
+      useResponsiveSummary,
+      statBarCollapsed: false
     };
   }
 
@@ -575,6 +584,19 @@ export default class OutfittingPage extends Page {
   }
 
   /**
+   * Toggle between responsive and classic summary views
+   */
+  _toggleSummaryView() {
+    const newValue = !this.state.useResponsiveSummary;
+    localStorage.setItem('summaryView', newValue ? 'responsive' : 'classic');
+    this.setState({ useResponsiveSummary: newValue });
+  }
+
+  _toggleStatBar() {
+    this.setState({ statBarCollapsed: !this.state.statBarCollapsed });
+  }
+
+  /**
    * Called when the code for the ship has been updated, to synchronise the rest of the data
    */
   _codeUpdated() {
@@ -871,6 +893,7 @@ export default class OutfittingPage extends Page {
               placeholder={translate('Enter Name')}
               maxLength={50}
             />
+            <div className="build-actions">
             <button
               onClick={canSave && this._saveBuild}
               disabled={!canSave}
@@ -943,21 +966,47 @@ export default class OutfittingPage extends Page {
             >
               <MatIcon className="lg" />
             </button>
+            </div>
           </div>
         </div>
 
-        {/* Main tables */}
-        <ShipSummaryTable
-          ship={ship}
-          fuel={fuel}
-          cargo={cargo}
-          marker={shipSummaryMarker}
-          pips={{
-            sys: this.state.sys,
-            wep: this.state.wep,
-            eng: this.state.eng
-          }}
-        />
+        {/* Summary view toggle */}
+        <div className="summary-toggle">
+          {this.state.useResponsiveSummary && <button onClick={this._toggleStatBar}>
+            {this.state.statBarCollapsed ? translate('Expand Stat Bar') : translate('Collapse Stat Bar')}
+          </button>}
+          <button onClick={this._toggleSummaryView}>
+            {this.state.useResponsiveSummary ? translate('Switch to Classic View') : translate('Switch to Responsive View')}
+          </button>
+        </div>
+
+        {/* Main tables - conditional rendering based on view preference */}
+        {this.state.useResponsiveSummary ? (
+          <ResponsiveShipSummary
+            ship={ship}
+            fuel={fuel}
+            cargo={cargo}
+            marker={shipSummaryMarker}
+            collapsed={this.state.statBarCollapsed}
+            pips={{
+              sys: this.state.sys,
+              wep: this.state.wep,
+              eng: this.state.eng
+            }}
+          />
+        ) : (
+          <ShipSummaryTable
+            ship={ship}
+            fuel={fuel}
+            cargo={cargo}
+            marker={shipSummaryMarker}
+            pips={{
+              sys: this.state.sys,
+              wep: this.state.wep,
+              eng: this.state.eng
+            }}
+          />
+        )}
         <StandardSlotSection
           ship={ship}
           fuel={fuel}
@@ -998,38 +1047,40 @@ export default class OutfittingPage extends Page {
         />
 
         {/* Control of ship and opponent */}
-        <div className="group quarter">
-          <div className="group half">
-            <h2 style={{ verticalAlign: 'middle', textAlign: 'left' }}>
-              {translate('ship control')}
-            </h2>
+        <div className="ship-control-row">
+          <div className="group quarter">
+            <div className="group half">
+              <h2 style={{ verticalAlign: 'middle', textAlign: 'left' }}>
+                {translate('ship control')}
+              </h2>
+            </div>
+            <div className="group half">
+              <Boost
+                marker={boostMarker}
+                ship={ship}
+                boost={boost}
+                onChange={this._boostUpdated}
+              />
+            </div>
           </div>
-          <div className="group half">
-            <Boost
-              marker={boostMarker}
-              ship={ship}
-              boost={boost}
-              onChange={this._boostUpdated}
+          <div className="group quarter">
+            <Pips
+              sys={sys}
+              eng={eng}
+              wep={wep}
+              mcSys={mcSys}
+              mcEng={mcEng}
+              mcWep={mcWep}
+              onChange={this._pipsUpdated}
             />
           </div>
-        </div>
-        <div className="group quarter">
-          <Pips
-            sys={sys}
-            eng={eng}
-            wep={wep}
-            mcSys={mcSys}
-            mcEng={mcEng}
-            mcWep={mcWep}
-            onChange={this._pipsUpdated}
-          />
-        </div>
-        <div className="group quarter">
-          <Fuel
-            fuelCapacity={ship.fuelCapacity}
-            fuel={fuel}
-            onChange={this._fuelUpdated}
-          />
+          <div className="group quarter">
+            <Fuel
+              fuelCapacity={ship.fuelCapacity}
+              fuel={fuel}
+              onChange={this._fuelUpdated}
+            />
+          </div>
         </div>
         <div className="group quarter">
           {ship.cargoCapacity > 0 ? (
