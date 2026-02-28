@@ -383,6 +383,8 @@ export const HardpointCategories = {
   'scl': 'mining',
   'sdm': 'mining',
   'abl': 'mining',
+  'mvr': 'mining',
+  'pwa': 'mining',
   // Experimental
   'axmc': 'experimental',
   'axmce': 'experimental',
