@@ -4,6 +4,8 @@ import TranslatedComponent from './TranslatedComponent';
 import cn from 'classnames';
 import { Warning } from './SvgIcons';
 import * as Calc from '../shipyard/Calculations';
+import { Insurance } from '../shipyard/Constants';
+import Persist from '../stores/Persist';
 
 /**
  * Responsive Ship Summary - A modern, responsive version of the ship stats display
@@ -67,6 +69,15 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
     };
     const armourTypeShort = armourTypeShortMap[bulkheadName] || bulkheadName;
 
+    const canHaveFighters = ship.fighterHangars === true;
+    const fighterBayCount = canHaveFighters ?
+      ship.internal.filter(slot => slot.m && slot.m.grp === 'fh')
+        .reduce((sum, slot) => sum + slot.m.getBays(), 0) : 0;
+
+    const srvBayCount = ship.internal
+      .filter(slot => slot.m && slot.m.grp === 'pv')
+      .reduce((sum, slot) => sum + slot.m.getBays(), 0);
+
     let shieldColour = 'blue';
     let shieldTypeShort = 'No Shield';
     if (shieldGenerator && shieldGenerator.m.grp === 'psg') {
@@ -108,8 +119,8 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
               <tbody>
                 <tr>
                   <td className='label'>
-                    <span className='label-full'>{translate('SPEED')}</span>
-                    <span className='label-abbr'>SPEED</span>
+                    <span className='label-full'>{translate('MAX SPEED')}</span>
+                    <span className='label-abbr'>MAX SPEED</span>
                   </td>
                   <td
                     className='value'
@@ -148,7 +159,7 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                 </tr>
                 <tr>
                   <td className='label'>
-                    <span className='label-full'>BST INT ({translate('DST')})</span>
+                    <span className='label-full'>BST INT ({translate('PD')})</span>
                     <span className='label-abbr'>BST INT(D)</span>
                   </td>
                   <td
@@ -293,8 +304,8 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                 </tr>
                 <tr>
                   <td className='label'>
-                    <span className='label-full'>{translate('TTD')}</span>
-                    <span className='label-abbr'>TTD</span>
+                    <span className='label-full'>{translate('MAX TTD')}</span>
+                    <span className='label-abbr'>MAX TTD</span>
                   </td>
                   <td
                     className='value'
@@ -316,6 +327,13 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                   >
                     {currTimeToDrain === Infinity ? '∞' : time(currTimeToDrain)}
                   </td>
+                </tr>
+                <tr>
+                  <td className='label'>
+                    <span className='label-full'>{translate('FIGHTERS')}</span>
+                    <span className='label-abbr'>FIGHTERS</span>
+                  </td>
+                  <td className='value'>{canHaveFighters ? fighterBayCount : 'N/A'}</td>
                 </tr>
               </tbody>
             </table>
@@ -364,6 +382,13 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                   </td>
                   <td className='value'>{ship.crew}</td>
                 </tr>
+                <tr>
+                  <td className='label'>
+                    <span className='label-full'>{translate('SRV')}</span>
+                    <span className='label-abbr'>SRV</span>
+                  </td>
+                  <td className='value'>{srvBayCount}</td>
+                </tr>
               </tbody>
             </table>
           </div>
@@ -390,6 +415,19 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                     onMouseLeave={hide}
                   >
                     {ship.hullMass}{u.T}
+                  </td>
+                </tr>
+                <tr>
+                  <td className='label'>
+                    <span className='label-full'>DRY MASS</span>
+                    <span className='label-abbr'>DRY MASS</span>
+                  </td>
+                  <td
+                    className='value'
+                    onMouseEnter={termtip.bind(null, 'TT_SUMMARY_DRY_MASS', { cap: 0 })}
+                    onMouseLeave={hide}
+                  >
+                    {ship.dryMass}{u.T}
                   </td>
                 </tr>
                 <tr>
@@ -488,6 +526,19 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                     onMouseLeave={hide}
                   >
                     {int(ship.totalCost)}{u.CR}
+                  </td>
+                </tr>
+                <tr>
+                  <td className='label'>
+                    <span className='label-full'>INSURANCE</span>
+                    <span className='label-abbr'>INS</span>
+                  </td>
+                  <td
+                    className='value'
+                    onMouseEnter={termtip.bind(null, 'TT_INSURANCE', { cap: 0 })}
+                    onMouseLeave={hide}
+                  >
+                    {int(ship.totalCost * Insurance[Persist.getInsurance()])}{u.CR}
                   </td>
                 </tr>
               </tbody>

@@ -69,6 +69,7 @@ export default class OutfittingPage extends Page {
     this._engagementRangeUpdated = this._engagementRangeUpdated.bind(this);
     this._toggleSummaryView = this._toggleSummaryView.bind(this);
     this._toggleStatBar = this._toggleStatBar.bind(this);
+    this._toggleOutfitting = this._toggleOutfitting.bind(this);
     this._sectionMenuRefs = {};
   }
 
@@ -145,7 +146,8 @@ export default class OutfittingPage extends Page {
       opponentWep,
       engagementRange,
       useResponsiveSummary,
-      statBarCollapsed: false
+      statBarCollapsed: false,
+      outfittingCollapsed: false
     };
   }
 
@@ -596,6 +598,10 @@ export default class OutfittingPage extends Page {
     this.setState({ statBarCollapsed: !this.state.statBarCollapsed });
   }
 
+  _toggleOutfitting() {
+    this.setState({ outfittingCollapsed: !this.state.outfittingCollapsed });
+  }
+
   /**
    * Called when the code for the ship has been updated, to synchronise the rest of the data
    */
@@ -972,12 +978,12 @@ export default class OutfittingPage extends Page {
 
         {/* Summary view toggle */}
         <div className="summary-toggle">
-          {this.state.useResponsiveSummary && <button onClick={this._toggleStatBar}>
-            {this.state.statBarCollapsed ? translate('Expand Stat Bar') : translate('Collapse Stat Bar')}
-          </button>}
-          <button onClick={this._toggleSummaryView}>
-            {this.state.useResponsiveSummary ? translate('Switch to Classic View') : translate('Switch to Responsive View')}
-          </button>
+          {this.state.useResponsiveSummary && <div className="text-toggle" onClick={this._toggleStatBar}>
+            {this.state.statBarCollapsed ? '▼ ' + translate('Expand Stat Bar') + ' ▼' : '▲ ' + translate('Collapse Stat Bar') + ' ▲'}
+          </div>}
+          <div className="text-toggle" onClick={this._toggleSummaryView}>
+            {this.state.useResponsiveSummary ? '◀ ' + translate('Switch to Classic View') : translate('Switch to Responsive View') + ' ▶'}
+          </div>
         </div>
 
         {/* Main tables - conditional rendering based on view preference */}
@@ -1007,6 +1013,13 @@ export default class OutfittingPage extends Page {
             }}
           />
         )}
+
+        {/* Outfitting toggle */}
+        <div className={this.state.outfittingCollapsed ? 'outfitting-toggle pulse' : 'outfitting-toggle'} onClick={this._toggleOutfitting}>
+          {this.state.outfittingCollapsed ? '▼ Show Outfitting ▼' : '▲ Hide Outfitting ▲'}
+        </div>
+
+        {!this.state.outfittingCollapsed && <div className="outfitting-sections">
         <StandardSlotSection
           ship={ship}
           fuel={fuel}
@@ -1045,6 +1058,7 @@ export default class OutfittingPage extends Page {
           currentMenu={menu}
           sectionMenuRefs={this._sectionMenuRefs}
         />
+        </div>}
 
         {/* Control of ship and opponent */}
         <div className="ship-control-row">
