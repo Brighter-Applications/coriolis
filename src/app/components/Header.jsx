@@ -6,7 +6,7 @@ import { Insurance } from '../shipyard/Constants';
 import Link from './Link';
 import ActiveLink from './ActiveLink';
 import cn from 'classnames';
-import { Cogs, CoriolisLogo, Hammer, Help, Rocket, StatsBars } from './SvgIcons';
+import { Cogs, CoriolisLogo, Hammer, Heart, Help, Rocket, StatsBars } from './SvgIcons';
 import { Ships } from 'coriolis-data/dist';
 import Persist from '../stores/Persist';
 import { toDetailedExport } from '../shipyard/Serializer';
@@ -636,16 +636,24 @@ export default class Header extends TranslatedComponent {
         }
 
         <div className='r menu'>
+          <div className={cn('menu-header')} onClick={this._showHelp}>
+            <Help className='xl warning'/>
+          </div>
+        </div>
+
+        <div className='r menu'>
+          <a href="https://github.com/sponsors/Brighter-Applications" target="_blank" rel="noopener noreferrer">
+            <div className={cn('menu-header')}>
+              <Heart className='xl warning'/><span className='menu-item-label'>{translate('donate')}</span>
+            </div>
+          </a>
+        </div>
+
+        <div className='r menu'>
           <div className={cn('menu-header', { selected: openedMenu == 'settings' })} onClick={this._openSettings}>
             <Cogs className='xl warning'/><span className='menu-item-label'>{translate('settings')}</span>
           </div>
           {openedMenu == 'settings' ? this._getSettingsMenu() : null}
-        </div>
-
-        <div className='r menu'>
-          <div className={cn('menu-header')} onClick={this._showHelp}>
-            <Help className='xl warning'/>
-          </div>
         </div>
       </header>
     );
