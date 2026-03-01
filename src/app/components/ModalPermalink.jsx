@@ -27,7 +27,7 @@ export default class ModalPermalink extends TranslatedComponent {
   /**
    * Shorten URL on mount
    */
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     ShortenUrl(this.props.url,
       (shortenedUrl) => this.setState({ shortenedUrl }),
       (error) => this.setState({ shortenedUrl: 'Error - ' + error })
