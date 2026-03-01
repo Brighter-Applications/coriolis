@@ -101,20 +101,15 @@ export default class InternalSlot extends Slot {
       if (m && (m.powerplay === 'True' || m.powerplay === true)) {
         cgttip = 'PowerPlay Module';
       }
-      else if (availabilityIcon && availabilityIcon === <TechBrokerSmall className='techbroker' />) {
-        cgttip = 'Tech Broker Module';
-      }
-      else if (availabilityIcon && availabilityIcon === <CommunityGoalSmall className='community' />) {
+      else if (m && m.preEngineered && m.preEngineered.availability === 'CG') {
         cgttip = 'Community Goal Module';
       }
-      else if (availabilityIcon && availabilityIcon === <TechBrokerSmall className='techbroker' />) {
+      else if (m && m.preEngineered && m.preEngineered.availability === undefined) {
         cgttip = 'Tech Broker Module';
-      }
-      else if (availabilityIcon && availabilityIcon === <CommunityGoalSmall className='community' />) {
-        cgttip = 'Community Goal Module';
       }
 
-      let mass = m.getMass() || m.cargo || m.fuel || 0;
+      let mass = m.getMass() || m.get('cargo') || m.fuel || 0;
+      if (m.cargo) mass = Math.floor(mass);  // Cargo capacity is always an integer
       const className = cn('details', enabled ? '' : 'disabled');
 
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
