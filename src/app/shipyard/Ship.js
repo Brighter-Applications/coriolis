@@ -813,6 +813,7 @@ export default class Ship {
             module.blueprint = getBlueprint(blueprints[i + 1].fdname, module);
             module.blueprint.grade = blueprints[i + 1].grade;
             module.blueprint.special = blueprints[i + 1].special;
+
             // For pre-engineered modules, clear and re-apply ALL blueprints cumulatively
             if (module.preEngineered && module.preEngineered.blueprints) {
               this.clearModifications(module, true); // Prevent stat update
