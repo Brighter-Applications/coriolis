@@ -5,6 +5,7 @@ import Module from '../shipyard/Module';
 import { Modules } from 'coriolis-data/dist';
 import { Modifications } from 'coriolis-data/dist';
 import { getBlueprint, setQualityCB } from './BlueprintFunctions';
+import * as ModuleUtils from '../shipyard/ModuleUtils';
 
 /**
  * Check if an imported module is valid
@@ -67,6 +68,23 @@ function _moduleFromFdName(fdname) {
   }
 
   // Not found
+  return null;
+}
+
+/**
+ * Find the pre-engineered Expanded Capacity Cargo Rack for a given class
+ * @param {Number} clss The class of the cargo rack (5 or 6)
+ * @return {Module} The pre-engineered module, or null
+ */
+function _findPreEngineeredCargoRack(clss) {
+  if (!Modules.internal.cr) return null;
+  for (const mod of Modules.internal.cr) {
+    if (mod.class === clss && mod.preEngineered &&
+        mod.preEngineered.blueprints &&
+        mod.preEngineered.blueprints.indexOf('CargoRack_IncreasedCapacity') !== -1) {
+      return new Module({ template: mod });
+    }
+  }
   return null;
 }
 
@@ -312,6 +330,19 @@ export function shipFromLoadoutJSON(json) {
     } else {
       const internalJson = internalSlot;
       let internal = _moduleFromFdName(internalJson.Item);
+
+      // Check if this is a cargo rack with the Expanded Capacity pre-engineering
+      // If so, swap to the pre-engineered module and skip applying engineering manually
+      if (internal && internalJson.Engineering &&
+          internalJson.Engineering.BlueprintName.toLowerCase() === 'cargorack_increasedcapacity') {
+        const preEngRack = _findPreEngineeredCargoRack(internal.class);
+        if (preEngRack) {
+          internal = preEngRack;
+          // Clear engineering - the pre-engineered module's use() handler applies it automatically
+          internalJson.Engineering = null;
+        }
+      }
+
       // Check the internal module returned is valid
       if (!_isValidImportedModule(internal, 'internal'))
       {
