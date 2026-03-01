@@ -158,6 +158,10 @@ export default class ModalShoppingList extends TranslatedComponent {
    */
   fixArmourItemNameForEDOMH(ship, item) {
     // The module blueprint fdname contains "Armour_" it's a bulkhead and we need to pre-populate the item field with the correct name from the ship object
+    // If the bulkhead has a symbol (fdname), use it directly (e.g. Caspian Explorer)
+    if (ship.bulkheads.m.symbol) {
+      return ship.bulkheads.m.symbol;
+    }
     switch (ship.bulkheads.m.name){
       case "Lightweight Alloy":
         item = ship.id + "_Armour_Grade1";
