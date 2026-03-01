@@ -114,23 +114,31 @@ export function shipFromLoadoutJSON(json) {
         ship.cargoHatch.priority = module.Priority;
         break;
       // Add the bulkheads
-      case 'armour':
-        if (module.Item.toLowerCase().endsWith('_armour_grade1')) {
+      case 'armour': {
+        const itemLower = module.Item.toLowerCase();
+        // Ships like the Caspian Explorer have 6 bulkheads: a '_grade1_default'
+        // for Lightweight Alloy and '_grade1' for the Mk II Ablative variant.
+        // Standard ships have 5 bulkheads where '_grade1' is Lightweight Alloy.
+        const bulkheadOffset = shipTemplate.bulkheads.length > 5 ? 1 : 0;
+        if (itemLower.endsWith('_armour_grade1_default')) {
           ship.useBulkhead(0, true);
-        } else if (module.Item.toLowerCase().endsWith('_armour_grade2')) {
-          ship.useBulkhead(1, true);
-        } else if (module.Item.toLowerCase().endsWith('_armour_grade3')) {
-          ship.useBulkhead(2, true);
-        } else if (module.Item.toLowerCase().endsWith('_armour_mirrored')) {
-          ship.useBulkhead(3, true);
-        } else if (module.Item.toLowerCase().endsWith('_armour_reactive')) {
-          ship.useBulkhead(4, true);
+        } else if (itemLower.endsWith('_armour_grade1')) {
+          ship.useBulkhead(0 + bulkheadOffset, true);
+        } else if (itemLower.endsWith('_armour_grade2')) {
+          ship.useBulkhead(1 + bulkheadOffset, true);
+        } else if (itemLower.endsWith('_armour_grade3')) {
+          ship.useBulkhead(2 + bulkheadOffset, true);
+        } else if (itemLower.endsWith('_armour_mirrored')) {
+          ship.useBulkhead(3 + bulkheadOffset, true);
+        } else if (itemLower.endsWith('_armour_reactive')) {
+          ship.useBulkhead(4 + bulkheadOffset, true);
         } else {
           throw 'Unknown bulkheads "' + module.Item + '"';
         }
         ship.bulkheads.enabled = true;
         if (module.Engineering) _addModifications(ship.bulkheads.m, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
+      }
       case 'powerplant':
         let powerplant = _moduleFromFdName(module.Item);
         // Check the powerplant returned is valid

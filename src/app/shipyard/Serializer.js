@@ -214,9 +214,19 @@ export function toSLEF(buildName, ship) {
 
   // Add bulkheads/armour
   if (ship.bulkheads && ship.bulkheads.m) {
+    // Prefer the symbol (fdname) from ship data if available.
+    // Otherwise construct from index using the standard FD naming convention.
+    let bulkheadItem;
+    if (ship.bulkheads.m.symbol) {
+      bulkheadItem = ship.bulkheads.m.symbol;
+    } else {
+      const gradeSuffixes = ['grade1', 'grade2', 'grade3', 'mirrored', 'reactive'];
+      const suffix = gradeSuffixes[ship.bulkheads.m.index] || `grade${ship.bulkheads.m.index + 1}`;
+      bulkheadItem = `${shipFdName.toLowerCase()}_armour_${suffix}`;
+    }
     const module = {
       Slot: 'Armour',
-      Item: ship.bulkheads.m.symbol || `${shipFdName.toLowerCase()}_armour_grade${ship.bulkheads.m.index + 1}`,
+      Item: bulkheadItem,
       On: true,
       Priority: ship.bulkheads.priority
     };
