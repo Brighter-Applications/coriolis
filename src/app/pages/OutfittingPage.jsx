@@ -6,6 +6,7 @@ import Router from '../Router';
 import Persist from '../stores/Persist';
 import * as Utils from '../utils/UtilityFunctions';
 import Ship from '../shipyard/Ship';
+import { getDefaultEdIDs } from '../shipyard/ModuleUtils';
 import * as _ from 'lodash';
 import { toDetailedBuild, toSLEF } from '../shipyard/Serializer';
 import { outfitURL } from '../utils/UrlGenerators';
@@ -719,17 +720,18 @@ export default class OutfittingPage extends Page {
   _inaraShoppingList() {
     const ship = this.state.ship;
 
-    const shipId = Ships[ship.id].eddbID;
-    // Provide unique list of non-PP module EDDB IDs
+    const shipId = Ships[ship.id].edID;
+    const defaultEdIDs = getDefaultEdIDs(ship.id);
+    // Provide unique list of non-PP, non-default module Frontier IDs (edID)
     const modIds = ship.internal
       .concat(ship.bulkheads, ship.standard, ship.hardpoints)
-      .filter(slot => slot !== null && slot.m !== null && !slot.m.pp)
-      .map(slot => slot.m.eddbID)
+      .filter(slot => slot !== null && slot.m !== null && !slot.m.pp && slot.m.edID && !defaultEdIDs.has(slot.m.edID))
+      .map(slot => slot.m.edID)
       .filter((v, i, a) => a.indexOf(v) === i);
 
     // Open up the relevant URL
     window.open(
-      'https://inara.cz/inapi/corisearch.php?s=' + shipId + '&m=' + modIds.join(',')
+      'https://inara.cz/inapi/outfitsearch.php?s=' + shipId + '&m=' + modIds.join(',')
     );
   }
 
