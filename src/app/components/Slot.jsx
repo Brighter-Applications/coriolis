@@ -43,7 +43,6 @@ export default class Slot extends TranslatedComponent {
 
   /**
    * Check if a module is eligible for this slot
-
    * Uses canMount to check for slot-specific restrictions (e.g. modules
    * that can only be fitted in restricted slots like Limpets or Cargo)
    * @param {object} module The module to check
