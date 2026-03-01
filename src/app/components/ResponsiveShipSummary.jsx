@@ -427,7 +427,7 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                     onMouseEnter={termtip.bind(null, 'TT_SUMMARY_DRY_MASS', { cap: 0 })}
                     onMouseLeave={hide}
                   >
-                    {ship.dryMass}{u.T}
+                    {Math.round(ship.dryMass)}{u.T}
                   </td>
                 </tr>
                 <tr>
