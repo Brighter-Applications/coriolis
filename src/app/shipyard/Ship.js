@@ -1584,10 +1584,10 @@ export default class Ship {
       .reduce((sum, fuel) => sum + fuel)
       .value();
 
-    // handle cargo capacity
+    // handle cargo capacity (floor each module's cargo to match in-game integer values)
     cargoCapacity += chain(slots)
       .map(slot => slot.m ? slot.m.get('cargo') : null)
-      .map(cargo => cargo || 0)
+      .map(cargo => cargo ? Math.floor(cargo) : 0)
       .reduce((sum, cargo) => sum + cargo)
       .value();
 
