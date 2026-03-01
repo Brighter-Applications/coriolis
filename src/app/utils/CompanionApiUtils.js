@@ -135,6 +135,23 @@ export const HARDPOINT_NUM_TO_CLASS = {
 
 
 /**
+ * Find the pre-engineered Expanded Capacity Cargo Rack for a given class
+ * @param {Number} clss The class of the cargo rack (5 or 6)
+ * @return {Module} The pre-engineered module, or null
+ */
+function _findPreEngineeredCargoRack(clss) {
+  if (!Modules.internal.cr) return null;
+  for (const mod of Modules.internal.cr) {
+    if (mod.class === clss && mod.preEngineered &&
+        mod.preEngineered.blueprints &&
+        mod.preEngineered.blueprints.indexOf('CargoRack_IncreasedCapacity') !== -1) {
+      return new Module({ template: mod });
+    }
+  }
+  return null;
+}
+
+/**
  * Obtain a module given its ED ID
  * @param {Integer} edId the Elite ID of the module
  * @return {Module} the module
@@ -379,7 +396,18 @@ export function shipFromJson(json) {
       // No module
     } else {
       const internalJson = internalSlot.module;
-      const internal = _moduleFromEdId(internalJson.id);
+      let internal = _moduleFromEdId(internalJson.id);
+
+      // Check if this is a cargo rack with the Expanded Capacity pre-engineering
+      if (internal && rootModule && rootModule.engineer &&
+          rootModule.engineer.recipeName.toLowerCase() === 'cargorack_increasedcapacity') {
+        const preEngRack = _findPreEngineeredCargoRack(internal.class);
+        if (preEngRack) {
+          internal = preEngRack;
+          rootModule.WorkInProgress_modifications = null;
+        }
+      }
+
       rootModule = internalSlot;
       if (rootModule.WorkInProgress_modifications) _addModifications(internal, rootModule.WorkInProgress_modifications, rootModule.engineer.recipeName, rootModule.engineer.recipeLevel);
       ship.use(ship.internal[i], internal, true);
