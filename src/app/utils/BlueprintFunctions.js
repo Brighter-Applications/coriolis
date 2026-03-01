@@ -442,6 +442,10 @@ export function setPercent(ship, m, percent) {
  */
 export function setQualityCB(blueprint, quality, cb) {
   // Pick given value as multiplier
+  if (!blueprint || !blueprint.grades || !blueprint.grades[blueprint.grade]) {
+    console.error('setQualityCB: Invalid blueprint or grade', blueprint ? blueprint.grade : 'no blueprint');
+    return;
+  }
   const features = blueprint.grades[blueprint.grade].features;
   for (const featureName in features) {
     let value;
@@ -488,6 +492,9 @@ export function setRandom(ship, m) {
  */
 export function getPercent(m) {
   let result = null;
+  if (!m.blueprint || !m.blueprint.grades || !m.blueprint.grades[m.blueprint.grade]) {
+    return 0;
+  }
   const features = m.blueprint.grades[m.blueprint.grade].features;
   for (const featureName in features) {
     if (features[featureName][0] === features[featureName][1]) {

@@ -813,11 +813,9 @@ export default class Ship {
             module.blueprint = getBlueprint(blueprints[i + 1].fdname, module);
             module.blueprint.grade = blueprints[i + 1].grade;
             module.blueprint.special = blueprints[i + 1].special;
-            // Re-apply all modifications based on the saved blueprint to ensure stats are correct
-            this.clearModifications(module, true); // Prevent stat update
-
-            // For pre-engineered modules, we need to apply ALL blueprints cumulatively, not just the saved fdname
+            // For pre-engineered modules, clear and re-apply ALL blueprints cumulatively
             if (module.preEngineered && module.preEngineered.blueprints) {
+              this.clearModifications(module, true); // Prevent stat update
               const blueprintNames = _.split(module.preEngineered.blueprints, ',');
               for (const blueprintName of blueprintNames) {
                 const blueprint = getBlueprint(blueprintName.trim(), module);
@@ -835,10 +833,8 @@ export default class Ship {
                   });
                 }
               }
-            } else {
-              // Regular module - apply only the saved blueprint
-              setQualityCB(module.blueprint, 1, (featureName, value) => this.setModification(module, featureName, value, false, true));
             }
+            // Regular modules: saved mods are already loaded and correct
           } else if (module.preEngineered && module.preEngineered.blueprints) {
             // console.log('Pre-engineered module detected:', module.symbol, module.preEngineered);
             // This is a pre-engineered module with no saved blueprint, so create the default blueprint structure
@@ -912,11 +908,9 @@ export default class Ship {
             module.blueprint = getBlueprint(blueprints[cl + i].fdname, module);
             module.blueprint.grade = blueprints[cl + i].grade;
             module.blueprint.special = blueprints[cl + i].special;
-            // Re-apply all modifications based on the saved blueprint to ensure stats are correct
-            this.clearModifications(module, true); // Prevent stat update
-
-            // For pre-engineered modules, we need to apply ALL blueprints cumulatively, not just the saved fdname
+            // For pre-engineered modules, clear and re-apply ALL blueprints cumulatively
             if (module.preEngineered && module.preEngineered.blueprints) {
+              this.clearModifications(module, true); // Prevent stat update
               const blueprintNames = _.split(module.preEngineered.blueprints, ',');
               for (const blueprintName of blueprintNames) {
                 const blueprint = getBlueprint(blueprintName.trim(), module);
@@ -934,10 +928,8 @@ export default class Ship {
                   });
                 }
               }
-            } else {
-              // Regular module - apply only the saved blueprint
-              setQualityCB(module.blueprint, 1, (featureName, value) => this.setModification(module, featureName, value, false, true));
             }
+            // Regular modules: saved mods are already loaded and correct
           } else if (module.preEngineered && module.preEngineered.blueprints) {
             // This is a pre-engineered module with no saved blueprint, so create the default blueprint structure
             module.blueprint = {};
@@ -995,11 +987,9 @@ export default class Ship {
             module.blueprint = getBlueprint(blueprints[cl + i].fdname, module);
             module.blueprint.grade = blueprints[cl + i].grade;
             module.blueprint.special = blueprints[cl + i].special;
-            // Re-apply all modifications based on the saved blueprint to ensure stats are correct
-            this.clearModifications(module, true); // Prevent stat update
-
-            // For pre-engineered modules, we need to apply ALL blueprints cumulatively, not just the saved fdname
+            // For pre-engineered modules, clear and re-apply ALL blueprints cumulatively
             if (module.preEngineered && module.preEngineered.blueprints) {
+              this.clearModifications(module, true); // Prevent stat update
               const blueprintNames = _.split(module.preEngineered.blueprints, ',');
               for (const blueprintName of blueprintNames) {
                 const blueprint = getBlueprint(blueprintName.trim(), module);
@@ -1017,10 +1007,8 @@ export default class Ship {
                   });
                 }
               }
-            } else {
-              // Regular module - apply only the saved blueprint
-              setQualityCB(module.blueprint, 1, (featureName, value) => this.setModification(module, featureName, value, false, true));
             }
+            // Regular modules: saved mods are already loaded and correct
           } else if (module.preEngineered && module.preEngineered.blueprints) {
             // console.log('Pre-engineered module detected:', module.symbol, module.preEngineered);
             // This is a pre-engineered module with no saved blueprint, so create the default blueprint structure
