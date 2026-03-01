@@ -817,7 +817,6 @@ export default class Ship {
             // For pre-engineered modules, clear and re-apply ALL blueprints cumulatively
             if (module.preEngineered && module.preEngineered.blueprints) {
               this.clearModifications(module, true); // Prevent stat update
-
               const blueprintNames = _.split(module.preEngineered.blueprints, ',');
               for (const blueprintName of blueprintNames) {
                 const blueprint = getBlueprint(blueprintName.trim(), module);
@@ -835,7 +834,6 @@ export default class Ship {
                   });
                 }
               }
-
             }
             // Regular modules: saved mods are already loaded and correct
           } else if (module.preEngineered && module.preEngineered.blueprints) {
@@ -911,7 +909,6 @@ export default class Ship {
             module.blueprint = getBlueprint(blueprints[cl + i].fdname, module);
             module.blueprint.grade = blueprints[cl + i].grade;
             module.blueprint.special = blueprints[cl + i].special;
-
             // For pre-engineered modules, clear and re-apply ALL blueprints cumulatively
             if (module.preEngineered && module.preEngineered.blueprints) {
               this.clearModifications(module, true); // Prevent stat update
@@ -932,7 +929,6 @@ export default class Ship {
                   });
                 }
               }
-
             }
             // Regular modules: saved mods are already loaded and correct
           } else if (module.preEngineered && module.preEngineered.blueprints) {
@@ -992,7 +988,6 @@ export default class Ship {
             module.blueprint = getBlueprint(blueprints[cl + i].fdname, module);
             module.blueprint.grade = blueprints[cl + i].grade;
             module.blueprint.special = blueprints[cl + i].special;
-
             // For pre-engineered modules, clear and re-apply ALL blueprints cumulatively
             if (module.preEngineered && module.preEngineered.blueprints) {
               this.clearModifications(module, true); // Prevent stat update

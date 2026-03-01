@@ -251,16 +251,23 @@ export function shipFromJson(json) {
 
   // Add the bulkheads
   const armourJson = json.modules.Armour.module;
-  if (armourJson.name.toLowerCase().endsWith('_armour_grade1')) {
+  const armourName = armourJson.name.toLowerCase();
+  // Ships like the Caspian Explorer have 6 bulkheads: a '_grade1_default'
+  // for Lightweight Alloy and '_grade1' for the Mk II Ablative variant.
+  // Standard ships have 5 bulkheads where '_grade1' is Lightweight Alloy.
+  const bulkheadOffset = shipTemplate.bulkheads.length > 5 ? 1 : 0;
+  if (armourName.endsWith('_armour_grade1_default')) {
     ship.useBulkhead(0, true);
-  } else if (armourJson.name.toLowerCase().endsWith('_armour_grade2')) {
-    ship.useBulkhead(1, true);
-  } else if (armourJson.name.toLowerCase().endsWith('_armour_grade3')) {
-    ship.useBulkhead(2, true);
-  } else if (armourJson.name.toLowerCase().endsWith('_armour_mirrored')) {
-    ship.useBulkhead(3, true);
-  } else if (armourJson.name.toLowerCase().endsWith('_armour_reactive')) {
-    ship.useBulkhead(4, true);
+  } else if (armourName.endsWith('_armour_grade1')) {
+    ship.useBulkhead(0 + bulkheadOffset, true);
+  } else if (armourName.endsWith('_armour_grade2')) {
+    ship.useBulkhead(1 + bulkheadOffset, true);
+  } else if (armourName.endsWith('_armour_grade3')) {
+    ship.useBulkhead(2 + bulkheadOffset, true);
+  } else if (armourName.endsWith('_armour_mirrored')) {
+    ship.useBulkhead(3 + bulkheadOffset, true);
+  } else if (armourName.endsWith('_armour_reactive')) {
+    ship.useBulkhead(4 + bulkheadOffset, true);
   } else {
     throw 'Unknown bulkheads "' + armourJson.name + '"';
   }
