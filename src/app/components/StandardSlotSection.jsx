@@ -174,7 +174,7 @@ export default class StandardSlotSection extends SlotSection {
       selected={currentMenu == st[1]}
       onChange={this.props.onChange}
       ship={ship}
-      warning={m => m instanceof Module ? m.getMaxMass() < (ship.dryMass + cargo + fuel - st[1].m.mass + m.mass) : m.maxmass < (ship.dryMass + cargo + fuel - st[1].m.mass + m.mass)}
+      warning={m => m instanceof Module ? m.getMaxMass() < (ship.ladenMass - st[1].m.getMass() + m.getMass()) : m.maxmass < (ship.ladenMass - st[1].m.getMass() + (m.mass || 0))}
     />;
 
 
