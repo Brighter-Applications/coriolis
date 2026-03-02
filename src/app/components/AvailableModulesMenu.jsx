@@ -382,9 +382,17 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   }
 
   /**
-   * Sort modules by size (descending) then rating (ascending)
+   * Sort modules by size (descending) then rating (ascending).
+   * Bulkheads are sorted by cost (cheapest first).
    */
   _sortModules = (a, b) => {
+    // Bulkheads: sort by cost ascending (cheapest first)
+    const isBulkheadA = a.grp === 'bh' || a.grp === 'armour' || (a.name && a.name.toLowerCase().includes('bulkhead'));
+    const isBulkheadB = b.grp === 'bh' || b.grp === 'armour' || (b.name && b.name.toLowerCase().includes('bulkhead'));
+    if (isBulkheadA && isBulkheadB) {
+      return (a.cost || 0) - (b.cost || 0);
+    }
+
     const classA = a.class || 0;
     const classB = b.class || 0;
     if (classA !== classB) {
@@ -834,17 +842,10 @@ export default class AvailableModulesMenu extends TranslatedComponent {
           const { groupKey, modules: groupModules } = group;
 
           // Determine if we should show a group header (sub-header)
-          // Show group header if:
-          // 1. There are multiple groups in this category, OR
-          // 2. The group key is 'fh' (fighter hangar), OR
-          // 3. The main category is 'shields' (always show sub-headers for shields), OR
-          // 4. The main category is 'experimental' (always show sub-headers for experimental), OR
-          // 5. The main category is 'limpet controllers' (always show sub-headers for limpet controllers)
-          const shouldShowGroupHeader = hasMultipleGroups ||
-                                       groupKey === 'fh' ||
-                                       mainCategoryName === 'shields' ||
-                                       mainCategoryName === 'experimental' ||
-                                       mainCategoryName === 'limpet controllers';
+          // Always show sub-headers so users can identify module types,
+          // especially when a category filter is active and only one group
+          // is visible (e.g. Pulse Wave Analyzer under Mining in utility slots).
+          const shouldShowGroupHeader = true;
 
           if (shouldShowGroupHeader) {
             // Get group display name using the new method
@@ -948,11 +949,6 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    * Get friendly display name for module group keys
    */
   _getGroupDisplayName(groupKey, modules) {
-    // First try to get the name from the first module's ukName if available
-    if (modules && modules.length > 0 && modules[0].ukName) {
-      return modules[0].ukName;
-    }
-
     // Fallback to mapping common group keys to friendly names
     const groupDisplayNames = {
       // Hardpoint modules
@@ -995,11 +991,13 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       'ch': 'Chaff Launcher',
       'po': 'Point Defence',
       'ec': 'Electronic Countermeasure',
+      'sfn': 'Shutdown Field Neutraliser',
       'cs': 'Cargo Scanner',
       'kw': 'Kill Warrant Scanner',
       'ws': 'Wake Scanner',
       'sc': 'Surface Scanner',
       'ss': 'Detailed Surface Scanner',
+      'xs': 'Xeno Scanner',
 
       // Internal modules
       'cr': 'Cargo Rack',
@@ -1008,6 +1006,10 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       'bsg': 'Bi-Weave Shield Generator',
       'psg': 'Prismatic Shield Generator',
       'scb': 'Shield Cell Bank',
+      'pce': 'Economy Class',
+      'pci': 'Business Class',
+      'pcm': 'First Class',
+      'pcq': 'Luxury Class',
       'cc': 'Collector Limpet Controller',
       'fx': 'Fuel Transfer Limpet Controller',
       'hb': 'Hatch Breaker Limpet Controller',
@@ -1015,14 +1017,18 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       'rpl': 'Repair Limpet Controller',
       'mlc': 'Multi Limpet Controller',
       'rsl': 'Research Limpet Controller',
+      'rcpl': 'Recon Limpet Controller',
+      'dtl': 'Decontamination Limpet Controller',
       'fh': 'Fighter Hangar',
       'pv': 'Planetary Vehicle Hangar',
       'fs': 'Fuel Scoop',
       'ft': 'Fuel Tank',
       'hr': 'Hull Reinforcement Package',
       'mrp': 'Module Reinforcement Package',
+      'mahr': 'Meta Alloy Hull Reinforcement',
       'dc': 'Docking Computer',
       'sua': 'Supercruise Assist',
+      'pas': 'Planetary Approach Suite',
       'ews': 'Experimental Weapon Stabiliser',
 
       // Standard modules
@@ -1034,7 +1040,14 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       'ss': 'Sensors'
     };
 
-    return groupDisplayNames[groupKey] || groupKey.toUpperCase();
+    // Check explicit mapping first, then fall back to first module's ukName, then uppercase key
+    if (groupDisplayNames[groupKey]) {
+      return groupDisplayNames[groupKey];
+    }
+    if (modules && modules.length > 0 && modules[0].ukName) {
+      return modules[0].ukName;
+    }
+    return groupKey.toUpperCase();
   }
 
   /**
