@@ -116,7 +116,7 @@ export default class InternalSlot extends Slot {
         <div className={'cb'}>
           <div className={'l'}>
             {availabilityIcon ?  <span onMouseOver={termtip.bind(null, cgttip)}
-                                               onMouseOut={tooltip.bind(null, null)}>{availabilityIcon}</span> : ''}{classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified /></span> : ''}</div>
+                                               onMouseOut={tooltip.bind(null, null)}>{availabilityIcon}</span> : ''}{classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified />{m.blueprint && m.blueprint.grade ? <sub className='eng-grade'>{m.blueprint.grade}</sub> : null}</span> : ''}</div>
           <div className={'r'}>{formats.round(mass)}{u.T}</div>
         </div>
         <div className={'cb'}>
