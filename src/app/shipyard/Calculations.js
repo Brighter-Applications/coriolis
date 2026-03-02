@@ -804,6 +804,18 @@ export function sysRechargeRate(pd, sys) {
 }
 
 /**
+ * Obtain the recharge rate of the WEP capacitor of a power distributor given pips
+ * Uses non-linear pip curve: pow(pips/4, 1.1)
+ * @param {Object}   pd   The power distributor
+ * @param {number}   wep  The number of pips to WEP
+ * @returns {number}      The recharge rate in MW
+ */
+export function wepRechargeRate(pd, wep) {
+  if (!pd) return 0;
+  return pd.getWeaponsRechargeRate() * Math.pow(wep / 4, 1.1);
+}
+
+/**
  * Calculate the sustained DPS for a ship against an opponent at a given range
  * @param   {Object}  ship            The ship
  * @param   {Object}  opponent        The opponent ship
@@ -1032,7 +1044,8 @@ export function timeToDrainWep(ship, wep) {
   }
 
   // Calculate the drain time
-  const drainPerSecond = totalSEps - ship.standard[4].m.getWeaponsRechargeRate() * wep / 4;
+  // Use non-linear pip curve: pow(wep/4, 1.1) matching EDSY's formula
+  const drainPerSecond = totalSEps - ship.standard[4].m.getWeaponsRechargeRate() * Math.pow(wep / 4, 1.1);
   if (drainPerSecond <= 0) {
     // Can fire forever
     return Infinity;
