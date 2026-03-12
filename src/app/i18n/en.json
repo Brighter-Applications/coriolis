@@ -1,6 +1,9 @@
 {
     "PHRASE_ALT_ALL": "Alt + Click to fill all slots",
     "PHRASE_BACKUP_DESC": "Backup of all Coriolis data to save or transfer to another browser/device",
+    "PHRASE_CMDR_LINK": "Link your CMDR account to view your in-game ships, materials, and modules",
+    "PHRASE_CMDR_LINKED": "Linked as CMDR {cmdr}",
+    "PHRASE_CMDR_NO_SHIPS": "No ships synced yet. Make sure EDMC is running with the Coriolis plugin.",
     "PHRASE_CONFIRMATION": "Are you sure?",
     "PHRASE_FIT_MODULE": "Fit this module?",
     "PHRASE_EXPORT_DESC": "A detailed JSON export of your build for use in other sites and tools",
