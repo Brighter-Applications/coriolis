@@ -373,17 +373,24 @@ export default class Header extends TranslatedComponent {
    */
   _getBuildsMenu() {
     let builds = Persist.getBuilds();
-    let buildList = [];
-    for (let shipId of this.shipOrder) {
-      if (builds[shipId]) {
-        let shipBuilds = [];
-        let buildNameOrder = Object.keys(builds[shipId]).sort();
-        for (let buildName of buildNameOrder) {
-          let href = outfitURL(shipId, builds[shipId][buildName], buildName);
-          shipBuilds.push(<li key={shipId + '-' + buildName} ><ActiveLink href={href} className='block'>{buildName}</ActiveLink></li>);
+    let buildList;
+    let translate = this.context.language.translate;
+
+    if (Persist.hasBuilds()) {
+      buildList = [];
+      for (let shipId of this.shipOrder) {
+        if (builds[shipId]) {
+          let shipBuilds = [];
+          let buildNameOrder = Object.keys(builds[shipId]).sort();
+          for (let buildName of buildNameOrder) {
+            let href = outfitURL(shipId, builds[shipId][buildName], buildName);
+            shipBuilds.push(<li key={shipId + '-' + buildName} ><ActiveLink href={href} className='block'>{buildName}</ActiveLink></li>);
+          }
+          buildList.push(<ul key={shipId}>{Ships[shipId].properties.name}{shipBuilds}</ul>);
         }
-        buildList.push(<ul key={shipId}>{Ships[shipId].properties.name}{shipBuilds}</ul>);
       }
+    } else {
+      buildList = <span className='cap'>{translate('none created')}</span>;
     }
 
     return (
