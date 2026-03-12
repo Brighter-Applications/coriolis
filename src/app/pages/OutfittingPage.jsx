@@ -19,6 +19,7 @@ import {
   LinkIcon,
   ShoppingIcon,
   MatIcon,
+  PersonIcon,
 } from '../components/SvgIcons';
 import LZString from 'lz-string';
 import ShipSummaryTable from '../components/ShipSummaryTable';
@@ -37,6 +38,7 @@ import OutfittingSubpages from '../components/OutfittingSubpages';
 import ModalExport from '../components/ModalExport';
 import ModalPermalink from '../components/ModalPermalink';
 import ModalShoppingList from '../components/ModalShoppingList';
+import ModalBuildLink from '../components/ModalBuildLink';
 
 /**
  * Document Title Generator
@@ -71,6 +73,7 @@ export default class OutfittingPage extends Page {
     this._toggleSummaryView = this._toggleSummaryView.bind(this);
     this._toggleStatBar = this._toggleStatBar.bind(this);
     this._toggleOutfitting = this._toggleOutfitting.bind(this);
+    this._saveToCmdr = this._saveToCmdr.bind(this);
     this._sectionMenuRefs = {};
   }
 
@@ -745,6 +748,24 @@ export default class OutfittingPage extends Page {
   }
 
   /**
+   * Open ModalBuildLink to save/link this build to cmdr-coriolis
+   */
+  _saveToCmdr() {
+    const { ship, shipId, buildName } = this.state;
+    const code = ship.toString();
+    const url = window.location.href;
+    this.context.showModal(
+      <ModalBuildLink
+        shipId={shipId}
+        shipDisplayName={ship.name}
+        buildName={buildName}
+        code={code}
+        url={url}
+      />
+    );
+  }
+
+  /**
    * Handle Key Down
    * @param  {Event} e  Keyboard Event
    */
@@ -973,6 +994,22 @@ export default class OutfittingPage extends Page {
               onMouseOut={hide}
             >
               <MatIcon className="lg" />
+            </button>
+            <button
+              className={(!Persist.getActiveCmdrLink() || !savedCode || !Persist.hasBuilds()) ? 'disabled' : ''}
+              onClick={Persist.getActiveCmdrLink() && savedCode && Persist.hasBuilds() && this._saveToCmdr}
+              disabled={!Persist.getActiveCmdrLink() || !savedCode || !Persist.hasBuilds()}
+              onMouseOver={termtip.bind(
+                null,
+                !Persist.getActiveCmdrLink()
+                  ? 'link a CMDR account first'
+                  : !savedCode || !Persist.hasBuilds()
+                    ? 'name and save the build first'
+                    : 'save build to CMDR Coriolis'
+              )}
+              onMouseOut={hide}
+            >
+              <PersonIcon className="lg" />
             </button>
             </div>
           </div>
