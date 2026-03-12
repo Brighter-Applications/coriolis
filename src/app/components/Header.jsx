@@ -95,6 +95,7 @@ export default class Header extends TranslatedComponent {
     this._toggleModuleResistances = this._toggleModuleResistances.bind(this);
     this._toggleAnimations = this._toggleAnimations.bind(this);
     this._togglePromptCG = this._togglePromptCG.bind(this);
+    this._toggleSyncBuilds = this._toggleSyncBuilds.bind(this);
     this.update = this.update.bind(this);
     this.languageOptions = [];
     this.insuranceOptions = [];
@@ -251,6 +252,13 @@ export default class Header extends TranslatedComponent {
    */
   _togglePromptCG() {
     Persist.setPromptCG(!Persist.promptCG());
+  }
+
+  /**
+   * Toggle auto-sync builds to CMDR Coriolis
+   */
+  _toggleSyncBuilds() {
+    Persist.syncBuilds(!Persist.syncBuilds());
   }
 
   /**
@@ -466,6 +474,7 @@ export default class Header extends TranslatedComponent {
     let promptCG = Persist.promptCGModules();
     let moduleResistances = Persist.showModuleResistances();
     let animations = Persist.showAnimations();
+    let syncBuilds = Persist.syncBuilds();
 
     return (
       <div className='menu-list no-wrap cap' onClick={ (e) => e.stopPropagation() }>
@@ -494,6 +503,10 @@ export default class Header extends TranslatedComponent {
             <tr className='cap ptr' onClick={this._toggleAnimations} >
               <td>{translate('animations')}</td>
               <td className={cn('ri', { disabled: !animations, 'primary-disabled': animations })}>{(animations ? '✓' : '✗')}</td>
+            </tr>
+            <tr className='cap ptr' onClick={this._toggleSyncBuilds} >
+              <td>{translate('sync builds')}</td>
+              <td className={cn('ri', { disabled: !syncBuilds, 'primary-disabled': syncBuilds })}>{(syncBuilds ? '✓' : '✗')}</td>
             </tr>
             <tr>
               <td>{translate('insurance')}</td>

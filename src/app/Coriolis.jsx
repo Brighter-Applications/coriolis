@@ -22,6 +22,7 @@ import OutfittingPage from './pages/OutfittingPage';
 import ComparisonPage from './pages/ComparisonPage';
 import ShipyardPage from './pages/ShipyardPage';
 import ErrorDetails from './pages/ErrorDetails';
+import { syncAllBuilds } from './utils/BuildSync';
 
 
 const zlib = require('pako');
@@ -409,6 +410,14 @@ export default class Coriolis extends React.Component {
     this._checkCmdrLinkHash();
 
     Router.start();
+
+    // Auto-sync all builds to cmdr.coriolis.io on page load if enabled
+    if (Persist.syncBuilds()) {
+      const link = Persist.getActiveCmdrLink();
+      if (link) {
+        syncAllBuilds(link);
+      }
+    }
   }
 
   /**

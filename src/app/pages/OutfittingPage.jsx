@@ -39,6 +39,7 @@ import ModalExport from '../components/ModalExport';
 import ModalPermalink from '../components/ModalPermalink';
 import ModalShoppingList from '../components/ModalShoppingList';
 import ModalBuildLink from '../components/ModalBuildLink';
+import { syncSingleBuild } from '../utils/BuildSync';
 
 /**
  * Document Title Generator
@@ -440,6 +441,14 @@ export default class OutfittingPage extends Page {
     Persist.saveBuild(shipId, newBuildName, code);
     this._updateRoute(shipId, newBuildName, code);
 
+    // Auto-sync to cmdr.coriolis.io if enabled
+    if (Persist.syncBuilds()) {
+      const link = Persist.getActiveCmdrLink();
+      if (link) {
+        syncSingleBuild(link, shipId, newBuildName, code);
+      }
+    }
+
     let opponent, opponentBuild, opponentSys, opponentEng, opponentWep;
     if (
       shipId === this.state.opponent.id &&
@@ -484,6 +493,15 @@ export default class OutfittingPage extends Page {
       Persist.deleteBuild(shipId, buildName);
       Persist.saveBuild(shipId, newBuildName, code);
       this._updateRoute(shipId, newBuildName, code);
+
+      // Auto-sync renamed build to cmdr.coriolis.io if enabled
+      if (Persist.syncBuilds()) {
+        const link = Persist.getActiveCmdrLink();
+        if (link) {
+          syncSingleBuild(link, shipId, newBuildName, code);
+        }
+      }
+
       this.setState({
         buildName: newBuildName,
         code,

@@ -18,6 +18,7 @@ const LS_KEY_ROLLS = 'matsPerGrade';
 const LS_KEY_PROMPT_CG = 'promptCG';
 const LS_KEY_ANIMATIONS = 'animations';
 const LS_KEY_CMDR_LINKS = 'cmdrLinks';
+const LS_KEY_SYNC_BUILDS = 'syncBuilds';
 
 let LS;
 
@@ -133,6 +134,9 @@ export class Persist extends EventEmitter {
       ? cmdrLinksData
       : { links: [], activeIndex: -1 };
 
+    let syncBuilds = _get(LS_KEY_SYNC_BUILDS);
+    this._syncBuilds = syncBuilds === null ? false : !!syncBuilds;
+
     if (LS) {
       window.addEventListener('storage', this.onStorageChange);
     }
@@ -146,6 +150,21 @@ export class Persist extends EventEmitter {
     this._promptCG = !!value;
     _put(LS_KEY_PROMPT_CG, this._promptCG);
     this.emit('promptCG', this._promptCG);
+  }
+
+  /**
+   * Sync builds setting — whether to automatically push local builds
+   * to cmdr-coriolis when a CMDR link is active.
+   * @param  {boolean} [value] Optional — set the value
+   * @return {boolean} Current value
+   */
+  syncBuilds(value) {
+    if (value !== undefined) {
+      this._syncBuilds = !!value;
+      _put(LS_KEY_SYNC_BUILDS, this._syncBuilds);
+      this.emit('syncBuilds', this._syncBuilds);
+    }
+    return this._syncBuilds;
   }
 
   /**
