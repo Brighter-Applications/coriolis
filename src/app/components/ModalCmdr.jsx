@@ -97,7 +97,7 @@ export default class ModalCmdr extends TranslatedComponent {
    */
   _linkAccount() {
     window.open(
-      CMDR_HOST + '/link/',
+      CMDR_HOST + '/link/?origin=' + encodeURIComponent(window.location.origin),
       'cmdr-link',
       'width=500,height=450,menubar=no,toolbar=no'
     );
