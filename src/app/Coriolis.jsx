@@ -164,6 +164,25 @@ export default class Coriolis extends React.Component {
   }
 
   /**
+   * Handle postMessage from the cmdr.coriolis.io link popup.
+   * Validates the origin and stores the CMDR link.
+   * @param  {MessageEvent} event
+   */
+  _onCmdrLinkMessage(event) {
+    const ALLOWED_ORIGINS = [
+      'https://cmdr.coriolis.io',
+      'http://localhost:8000',
+    ];
+    if (!ALLOWED_ORIGINS.includes(event.origin)) {
+      return; // Ignore messages from unknown origins
+    }
+    const data = event.data;
+    if (data && data.type === 'cmdr-link' && data.cmdrName && data.apiKey) {
+      Persist.addCmdrLink(data.cmdrName, data.apiKey, event.origin);
+    }
+  }
+
+  /**
    * Propagate the sizeRatio change
    * @param  {number} sizeRatio Size ratio / scale
    */
@@ -355,6 +374,9 @@ export default class Coriolis extends React.Component {
     document.addEventListener('keydown', this._keyDown);
     Persist.addListener('language', this._onLanguageChange);
     Persist.addListener('sizeRatio', this._onSizeRatioChange);
+
+    // Listen for postMessage from cmdr.coriolis.io link popup
+    window.addEventListener('message', this._onCmdrLinkMessage.bind(this));
 
     Router.start();
   }

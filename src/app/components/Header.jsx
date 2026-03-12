@@ -6,11 +6,12 @@ import { Insurance } from '../shipyard/Constants';
 import Link from './Link';
 import ActiveLink from './ActiveLink';
 import cn from 'classnames';
-import { Cogs, CoriolisLogo, Hammer, Heart, Help, Rocket, StatsBars } from './SvgIcons';
+import { Cogs, CoriolisLogo, Hammer, Heart, Help, PersonIcon, Rocket, StatsBars } from './SvgIcons';
 import { Ships } from 'coriolis-data/dist';
 import Persist from '../stores/Persist';
 import { toDetailedExport } from '../shipyard/Serializer';
 import Ship from '../shipyard/Ship';
+import ModalCmdr from './ModalCmdr';
 import ModalDeleteAll from './ModalDeleteAll';
 import ModalExport from './ModalExport';
 import ModalHelp from './ModalHelp';
@@ -89,6 +90,7 @@ export default class Header extends TranslatedComponent {
     this._getAnnouncementsMenu = this._getAnnouncementsMenu.bind(this);
     this._openSettings = this._openMenu.bind(this, 'settings');
     this._showHelp = this._showHelp.bind(this);
+    this._showCmdr = this._showCmdr.bind(this);
     this._toggleTooltips = this._toggleTooltips.bind(this);
     this._toggleModuleResistances = this._toggleModuleResistances.bind(this);
     this._toggleAnimations = this._toggleAnimations.bind(this);
@@ -298,6 +300,15 @@ export default class Header extends TranslatedComponent {
     e.preventDefault();
 
     this.context.showModal(<ModalHelp title={translate('help')} />);
+  }
+
+  /**
+   * Show CMDR Coriolis modal
+   * @param  {SyntheticEvent} e Event
+   */
+  _showCmdr(e) {
+    e.preventDefault();
+    this.context.showModal(<ModalCmdr />);
   }
 
   /**
@@ -634,6 +645,12 @@ export default class Header extends TranslatedComponent {
             </a>
           </div> : null
         }
+
+        <div className='r menu'>
+          <div className={cn('menu-header')} onClick={this._showCmdr}>
+            <PersonIcon className={'xl' + (Persist.hasCmdrLinks() ? ' primary' : ' warning')}/>
+          </div>
+        </div>
 
         <div className='r menu'>
           <div className={cn('menu-header')} onClick={this._showHelp}>
