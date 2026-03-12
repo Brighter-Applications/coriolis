@@ -4,6 +4,18 @@ import TranslatedComponent from './TranslatedComponent';
 import Persist from '../stores/Persist';
 import { PersonIcon, FloppyDisk, Bin } from './SvgIcons';
 import { fetchShips, fetchBuilds, saveBuild, updateBuild, unlinkBuild } from '../utils/CmdrApi';
+import { SHIP_FD_NAME_TO_CORIOLIS_NAME } from '../utils/CompanionApiUtils';
+
+/**
+ * Build a reverse lookup: coriolis shipId → set of lowered FD names.
+ * e.g. 'fer_de_lance' → ['ferdelance']
+ */
+const CORIOLIS_TO_FD = {};
+for (const fdName in SHIP_FD_NAME_TO_CORIOLIS_NAME) {
+  const corId = SHIP_FD_NAME_TO_CORIOLIS_NAME[fdName];
+  if (!CORIOLIS_TO_FD[corId]) CORIOLIS_TO_FD[corId] = [];
+  CORIOLIS_TO_FD[corId].push(fdName.toLowerCase());
+}
 
 /**
  * Modal for saving a coriolis build to cmdr-coriolis and optionally
@@ -173,7 +185,7 @@ export default class ModalBuildLink extends TranslatedComponent {
    */
   render() {
     const translate = this.context.language.translate;
-    const { buildName, shipDisplayName } = this.props;
+    const { shipId, buildName, shipDisplayName } = this.props;
     const {
       loading, saving, error, success,
       ships, existingBuild,
@@ -182,20 +194,16 @@ export default class ModalBuildLink extends TranslatedComponent {
 
     const isLinked = existingBuild && existingBuild.linkedShip;
 
+    // Filter ships to only those matching this build's ship type
+    const fdNames = CORIOLIS_TO_FD[shipId] || [shipId];
+    const matchingShips = ships.filter(s => fdNames.indexOf(s.shipType) !== -1);
+
     return (
       <div className='modal' onClick={(e) => e.stopPropagation()}>
         <h2 style={{ display: 'flex', alignItems: 'center', gap: '0.5em' }}>
           <PersonIcon className='lg' />
-          {translate('save build to CMDR Coriolis')}
+          {shipDisplayName + ' — ' + buildName}
         </h2>
-
-        {/* Build info */}
-        <table className='cmdr-table' style={{ marginBottom: '1em' }}>
-          <tbody>
-            <tr><td className='le'><strong>{translate('ship')}</strong></td><td>{shipDisplayName}</td></tr>
-            <tr><td className='le'><strong>{translate('build')}</strong></td><td>{buildName}</td></tr>
-          </tbody>
-        </table>
 
         {loading && <p className='cmdr-loading'>{translate('loading')}...</p>}
         {error && <p className='cmdr-error'>{error}</p>}
@@ -205,8 +213,8 @@ export default class ModalBuildLink extends TranslatedComponent {
           <div className='build-link-form'>
             {/* Description */}
             <div style={{ marginBottom: '0.8em' }}>
-              <label style={{ display: 'block', marginBottom: '0.3em' }}>
-                {translate('description')}
+              <label className='cap' style={{ display: 'block', marginBottom: '0.3em' }}>
+                {translate('Description')}
               </label>
               <input
                 type='text'
@@ -221,8 +229,8 @@ export default class ModalBuildLink extends TranslatedComponent {
 
             {/* Ship link dropdown */}
             <div style={{ marginBottom: '1em' }}>
-              <label style={{ display: 'block', marginBottom: '0.3em' }}>
-                {translate('link to ship')}
+              <label className='cap' style={{ display: 'block', marginBottom: '0.3em' }}>
+                {translate('Link to Ship')}
               </label>
               <select
                 className='build-link-ship-select'
@@ -231,13 +239,18 @@ export default class ModalBuildLink extends TranslatedComponent {
                 disabled={saving}
                 style={{ width: '100%', padding: '0.4em' }}
               >
-                <option value=''>{translate('none')}</option>
-                {ships.map(s => (
+                <option value=''>— {translate('None')} —</option>
+                {matchingShips.map(s => (
                   <option key={s.id} value={s.id}>
-                    {s.shipTypeDisplay} — {s.shipName || s.shipIdent || 'Unnamed'} — #{s.capiShipId}
+                    {s.shipName || s.shipIdent || 'Unnamed'} — #{s.capiShipId}
                   </option>
                 ))}
               </select>
+              {matchingShips.length === 0 && !loading && (
+                <p className='cmdr-empty' style={{ marginTop: '0.3em', fontSize: '0.85em', opacity: 0.7 }}>
+                  {translate('No matching ships found for')} {shipDisplayName}
+                </p>
+              )}
             </div>
 
             {/* Action buttons */}
