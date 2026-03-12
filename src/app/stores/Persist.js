@@ -198,6 +198,10 @@ export class Persist extends EventEmitter {
           this.matsPerGrade = JSON.parse(newValue);
           this.emit('matsPerGrade', this.matsPerGrade);
           break;
+        case LS_KEY_CMDR_LINKS:
+          this.cmdrLinks = newValue ? JSON.parse(newValue) : { links: [], activeIndex: -1 };
+          this.emit('cmdrLinks', this.cmdrLinks);
+          break;
       }
     } catch (e) {
       // On JSON.Parse Error - don't sync or do anything

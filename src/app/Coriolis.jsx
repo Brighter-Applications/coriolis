@@ -183,6 +183,32 @@ export default class Coriolis extends React.Component {
   }
 
   /**
+   * Check the URL hash for redirect-based CMDR link data.
+   * When the link popup's window.opener is null (due to login redirects or
+   * COOP headers), the popup redirects back here with link data encoded in
+   * the hash: #/cmdr-linked/BASE64_JSON
+   */
+  _checkCmdrLinkHash() {
+    const hash = window.location.hash;
+    const prefix = '#/cmdr-linked/';
+    if (hash && hash.indexOf(prefix) === 0) {
+      try {
+        const encoded = hash.substring(prefix.length);
+        const data = JSON.parse(atob(encoded));
+        if (data.cmdrName && data.apiKey && data.host) {
+          Persist.addCmdrLink(data.cmdrName, data.apiKey, data.host);
+        }
+      } catch (e) {
+        console && console.error && console.error('Failed to parse CMDR link hash', e);
+      }
+      // Clean the hash so it doesn't persist in the URL
+      window.location.hash = '';
+      // If this was opened as a popup, try to close it
+      try { window.close(); } catch (e) { /* ignore */ }
+    }
+  }
+
+  /**
    * Propagate the sizeRatio change
    * @param  {number} sizeRatio Size ratio / scale
    */
@@ -377,6 +403,10 @@ export default class Coriolis extends React.Component {
 
     // Listen for postMessage from cmdr.coriolis.io link popup
     window.addEventListener('message', this._onCmdrLinkMessage.bind(this));
+
+    // Check for redirect-based CMDR link data in the URL hash
+    // (fallback when window.opener is null in the popup)
+    this._checkCmdrLinkHash();
 
     Router.start();
   }
