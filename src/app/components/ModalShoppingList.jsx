@@ -103,11 +103,7 @@ export default class ModalShoppingList extends TranslatedComponent {
    */
   _checkCmdrLink() {
     const link = Persist.getActiveCmdrLink();
-    console.log('[Shopping List] CMDR link:', link);
-    if (!link) {
-      console.log('[Shopping List] No CMDR link found - user not logged in to CMDR Coriolis');
-      return;
-    }
+    if (!link) return;
 
     this.setState({ cmdrLinked: true });
 
@@ -125,14 +121,7 @@ export default class ModalShoppingList extends TranslatedComponent {
         b => b.shipType === shipId && b.buildName === buildName && b.linkedShip
       );
 
-      console.log('[Shopping List] All builds:', builds.map(b => ({ shipType: b.shipType, buildName: b.buildName, linkedShip: b.linkedShip })));
-      console.log('[Shopping List] Looking for:', { shipId, buildName });
-      console.log('[Shopping List] Found build:', linkedBuild);
-
-      if (!linkedBuild) {
-        console.log('[Shopping List] No linked build found');
-        return;
-      }
+      if (!linkedBuild) return;
 
       this.setState({ buildLinked: true });
 
@@ -149,10 +138,7 @@ export default class ModalShoppingList extends TranslatedComponent {
       // Find the linked ship's loadout
       const ships = shipsResp.ships || [];
       const linkedShipId = linkedBuild.linkedShip?.id || linkedBuild.linkedShip;
-      console.log('[Shopping List] Looking for linked ship ID:', linkedShipId);
-      console.log('[Shopping List] Available ships:', ships.map(s => ({ id: s.id, name: s.name, hasLoadout: !!s.loadout })));
       const linkedShip = ships.find(s => s.id === linkedShipId);
-      console.log('[Shopping List] Found linked ship:', linkedShip ? { id: linkedShip.id, name: linkedShip.name, hasLoadout: !!linkedShip.loadout, loadoutLength: linkedShip.loadout?.length } : 'NOT FOUND');
 
       // Compute remaining mats, comparing with the ship's current loadout
       this._computeRemaining(inventory, linkedShip);
@@ -247,7 +233,6 @@ export default class ModalShoppingList extends TranslatedComponent {
 
     // If no linked ship, calculate all materials (original behavior)
     if (!linkedShip || !linkedShip.loadout) {
-      console.log('[Shopping List] No linked ship or loadout, using all materials');
       return this.state.mats;
     }
 
@@ -259,7 +244,6 @@ export default class ModalShoppingList extends TranslatedComponent {
     // Handle both array format (EDMC) and object format (Companion API)
     if (Array.isArray(loadout)) {
       // EDMC format: array of {slot, item, engineering, ...}
-      console.log('[Shopping List] Processing EDMC format loadout with', loadout.length, 'modules');
       for (const slotData of loadout) {
         if (slotData && slotData.item) {
           const fdName = slotData.item.toLowerCase();
@@ -271,7 +255,6 @@ export default class ModalShoppingList extends TranslatedComponent {
       }
     } else {
       // Companion API format: {slotName: {module: {name, ...}}}
-      console.log('[Shopping List] Processing Companion API format loadout');
       for (const slotName in loadout) {
         const slot = loadout[slotName];
         if (slot && slot.module) {
@@ -283,8 +266,6 @@ export default class ModalShoppingList extends TranslatedComponent {
         }
       }
     }
-
-    console.log('[Shopping List] Current modules lookup:', Object.keys(currentModules).map(k => `${k} (${currentModules[k].length})`));
 
     // Track which current modules have been matched (to handle duplicates)
     const matchedIndices = {};
@@ -349,27 +330,22 @@ export default class ModalShoppingList extends TranslatedComponent {
         // Case: No engineering on current module → need everything
         startGrade = 1;
         needExperimental = !!targetExperimental;
-        console.log('[Shopping List] ✗ DIFFER (No engineering):', module.m.name, '→ needs all grades 1-' + targetGrade);
       } else if (currentBlueprint !== targetBlueprint) {
         // Case 1: Blueprint TYPE changed → start from scratch (grade 1), experimental is wiped
         startGrade = 1;
         needExperimental = !!targetExperimental;
-        console.log('[Shopping List] ✗ DIFFER (Blueprint changed):', module.m.name, currentBlueprint, '→', targetBlueprint, 'needs all grades 1-' + targetGrade);
       } else if (currentGrade < targetGrade) {
         // Case 2: Same blueprint, GRADE increased → only need missing grades
         startGrade = currentGrade + 1;
         // Experimental: need it if different or missing
         needExperimental = targetExperimental !== currentExperimental;
-        console.log('[Shopping List] ✗ DIFFER (Grade increase):', module.m.name, 'G' + currentGrade, '→ G' + targetGrade, 'needs grades', startGrade + '-' + targetGrade, needExperimental ? '+ experimental' : '');
       } else if (currentGrade === targetGrade && currentExperimental !== targetExperimental) {
         // Case 3: Same blueprint, same grade, different/missing experimental
         startGrade = targetGrade + 1; // Don't calculate any blueprint grades
         needExperimental = !!targetExperimental;
-        console.log('[Shopping List] ✗ DIFFER (Experimental only):', module.m.name, currentExperimental || 'none', '→', targetExperimental);
       } else {
         // Case 4: Everything matches
         matchCount++;
-        console.log('[Shopping List] ✓ MATCH:', module.m.name, 'G' + targetGrade, module.m.blueprint.name, targetExperimental ? '+ ' + module.m.blueprint.special.name : '');
         continue;
       }
 
@@ -406,8 +382,9 @@ export default class ModalShoppingList extends TranslatedComponent {
       }
     }
 
-    console.log('[Shopping List] Summary: Matched', matchCount, 'modules, Differ', differCount, 'modules');
-    console.log('[Shopping List] Materials needed:', mats);
+    // Store match counts for display in UI
+    this._moduleMatchCount = matchCount;
+    this._moduleDifferCount = differCount;
 
     return mats;
   }
@@ -781,7 +758,11 @@ export default class ModalShoppingList extends TranslatedComponent {
               {this.renderColumn('Encoded', this.state.remainingEnc, 'expandedEnc', true)}
             </div>
           ) : (
-            <p>{translate('You have all the materials needed!')}</p>
+            this._moduleDifferCount === 0 ? (
+              <p>Your ship matches your build!</p>
+            ) : (
+              <p>You have all the materials needed to complete this build!</p>
+            )
           )}
         </div>
       ) : (
