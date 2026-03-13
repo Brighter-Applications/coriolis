@@ -234,6 +234,7 @@ export default class ModalShoppingList extends TranslatedComponent {
 
     // If no linked ship, calculate all materials (original behavior)
     if (!linkedShip || !linkedShip.loadout) {
+      console.log('[Shopping List] No linked ship or loadout, using all materials');
       return this.state.mats;
     }
 
