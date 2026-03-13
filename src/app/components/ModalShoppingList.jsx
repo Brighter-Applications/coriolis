@@ -555,6 +555,7 @@ export default class ModalShoppingList extends TranslatedComponent {
           )}
         </div>
       )}
+      <a href="https://inara.cz/elite/nearest-stations/?formbrief=1&pa1[]=25&ps1=" target="_blank" rel="noopener" className={'l cb cap'}>{translate('FIND_MATERIAL_TRADER')}</a><br />
 
       <div id='edengineer' display={this.display} hidden={!!this.state.failed && !compatible}>
       <hr />
