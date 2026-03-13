@@ -111,7 +111,7 @@ export class Persist extends EventEmitter {
     this.state =  _get(LS_KEY_STATE);
     this.sizeRatio = _get(LS_KEY_SIZE_RATIO) || 1;
     this.matsPerGrade = matsPerGrade || {
-      1: 2,
+      1: 1,
       2: 2,
       3: 3,
       4: 4,
