@@ -8,6 +8,46 @@ const zlib = require('zlib');
 const base64url = require('base64url');
 
 /**
+ * Material display name → category lookup.
+ * Used to group shopping list materials into Raw / Manufactured / Encoded.
+ */
+const RAW_MATS = new Set([
+  'Antimony', 'Arsenic', 'Boron', 'Cadmium', 'Carbon', 'Chromium', 'Germanium',
+  'Iron', 'Lead', 'Manganese', 'Mercury', 'Molybdenum', 'Nickel', 'Niobium',
+  'Phosphorus', 'Polonium', 'Rhenium', 'Ruthenium', 'Selenium', 'Sulphur',
+  'Technetium', 'Tellurium', 'Tin', 'Tungsten', 'Vanadium', 'Yttrium', 'Zinc',
+  'Zirconium',
+]);
+
+const ENCODED_MATS = new Set([
+  'Aberrant Shield Pattern Analysis', 'Abnormal Compact Emissions Data',
+  'Adaptive Encryptors Capture', 'Adaptive Encyptors Capture',
+  'Anomalous Bulk Scan Data', 'Anomalous FSD Telemetry',
+  'Atypical Disrupted Wake Echoes', 'Atypical Encryption Archives',
+  'Classified Scan Databanks', 'Classified Scan Fragment',
+  'Cracked Industrial Firmware', 'Datamined Wake Exceptions',
+  'Decoded Emission Data', 'Distorted Shield Cycle Recordings',
+  'Divergent Scan Data', 'Eccentric Hyperspace Trajectories',
+  'Exceptional Scrambled Emission Data', 'Guardian Module Blueprint Segment',
+  'Guardian Vessel Blueprint Segment', 'Guardian Weapon Blueprint Segment',
+  'Inconsistent Shield Soak Analysis', 'Irregular Emission Data',
+  'Modified Consumer Firmware', 'Modified Embedded Firmware',
+  'Open Symmetric Keys', 'Peculiar Shield Frequency Data',
+  'Security Firmware Patch', 'Specialised Legacy Firmware',
+  'Strange Wake Solutions', 'Tagged Encryption Codes',
+  'Unexpected Emission Data', 'Unidentified Scan Archives',
+  'Untypical Shield Scans', 'Unusual Encrypted Files',
+]);
+
+function matCategory(name) {
+  if (RAW_MATS.has(name)) return 'raw';
+  if (ENCODED_MATS.has(name)) return 'encoded';
+  return 'manufactured';
+}
+
+const TRUNCATE_LIMIT = 10;
+
+/**
  * Permalink modal
  */
 export default class ModalShoppingList extends TranslatedComponent {
@@ -25,6 +65,9 @@ export default class ModalShoppingList extends TranslatedComponent {
     super(props);
     this.state = {
       matsList: '',
+      matsRaw: [],
+      matsMfg: [],
+      matsEnc: [],
       mats: {},
       failed: false,
       cmdrName: Persist.getCmdr().selected,
@@ -33,7 +76,12 @@ export default class ModalShoppingList extends TranslatedComponent {
       blueprints: [],
       cmdrLinked: false,
       buildLinked: false,
-      remainingMatsList: '',
+      remainingRaw: [],
+      remainingMfg: [],
+      remainingEnc: [],
+      expandedRaw: false,
+      expandedMfg: false,
+      expandedEnc: false,
     };
   }
 
@@ -99,7 +147,7 @@ export default class ModalShoppingList extends TranslatedComponent {
    */
   _computeRemaining(inventory) {
     const mats = this.state.mats;
-    let remaining = '';
+    let raw = [], mfc = [], enc = [];
     for (const name in mats) {
       if (!mats.hasOwnProperty(name)) continue;
       const needed = mats[name];
@@ -108,10 +156,14 @@ export default class ModalShoppingList extends TranslatedComponent {
       const have = inventory[key] || 0;
       const diff = needed - have;
       if (diff > 0) {
-        remaining += `${name}: ${diff} (need ${needed}, have ${have})\n`;
+        const entry = { name, count: diff, need: needed, have };
+        const cat = matCategory(name);
+        if (cat === 'raw') raw.push(entry);
+        else if (cat === 'encoded') enc.push(entry);
+        else mfc.push(entry);
       }
     }
-    this.setState({ remainingMatsList: remaining || 'You have all the materials needed!' });
+    this.setState({ remainingRaw: raw, remainingMfg: mfc, remainingEnc: enc });
   }
 
   /**
@@ -379,6 +431,7 @@ export default class ModalShoppingList extends TranslatedComponent {
       }
     }
     let matsString = '';
+    let raw = [], mfc = [], enc = [];
     for (const i in mats) {
       if (!mats.hasOwnProperty(i)) {
         continue;
@@ -388,8 +441,13 @@ export default class ModalShoppingList extends TranslatedComponent {
         continue;
       }
       matsString += `${i}: ${mats[i]}\n`;
+      const entry = { name: i, count: mats[i] };
+      const cat = matCategory(i);
+      if (cat === 'raw') raw.push(entry);
+      else if (cat === 'encoded') enc.push(entry);
+      else mfc.push(entry);
     }
-    this.setState({ matsList: matsString, mats });
+    this.setState({ matsList: matsString, matsRaw: raw, matsMfg: mfc, matsEnc: enc, mats });
   }
 
   /**
@@ -418,6 +476,44 @@ export default class ModalShoppingList extends TranslatedComponent {
   }
 
   /**
+   * Toggle expanded state for a material category column.
+   * @param {string} key  One of 'expandedRaw', 'expandedMfg', 'expandedEnc'
+   */
+  toggleExpand(key) {
+    this.setState(prev => ({ [key]: !prev[key] }));
+  }
+
+  /**
+   * Render a single material column with optional truncation.
+   * @param {string}  title      Column heading
+   * @param {Array}   items      Array of {name, count[, need, have]}
+   * @param {string}  expandKey  State key for expanded toggle
+   * @param {boolean} showDetail  Whether to show need/have detail column
+   * @return {React.Component|null}
+   */
+  renderColumn(title, items, expandKey, showDetail) {
+    if (!items.length) return null;
+    const translate = this.context.language.translate;
+    const expanded = this.state[expandKey];
+    const truncated = !expanded && items.length > TRUNCATE_LIMIT;
+    const visible = truncated ? items.slice(0, TRUNCATE_LIMIT) : items;
+    const remaining = items.length - TRUNCATE_LIMIT;
+
+    return <div className='mats-col'>
+      <h4>{translate(title)}</h4>
+      <table className='mats-table'><tbody>
+        {visible.map(m => <tr key={m.name}>
+          <td className='mat-name'>{m.name}</td>
+          <td className='mat-count'>{m.count}</td>
+          {showDetail ? <td className='mat-detail'>({m.need}/{m.have})</td> : null}
+        </tr>)}
+      </tbody></table>
+      {truncated ? <a className='mats-show-more' onClick={() => this.toggleExpand(expandKey)}>{translate('show')} {remaining} {translate('more')}...</a> : null}
+      {expanded && items.length > TRUNCATE_LIMIT ? <a className='mats-show-more' onClick={() => this.toggleExpand(expandKey)}>{translate('show less')}</a> : null}
+    </div>;
+  }
+
+  /**
    * Render the modal
    * @return {React.Component} Modal Content
    */
@@ -428,17 +524,30 @@ export default class ModalShoppingList extends TranslatedComponent {
     this.cmdrChangeHandler = this.cmdrChangeHandler.bind(this);
     this.sendToEDEng = this.sendToEDEng.bind(this);
     this.sendToEDOMH = this.sendToEDOMH.bind(this);
-    return <div className='modal' onClick={ (e) => e.stopPropagation() }>
+    return <div className='modal modal-wide' onClick={ (e) => e.stopPropagation() }>
       {this.state.cmdrLinked && this.state.buildLinked ? (
         <div>
-          <h3>CMDR Coriolis</h3>
-          <p>{translate('PHRASE_CMDR_SHOPPING_MATS')}</p>
-          <textarea className='cb json' readOnly value={this.state.remainingMatsList} />
+          <h3>CMDR Coriolis — {translate('PHRASE_CMDR_SHOPPING_MATS')}</h3>
+          {this.state.remainingRaw.length || this.state.remainingMfg.length || this.state.remainingEnc.length ? (
+            <div className='mats-columns'>
+              {this.renderColumn('Raw', this.state.remainingRaw, 'expandedRaw', true)}
+              {this.renderColumn('Manufactured', this.state.remainingMfg, 'expandedMfg', true)}
+              {this.renderColumn('Encoded', this.state.remainingEnc, 'expandedEnc', true)}
+            </div>
+          ) : (
+            <p>{translate('You have all the materials needed!')}</p>
+          )}
         </div>
       ) : (
         <div>
           <h3>{translate('PHRASE_SHOPPING_MATS')}</h3>
-          <textarea className='cb json' readOnly value={this.state.matsList} />
+          <div className='mats-columns'>
+            {this.renderColumn('Raw', this.state.matsRaw, 'expandedRaw', false)}
+            {this.renderColumn('Manufactured', this.state.matsMfg, 'expandedMfg', false)}
+            {this.renderColumn('Encoded', this.state.matsEnc, 'expandedEnc', false)}
+          </div>
+          <hr />
+          <h3>CMDR Coriolis</h3>
           {this.state.cmdrLinked ? (
           <p>{translate('PHRASE_LINK_BUILD')}</p>
           ) : (
