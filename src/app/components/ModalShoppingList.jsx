@@ -103,7 +103,11 @@ export default class ModalShoppingList extends TranslatedComponent {
    */
   _checkCmdrLink() {
     const link = Persist.getActiveCmdrLink();
-    if (!link) return;
+    console.log('[Shopping List] CMDR link:', link);
+    if (!link) {
+      console.log('[Shopping List] No CMDR link found - user not logged in to CMDR Coriolis');
+      return;
+    }
 
     this.setState({ cmdrLinked: true });
 
@@ -121,7 +125,14 @@ export default class ModalShoppingList extends TranslatedComponent {
         b => b.shipType === shipId && b.buildName === buildName && b.linkedShip
       );
 
-      if (!linkedBuild) return;
+      console.log('[Shopping List] All builds:', builds.map(b => ({ shipType: b.shipType, buildName: b.buildName, linkedShip: b.linkedShip })));
+      console.log('[Shopping List] Looking for:', { shipId, buildName });
+      console.log('[Shopping List] Found build:', linkedBuild);
+
+      if (!linkedBuild) {
+        console.log('[Shopping List] No linked build found');
+        return;
+      }
 
       this.setState({ buildLinked: true });
 
