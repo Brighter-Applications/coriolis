@@ -3,6 +3,7 @@ import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import request from 'superagent';
 import Persist from '../stores/Persist';
+import { fetchBuilds, fetchMaterials } from '../utils/CmdrApi';
 const zlib = require('zlib');
 const base64url = require('base64url');
 
@@ -29,7 +30,10 @@ export default class ModalShoppingList extends TranslatedComponent {
       cmdrName: Persist.getCmdr().selected,
       cmdrs: Persist.getCmdr().cmdrs,
       matsPerGrade: Persist.getRolls(),
-      blueprints: []
+      blueprints: [],
+      cmdrLinked: false,
+      buildLinked: false,
+      remainingMatsList: '',
     };
   }
 
@@ -42,6 +46,72 @@ export default class ModalShoppingList extends TranslatedComponent {
       this.getCommanders();
       this.registerBPs();
     }
+    this._checkCmdrLink();
+  }
+
+  /**
+   * Check if user has a linked CMDR and if the current build is linked to a ship.
+   * If so, fetch materials and compute remaining mats.
+   */
+  _checkCmdrLink() {
+    const link = Persist.getActiveCmdrLink();
+    if (!link) return;
+
+    this.setState({ cmdrLinked: true });
+
+    Promise.all([
+      fetchBuilds(link),
+      fetchMaterials(link),
+    ]).then(([buildsResp, matsResp]) => {
+      const builds = buildsResp.builds || [];
+      const shipId = this.props.ship.id;
+      const buildName = this.props.buildName;
+
+      // Find a build matching this ship type + name that is linked to a ship
+      const linkedBuild = builds.find(
+        b => b.shipType === shipId && b.buildName === buildName && b.linkedShip
+      );
+
+      if (!linkedBuild) return;
+
+      this.setState({ buildLinked: true });
+
+      // Build material inventory lookup: { lowerName: count }
+      const inventory = {};
+      const materials = matsResp.materials || {};
+      for (const category of ['raw', 'manufactured', 'encoded']) {
+        const catMats = materials[category] || {};
+        for (const name in catMats) {
+          inventory[name.toLowerCase()] = catMats[name];
+        }
+      }
+
+      // Wait for renderMats to populate this.state.mats, then compute remaining
+      this._computeRemaining(inventory);
+    }).catch(err => {
+      console.warn('CMDR link check failed:', err);
+    });
+  }
+
+  /**
+   * Compute remaining materials by subtracting CMDR inventory from needed mats.
+   * @param {Object} inventory  { lowerName: count }
+   */
+  _computeRemaining(inventory) {
+    const mats = this.state.mats;
+    let remaining = '';
+    for (const name in mats) {
+      if (!mats.hasOwnProperty(name)) continue;
+      const needed = mats[name];
+      // Normalize display name to match fdname format (lowercase, no spaces)
+      const key = name.toLowerCase().replace(/ /g, '');
+      const have = inventory[key] || 0;
+      const diff = needed - have;
+      if (diff > 0) {
+        remaining += `${name}: ${diff} (need ${needed}, have ${have})\n`;
+      }
+    }
+    this.setState({ remainingMatsList: remaining || 'You have all the materials needed!' });
   }
 
   /**
@@ -359,26 +429,23 @@ export default class ModalShoppingList extends TranslatedComponent {
     this.sendToEDEng = this.sendToEDEng.bind(this);
     this.sendToEDOMH = this.sendToEDOMH.bind(this);
     return <div className='modal' onClick={ (e) => e.stopPropagation() }>
-      <h3>{translate('PHRASE_SHOPPING_MATS')}</h3>
-      <div>
-      <p>{translate('PHRASE_DIFFERENT_ROLLS')}</p>
-        <label>{translate('G1')}</label>
-        <input className={'groll'} id={1} type={'number'} min={0} defaultValue={this.state.matsPerGrade[1]} onChange={this.changeHandler} />
-        &nbsp;|&nbsp;<label>{translate('G2')}</label>
-        <input className={'groll'} id={2} type={'number'} min={0} defaultValue={this.state.matsPerGrade[2]} onChange={this.changeHandler} />
-        &nbsp;|&nbsp;<label>{translate('G3')}</label>
-        <input className={'groll'} id={3} type={'number'} min={0} value={this.state.matsPerGrade[3]} onChange={this.changeHandler} />
-        &nbsp;|&nbsp;<label>{translate('G4')}</label>
-        <input className={'groll'} id={4} type={'number'} min={0} value={this.state.matsPerGrade[4]} onChange={this.changeHandler} />
-        &nbsp;|&nbsp;<label>{translate('G5')}</label>
-        <input className={'groll'} id={5} type={'number'} min={0} value={this.state.matsPerGrade[5]} onChange={this.changeHandler} />
-      </div>
-
-      <div>
-        <p>{translate('PHRASE_ALL_MODULES_ALL_ROLLS')}</p>
-        <textarea className='cb json' readOnly value={this.state.matsList} />
-        <p>{translate('PHRASE_FOR_FINER_CONTROL')}</p>
-      </div>
+      {this.state.cmdrLinked && this.state.buildLinked ? (
+        <div>
+          <h3>CMDR Coriolis</h3>
+          <p>{translate('PHRASE_CMDR_SHOPPING_MATS')}</p>
+          <textarea className='cb json' readOnly value={this.state.remainingMatsList} />
+        </div>
+      ) : (
+        <div>
+          <h3>{translate('PHRASE_SHOPPING_MATS')}</h3>
+          <textarea className='cb json' readOnly value={this.state.matsList} />
+          {this.state.cmdrLinked ? (
+          <p>{translate('PHRASE_LINK_BUILD')}</p>
+          ) : (
+          <p>{translate('PHRASE_SIGN_UP_CMDR')}</p>
+          )}
+        </div>
+      )}
 
       <div id='edengineer' display={this.display} hidden={!!this.state.failed && !compatible}>
       <hr />
