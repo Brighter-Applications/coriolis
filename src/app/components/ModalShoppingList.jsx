@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import request from 'superagent';
 import Persist from '../stores/Persist';
-import { fetchBuilds, fetchMaterials } from '../utils/CmdrApi';
+import { fetchBuilds, fetchMaterials, fetchShips } from '../utils/CmdrApi';
 const zlib = require('zlib');
 const base64url = require('base64url');
 
@@ -110,7 +110,8 @@ export default class ModalShoppingList extends TranslatedComponent {
     Promise.all([
       fetchBuilds(link),
       fetchMaterials(link),
-    ]).then(([buildsResp, matsResp]) => {
+      fetchShips(link),
+    ]).then(([buildsResp, matsResp, shipsResp]) => {
       const builds = buildsResp.builds || [];
       const shipId = this.props.ship.id;
       const buildName = this.props.buildName;
@@ -134,23 +135,66 @@ export default class ModalShoppingList extends TranslatedComponent {
         }
       }
 
-      // Wait for renderMats to populate this.state.mats, then compute remaining
-      this._computeRemaining(inventory);
+      // Find the linked ship's loadout
+      const ships = shipsResp.ships || [];
+      const linkedShip = ships.find(s => s.id === linkedBuild.linkedShip);
+
+      // Compute remaining mats, comparing with the ship's current loadout
+      this._computeRemaining(inventory, linkedShip);
     }).catch(err => {
       console.warn('CMDR link check failed:', err);
     });
   }
 
   /**
-   * Compute remaining materials by subtracting CMDR inventory from needed mats.
-   * @param {Object} inventory  { lowerName: count }
+   * Check if two modules have identical engineering states.
+   * @param {Object} targetModule  Module from Coriolis build
+   * @param {Object} currentModule Module from CMDR ship loadout
+   * @return {boolean} True if engineering is identical
    */
-  _computeRemaining(inventory) {
-    const mats = this.state.mats;
+  _modulesMatch(targetModule, currentModule) {
+    if (!targetModule || !currentModule) return false;
+
+    const targetBlueprint = targetModule.blueprint;
+    const currentEngineer = currentModule.engineer;
+    const currentSpecial = currentModule.specialModifications;
+
+    // If target has no engineering, match only if current has no engineering
+    if (!targetBlueprint || !targetBlueprint.grade) {
+      return !currentEngineer;
+    }
+
+    // If target has engineering but current doesn't, no match
+    if (!currentEngineer) return false;
+
+    // Compare blueprint fdname and grade
+    if (targetBlueprint.fdname !== currentEngineer.recipeName) return false;
+    if (targetBlueprint.grade !== currentEngineer.recipeLevel) return false;
+
+    // Compare special effects
+    const targetSpecial = targetBlueprint.special ? targetBlueprint.special.edname : null;
+    const currentSpecialName = currentSpecial && currentSpecial.length > 0
+      ? Object.keys(currentSpecial[0])[0]
+      : null;
+
+    if (targetSpecial !== currentSpecialName) return false;
+
+    return true;
+  }
+
+  /**
+   * Compute materials needed by comparing target build with current ship loadout.
+   * @param {Object} inventory    { lowerName: count } Material inventory
+   * @param {Object} linkedShip   Ship data from CMDR API (optional)
+   */
+  _computeRemaining(inventory, linkedShip) {
+    // Calculate materials needed only for modules that differ from the current ship
+    const matsNeeded = this._calculateMaterialsForDifferences(linkedShip);
+
     let raw = [], mfc = [], enc = [];
-    for (const name in mats) {
-      if (!mats.hasOwnProperty(name)) continue;
-      const needed = mats[name];
+    for (const name in matsNeeded) {
+      if (!matsNeeded.hasOwnProperty(name)) continue;
+      const needed = matsNeeded[name];
       // Normalize display name to match fdname format (lowercase, no spaces)
       const key = name.toLowerCase().replace(/ /g, '');
       const have = inventory[key] || 0;
@@ -164,6 +208,83 @@ export default class ModalShoppingList extends TranslatedComponent {
       }
     }
     this.setState({ remainingRaw: raw, remainingMfg: mfc, remainingEnc: enc });
+  }
+
+  /**
+   * Calculate materials needed only for modules that differ between target and current ship.
+   * @param {Object} linkedShip  Ship data from CMDR API (optional)
+   * @return {Object} Materials needed { materialName: count }
+   */
+  _calculateMaterialsForDifferences(linkedShip) {
+    const ship = this.props.ship;
+    let mats = {};
+
+    // If no linked ship, calculate all materials (original behavior)
+    if (!linkedShip || !linkedShip.loadout) {
+      return this.state.mats;
+    }
+
+    // Build a lookup of current modules by their FD name (symbol)
+    const currentModules = {};
+    const loadout = linkedShip.loadout;
+    for (const slotName in loadout) {
+      const slot = loadout[slotName];
+      if (slot && slot.module) {
+        const fdName = slot.module.name.toLowerCase();
+        currentModules[fdName] = slot;
+      }
+    }
+
+    // Iterate through target build modules and compare
+    for (const module of ship.costList) {
+      if (module.type === 'SHIP') continue;
+      if (!module.m || !module.m.blueprint) continue;
+      if (!module.m.blueprint.grade || !module.m.blueprint.grades) continue;
+
+      // Find corresponding current module
+      const fdName = module.m.symbol ? module.m.symbol.toLowerCase() : null;
+      const currentSlot = fdName ? currentModules[fdName] : null;
+
+      // Check if modules match
+      const modulesMatch = currentSlot ? this._modulesMatch(module.m, currentSlot) : false;
+
+      // If modules match perfectly, skip material calculation for this module
+      if (modulesMatch) {
+        continue;
+      }
+
+      // Calculate materials for this module
+      // For primary engineering grades
+      for (let g in module.m.blueprint.grades) {
+        if (!module.m.blueprint.grades.hasOwnProperty(g)) continue;
+        if (Number(g) > module.m.blueprint.grade) continue;
+
+        for (let i in module.m.blueprint.grades[g].components) {
+          if (!module.m.blueprint.grades[g].components.hasOwnProperty(i)) continue;
+
+          if (mats[i]) {
+            mats[i] += module.m.blueprint.grades[g].components[i] * this.state.matsPerGrade[g];
+          } else {
+            mats[i] = module.m.blueprint.grades[g].components[i] * this.state.matsPerGrade[g];
+          }
+        }
+      }
+
+      // For special effects
+      if (module.m.blueprint.special) {
+        for (const j in module.m.blueprint.special.components) {
+          if (!module.m.blueprint.special.components.hasOwnProperty(j)) continue;
+
+          if (mats[j]) {
+            mats[j] += module.m.blueprint.special.components[j];
+          } else {
+            mats[j] = module.m.blueprint.special.components[j];
+          }
+        }
+      }
+    }
+
+    return mats;
   }
 
   /**
