@@ -131,7 +131,8 @@ export default class ModalShoppingList extends TranslatedComponent {
       for (const category of ['raw', 'manufactured', 'encoded']) {
         const catMats = materials[category] || {};
         for (const name in catMats) {
-          inventory[name.toLowerCase()] = catMats[name];
+          // Normalize: lowercase and remove spaces to match lookup format
+          inventory[name.toLowerCase().replace(/ /g, '')] = catMats[name];
         }
       }
 
