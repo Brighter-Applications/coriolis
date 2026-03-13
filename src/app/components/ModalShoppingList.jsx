@@ -149,33 +149,44 @@ export default class ModalShoppingList extends TranslatedComponent {
   /**
    * Check if two modules have identical engineering states.
    * @param {Object} targetModule  Module from Coriolis build
-   * @param {Object} currentModule Module from CMDR ship loadout
+   * @param {Object} currentModule Module from CMDR ship loadout slot
    * @return {boolean} True if engineering is identical
    */
   _modulesMatch(targetModule, currentModule) {
     if (!targetModule || !currentModule) return false;
 
     const targetBlueprint = targetModule.blueprint;
-    const currentEngineer = currentModule.engineer;
+
+    // Handle both Companion API format (engineer/recipeName) and EDMC format (engineering/blueprintName)
+    const currentEngineering = currentModule.engineering || currentModule.engineer;
     const currentSpecial = currentModule.specialModifications;
 
     // If target has no engineering, match only if current has no engineering
     if (!targetBlueprint || !targetBlueprint.grade) {
-      return !currentEngineer;
+      return !currentEngineering;
     }
 
     // If target has engineering but current doesn't, no match
-    if (!currentEngineer) return false;
+    if (!currentEngineering) return false;
+
+    // Get blueprint name from either format
+    const currentBlueprintName = currentEngineering.blueprintName || currentEngineering.recipeName;
+    const currentGrade = currentEngineering.level || currentEngineering.recipeLevel;
 
     // Compare blueprint fdname and grade
-    if (targetBlueprint.fdname !== currentEngineer.recipeName) return false;
-    if (targetBlueprint.grade !== currentEngineer.recipeLevel) return false;
+    if (targetBlueprint.fdname !== currentBlueprintName) return false;
+    if (targetBlueprint.grade !== currentGrade) return false;
 
     // Compare special effects
     const targetSpecial = targetBlueprint.special ? targetBlueprint.special.edname : null;
-    const currentSpecialName = currentSpecial && currentSpecial.length > 0
-      ? Object.keys(currentSpecial[0])[0]
-      : null;
+
+    // Handle both EDMC format (experimentalEffect string) and Companion format (specialModifications object)
+    let currentSpecialName = null;
+    if (currentEngineering.experimentalEffect) {
+      currentSpecialName = currentEngineering.experimentalEffect;
+    } else if (currentSpecial && currentSpecial.length > 0) {
+      currentSpecialName = Object.keys(currentSpecial[0])[0];
+    }
 
     if (targetSpecial !== currentSpecialName) return false;
 
@@ -221,43 +232,139 @@ export default class ModalShoppingList extends TranslatedComponent {
 
     // If no linked ship, calculate all materials (original behavior)
     if (!linkedShip || !linkedShip.loadout) {
+      console.log('[Shopping List] No linked ship or loadout, using all materials');
       return this.state.mats;
     }
 
     // Build a lookup of current modules by their FD name (symbol)
+    // Store as arrays to handle duplicate modules (multiple of the same type)
     const currentModules = {};
     const loadout = linkedShip.loadout;
-    for (const slotName in loadout) {
-      const slot = loadout[slotName];
-      if (slot && slot.module) {
-        const fdName = slot.module.name.toLowerCase();
-        currentModules[fdName] = slot;
+
+    // Handle both array format (EDMC) and object format (Companion API)
+    if (Array.isArray(loadout)) {
+      // EDMC format: array of {slot, item, engineering, ...}
+      console.log('[Shopping List] Processing EDMC format loadout with', loadout.length, 'modules');
+      for (const slotData of loadout) {
+        if (slotData && slotData.item) {
+          const fdName = slotData.item.toLowerCase();
+          if (!currentModules[fdName]) {
+            currentModules[fdName] = [];
+          }
+          currentModules[fdName].push(slotData);
+        }
+      }
+    } else {
+      // Companion API format: {slotName: {module: {name, ...}}}
+      console.log('[Shopping List] Processing Companion API format loadout');
+      for (const slotName in loadout) {
+        const slot = loadout[slotName];
+        if (slot && slot.module) {
+          const fdName = slot.module.name.toLowerCase();
+          if (!currentModules[fdName]) {
+            currentModules[fdName] = [];
+          }
+          currentModules[fdName].push(slot);
+        }
       }
     }
 
+    console.log('[Shopping List] Current modules lookup:', Object.keys(currentModules).map(k => `${k} (${currentModules[k].length})`));
+
+    // Track which current modules have been matched (to handle duplicates)
+    const matchedIndices = {};
+
     // Iterate through target build modules and compare
+    let matchCount = 0;
+    let differCount = 0;
     for (const module of ship.costList) {
       if (module.type === 'SHIP') continue;
       if (!module.m || !module.m.blueprint) continue;
       if (!module.m.blueprint.grade || !module.m.blueprint.grades) continue;
 
-      // Find corresponding current module
+      // Find corresponding current module(s)
       const fdName = module.m.symbol ? module.m.symbol.toLowerCase() : null;
-      const currentSlot = fdName ? currentModules[fdName] : null;
+      const currentSlots = fdName ? currentModules[fdName] : null;
 
-      // Check if modules match
-      const modulesMatch = currentSlot ? this._modulesMatch(module.m, currentSlot) : false;
+      // Find the current state of this module
+      let currentSlot = null;
+      let currentEngineering = null;
+      let currentBlueprint = null;
+      let currentGrade = 0;
+      let currentExperimental = null;
 
-      // If modules match perfectly, skip material calculation for this module
-      if (modulesMatch) {
+      if (currentSlots && currentSlots.length > 0) {
+        // Initialize tracking for this module type if needed
+        if (!matchedIndices[fdName]) {
+          matchedIndices[fdName] = new Set();
+        }
+
+        // Find an unmatched module of this type
+        for (let i = 0; i < currentSlots.length; i++) {
+          if (matchedIndices[fdName].has(i)) continue;
+
+          currentSlot = currentSlots[i];
+          matchedIndices[fdName].add(i);
+
+          // Extract current engineering state
+          currentEngineering = currentSlot.engineering || currentSlot.engineer;
+          if (currentEngineering) {
+            currentBlueprint = currentEngineering.blueprintName || currentEngineering.recipeName;
+            currentGrade = currentEngineering.level || currentEngineering.recipeLevel || 0;
+
+            if (currentEngineering.experimentalEffect) {
+              currentExperimental = currentEngineering.experimentalEffect;
+            } else if (currentSlot.specialModifications && currentSlot.specialModifications.length > 0) {
+              currentExperimental = Object.keys(currentSlot.specialModifications[0])[0];
+            }
+          }
+          break;
+        }
+      }
+
+      const targetBlueprint = module.m.blueprint.fdname;
+      const targetGrade = module.m.blueprint.grade;
+      const targetExperimental = module.m.blueprint.special ? module.m.blueprint.special.edname : null;
+
+      // Determine what materials are needed based on current vs target state
+      let startGrade = 1; // Default: start from grade 1
+      let needExperimental = false;
+
+      if (!currentEngineering) {
+        // Case: No engineering on current module → need everything
+        startGrade = 1;
+        needExperimental = !!targetExperimental;
+        console.log('[Shopping List] ✗ DIFFER (No engineering):', module.m.name, '→ needs all grades 1-' + targetGrade);
+      } else if (currentBlueprint !== targetBlueprint) {
+        // Case 1: Blueprint TYPE changed → start from scratch (grade 1), experimental is wiped
+        startGrade = 1;
+        needExperimental = !!targetExperimental;
+        console.log('[Shopping List] ✗ DIFFER (Blueprint changed):', module.m.name, currentBlueprint, '→', targetBlueprint, 'needs all grades 1-' + targetGrade);
+      } else if (currentGrade < targetGrade) {
+        // Case 2: Same blueprint, GRADE increased → only need missing grades
+        startGrade = currentGrade + 1;
+        // Experimental: need it if different or missing
+        needExperimental = targetExperimental !== currentExperimental;
+        console.log('[Shopping List] ✗ DIFFER (Grade increase):', module.m.name, 'G' + currentGrade, '→ G' + targetGrade, 'needs grades', startGrade + '-' + targetGrade, needExperimental ? '+ experimental' : '');
+      } else if (currentGrade === targetGrade && currentExperimental !== targetExperimental) {
+        // Case 3: Same blueprint, same grade, different/missing experimental
+        startGrade = targetGrade + 1; // Don't calculate any blueprint grades
+        needExperimental = !!targetExperimental;
+        console.log('[Shopping List] ✗ DIFFER (Experimental only):', module.m.name, currentExperimental || 'none', '→', targetExperimental);
+      } else {
+        // Case 4: Everything matches
+        matchCount++;
+        console.log('[Shopping List] ✓ MATCH:', module.m.name, 'G' + targetGrade, module.m.blueprint.name, targetExperimental ? '+ ' + module.m.blueprint.special.name : '');
         continue;
       }
 
-      // Calculate materials for this module
-      // For primary engineering grades
+      differCount++;
+
+      // Calculate materials for blueprint grades (from startGrade to targetGrade)
       for (let g in module.m.blueprint.grades) {
         if (!module.m.blueprint.grades.hasOwnProperty(g)) continue;
-        if (Number(g) > module.m.blueprint.grade) continue;
+        const gradeNum = Number(g);
+        if (gradeNum < startGrade || gradeNum > targetGrade) continue;
 
         for (let i in module.m.blueprint.grades[g].components) {
           if (!module.m.blueprint.grades[g].components.hasOwnProperty(i)) continue;
@@ -270,8 +377,8 @@ export default class ModalShoppingList extends TranslatedComponent {
         }
       }
 
-      // For special effects
-      if (module.m.blueprint.special) {
+      // Calculate materials for experimental (if needed)
+      if (needExperimental && module.m.blueprint.special) {
         for (const j in module.m.blueprint.special.components) {
           if (!module.m.blueprint.special.components.hasOwnProperty(j)) continue;
 
@@ -283,6 +390,9 @@ export default class ModalShoppingList extends TranslatedComponent {
         }
       }
     }
+
+    console.log('[Shopping List] Summary: Matched', matchCount, 'modules, Differ', differCount, 'modules');
+    console.log('[Shopping List] Materials needed:', mats);
 
     return mats;
   }
