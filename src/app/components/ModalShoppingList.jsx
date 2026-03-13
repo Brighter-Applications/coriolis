@@ -137,7 +137,10 @@ export default class ModalShoppingList extends TranslatedComponent {
 
       // Find the linked ship's loadout
       const ships = shipsResp.ships || [];
+      console.log('[Shopping List] Looking for linked ship ID:', linkedBuild.linkedShip);
+      console.log('[Shopping List] Available ships:', ships.map(s => ({ id: s.id, name: s.name, hasLoadout: !!s.loadout })));
       const linkedShip = ships.find(s => s.id === linkedBuild.linkedShip);
+      console.log('[Shopping List] Found linked ship:', linkedShip ? { id: linkedShip.id, name: linkedShip.name, hasLoadout: !!linkedShip.loadout, loadoutLength: linkedShip.loadout?.length } : 'NOT FOUND');
 
       // Compute remaining mats, comparing with the ship's current loadout
       this._computeRemaining(inventory, linkedShip);
