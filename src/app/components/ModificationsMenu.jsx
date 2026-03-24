@@ -58,8 +58,12 @@ export default class ModificationsMenu extends TranslatedComponent {
     this.modValDidChange = false;
     this._handleModChange = this._handleModChange.bind(this);
 
+    // Check if module has a blueprint - if not, open blueprints menu by default
+    const { m } = props;
+    const hasBlueprint = m.blueprint && m.blueprint.name;
+
     this.state = {
-      blueprintMenuOpened: false,
+      blueprintMenuOpened: !hasBlueprint, // Open blueprints menu if no blueprint exists
       specialMenuOpened: false
     };
   }
@@ -474,6 +478,18 @@ export default class ModificationsMenu extends TranslatedComponent {
     const isPreEngineered = m.preEngineered && m.preEngineered.blueprints && m.preEngineered.blueprints.length > 0;
     const canReengineer = isPreEngineered ? m.preEngineered.reengineerable : true;
     const canApplyExperimental = isPreEngineered ? m.preEngineered.canApplyExperimental : true;
+
+    // Check if module has engineering explicitly disabled
+    const engineeringDisabled = m.engineering === false || m.engineering === 'False';
+    if (engineeringDisabled) {
+      return (
+        <div className={cn('select', this.props.className)} onClick={(e) => e.stopPropagation()}>
+          <div className="section-menu disabled" style={{ cursor: 'not-allowed', textAlign: 'center', padding: '10px' }}>
+            {translate('PHRASE_ENGINEERING_DISABLED')}
+          </div>
+        </div>
+      );
+    }
 
     let blueprintLabel;
     let haveBlueprint = false;

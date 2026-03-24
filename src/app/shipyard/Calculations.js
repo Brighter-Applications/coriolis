@@ -82,19 +82,52 @@ export function shieldStrength(mass, baseShield, sg, multiplier) {
  * @param {number}   baseSpeed  base speed m/s for ship
  * @param {object}   thrusters  The ship's thrusters
  * @param {number}   engpip     the multiplier per pip to engines
+ * @param {number}   minthrust  the minimum thrust percentage (0-100)
  * @return {array}             Speed by pips
  */
-export function speed(mass, baseSpeed, thrusters, engpip) {
+export function speed(mass, baseSpeed, thrusters, minthrust) {
   if (!thrusters) { return [0, 0, 0, 0, 0]; }
   // thrusters might be a module or a template; handle either here
+  // Use modified masses: engineering modifies optmass and the related modifier
+  // propagates to minmass/maxmass, matching EDSY's mass curve behavior
   const minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
   const optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
   const maxMass = thrusters instanceof Module ? thrusters.getMaxMass() : thrusters.maxmass;
   const minMul = thrusters instanceof Module ? thrusters.getMinMul('speed') : (thrusters.minmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.minmulspeed : thrusters.minmul);
+  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.optmulspeed : thrusters.optmul);
+  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.maxmulspeed : thrusters.maxmul);
 
-  let results = normValues(minMass, optMass, maxMass, minMul, optMul, maxMul, mass, baseSpeed, engpip);
+  // DEBUG LOGGING
+  if (thrusters instanceof Module && thrusters.name === 'Enhanced Performance') {
+    console.log('EPT Speed Calculation Debug:');
+    console.log('  Mass:', mass, 'Base Speed:', baseSpeed, 'MinThrust:', minthrust);
+    console.log('  Masses: min=', minMass, 'opt=', optMass, 'max=', maxMass);
+    console.log('  Muls: min=', minMul, 'opt=', optMul, 'max=', maxMul);
+  }
+
+  // Calculate mass curve multiplier (same as EDSY's getMassCurveMultiplier)
+  const xnorm = Math.min(1, (maxMass - mass) / (maxMass - minMass));
+  const exponent = Math.log((optMul - minMul) / (maxMul - minMul)) / Math.log(Math.min(1, (maxMass - optMass) / (maxMass - minMass)));
+  const ynorm = Math.pow(xnorm, exponent);
+  const curNavSpdMul = minMul + ynorm * (maxMul - minMul);
+
+  // DEBUG LOGGING
+  if (thrusters instanceof Module && thrusters.name === 'Enhanced Performance') {
+    console.log('  Curve: xnorm=', xnorm.toFixed(4), 'exponent=', exponent.toFixed(4), 'ynorm=', ynorm.toFixed(4), 'speedMul=', curNavSpdMul.toFixed(4));
+  }
+
+  // Apply EDSY formula: curNavSpdMul * topspd * (powerdistEngMul + minthrust * (1 - powerdistEngMul))
+  const minthrust_pct = (minthrust || 0) / 100;
+  let results = [];
+  for (let eng = 0; eng <= 4; eng++) {
+    const powerdistEngMul = eng / 4;
+    results.push(curNavSpdMul * baseSpeed * (powerdistEngMul + minthrust_pct * (1 - powerdistEngMul)));
+  }
+
+  // DEBUG LOGGING
+  if (thrusters instanceof Module && thrusters.name === 'Enhanced Performance') {
+    console.log('  Results (0-4 pips):', results.map(r => r.toFixed(1)));
+  }
 
   return results;
 }
@@ -228,28 +261,60 @@ function calcValue(minMass, optMass, maxMass, minMul, optMul, maxMul, mass, base
  * @param {number}   mass         the mass of the ship
  * @param {number}   baseSpeed    the base speed of the ship
  * @param {object}   thrusters    the thrusters of the ship
- * @param {number}   engpip       the multiplier per pip to engines
+ * @param {number}   minthrust    the minimum thrust percentage (0-100)
  * @param {number}   eng          the pips to engines
  * @param {number}   boostFactor  the boost factor for ths ship
  * @param {boolean}  boost        true if the boost is activated
  * @returns {number}              the resultant speed
  */
-export function calcSpeed(mass, baseSpeed, thrusters, engpip, eng, boostFactor, boost) {
+export function calcSpeed(mass, baseSpeed, thrusters, minthrust, eng, boostFactor, boost) {
   if (!thrusters) { return 0; }
   // thrusters might be a module or a template; handle either here
-  const minMass = thrusters instanceof Module ? thrusters.getMinMass() : thrusters.minmass;
-  const optMass = thrusters instanceof Module ? thrusters.getOptMass() : thrusters.optmass;
-  const maxMass = thrusters instanceof Module ? thrusters.getMaxMass() : thrusters.maxmass;
+  // Use MODIFIED mass values (experimental effects like Drag Drives modify optmass)
+  const minMass = thrusters instanceof Module ? thrusters.getMinMass(true) : thrusters.minmass;
+  const optMass = thrusters instanceof Module ? thrusters.getOptMass(true) : thrusters.optmass;
+  const maxMass = thrusters instanceof Module ? thrusters.getMaxMass(true) : thrusters.maxmass;
   const minMul = thrusters instanceof Module ? thrusters.getMinMul('speed') : (thrusters.minmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.minmulspeed : thrusters.minmul);
-  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.minmulspeed : thrusters.minmul);
+  const optMul = thrusters instanceof Module ? thrusters.getOptMul('speed') : (thrusters.optmulspeed ? thrusters.optmulspeed : thrusters.optmul);
+  const maxMul = thrusters instanceof Module ? thrusters.getMaxMul('speed') : (thrusters.maxmulspeed ? thrusters.maxmulspeed : thrusters.maxmul);
 
-  let result = calcValue(minMass, optMass, maxMass, minMul, optMul, maxMul, mass, baseSpeed, engpip, eng);
-  if (boost == true) {
-    result *= boostFactor;
+  // DEBUG for EPT
+  const isEPT = thrusters instanceof Module && thrusters.name === 'Enhanced Performance';
+  if (isEPT && mass > 65) {
+    console.log('*** calcSpeed() called for EPT ***');
+    console.log('  mass:', mass, 'baseSpeed:', baseSpeed, 'minthrust:', minthrust, 'eng:', eng, 'boost:', boost);
+    console.log('  Masses:', minMass, '/', optMass, '/', maxMass);
+    console.log('  Muls:', minMul, '/', optMul, '/', maxMul);
   }
 
-  return result;
+  // Calculate mass curve multiplier (same as EDSY's getMassCurveMultiplier)
+  const xnorm = Math.min(1, (maxMass - mass) / (maxMass - minMass));
+  const exponent = Math.log((optMul - minMul) / (maxMul - minMul)) / Math.log(Math.min(1, (maxMass - optMass) / (maxMass - minMass)));
+  const ynorm = Math.pow(xnorm, exponent);
+  const curNavSpdMul = minMul + ynorm * (maxMul - minMul);
+
+  if (isEPT && mass > 65) {
+    console.log('  speedMul:', curNavSpdMul.toFixed(6));
+  }
+
+  if (boost == true) {
+    // EDSY boost formula: curNavSpdMul * bstspd (no power distribution)
+    // boostFactor is actually (base boost speed / base speed), so multiply back
+    const result = curNavSpdMul * baseSpeed * boostFactor;
+    if (isEPT && mass > 65) {
+      console.log('  BOOST result:', result.toFixed(1), 'm/s');
+    }
+    return result;
+  } else {
+    // EDSY normal speed formula: curNavSpdMul * topspd * (powerdistEngMul + minthrust * (1 - powerdistEngMul))
+    const minthrust_pct = (minthrust || 0) / 100;
+    const powerdistEngMul = eng / 4;
+    const result = curNavSpdMul * baseSpeed * (powerdistEngMul + minthrust_pct * (1 - powerdistEngMul));
+    if (isEPT && mass > 65) {
+      console.log('  TOP SPEED result:', result.toFixed(1), 'm/s');
+    }
+    return result;
+  }
 }
 
 /**
@@ -388,6 +453,19 @@ export function shieldMetrics(ship, sys) {
     // Recover time is the time taken to go from 0 to 50%.  It includes a 16-second wait before shields start to recover
     const shieldToRecover = (generatorStrength + boostersStrength + shieldAddition) / 2;
     const powerDistributor = ship.standard[4].m;
+    if (!powerDistributor) {
+      // Power distributor not fitted or build failed to load fully; return basic shield info without timing data
+      shield = {
+        generator: generatorStrength,
+        boosters: boostersStrength,
+        addition: shieldAddition,
+        cells: ship.shieldCells,
+        summary: generatorStrength + boostersStrength + shieldAddition,
+        total: generatorStrength + boostersStrength + ship.shieldCells + shieldAddition,
+        recover: Infinity,
+        recharge: Infinity,
+      };
+    } else {
     const sysRechargeRate = this.sysRechargeRate(powerDistributor, sys);
 
     // Our initial regeneration comes from the SYS capacitor store, which is replenished as it goes
@@ -448,6 +526,7 @@ export function shieldMetrics(ship, sys) {
       recover,
       recharge,
     };
+    } // end powerDistributor else block
 
     // Shield resistances have three components: the shield generator, the shield boosters and the SYS pips.
     // We re-cast these as damage percentages
@@ -720,7 +799,20 @@ export function sysResistance(sys) {
  * @returns {number}      The recharge rate in MJ/s
  */
 export function sysRechargeRate(pd, sys) {
+  if (!pd) return 0;
   return pd.getSystemsRechargeRate() * Math.pow(sys, 1.1) / Math.pow(4, 1.1);
+}
+
+/**
+ * Obtain the recharge rate of the WEP capacitor of a power distributor given pips
+ * Uses non-linear pip curve: pow(pips/4, 1.1)
+ * @param {Object}   pd   The power distributor
+ * @param {number}   wep  The number of pips to WEP
+ * @returns {number}      The recharge rate in MW
+ */
+export function wepRechargeRate(pd, wep) {
+  if (!pd) return 0;
+  return pd.getWeaponsRechargeRate() * Math.pow(wep / 4, 1.1);
 }
 
 /**
@@ -952,7 +1044,8 @@ export function timeToDrainWep(ship, wep) {
   }
 
   // Calculate the drain time
-  const drainPerSecond = totalSEps - ship.standard[4].m.getWeaponsRechargeRate() * wep / 4;
+  // Use non-linear pip curve: pow(wep/4, 1.1) matching EDSY's formula
+  const drainPerSecond = totalSEps - ship.standard[4].m.getWeaponsRechargeRate() * Math.pow(wep / 4, 1.1);
   if (drainPerSecond <= 0) {
     // Can fire forever
     return Infinity;

@@ -22,6 +22,7 @@ import OutfittingPage from './pages/OutfittingPage';
 import ComparisonPage from './pages/ComparisonPage';
 import ShipyardPage from './pages/ShipyardPage';
 import ErrorDetails from './pages/ErrorDetails';
+import { syncAllBuilds } from './utils/BuildSync';
 
 
 const zlib = require('pako');
@@ -55,7 +56,7 @@ export default class Coriolis extends React.Component {
       noTouch: !('ontouchstart' in window || navigator.msMaxTouchPoints || navigator.maxTouchPoints),
       page: null,
       // Announcements must have an expiry date in format "YYYY-MM-DDTHH:MM:SSZ"
-      announcements: [{expiry: "2025-12-31T00:00:00Z", text: "Caspian Explorer Added. React Upgraded. Lots of upgrades."}],
+      announcements: [{expiry: "2026-03-31T00:00:00Z", text: "Goodbye React 15. So long and thanks for all the Ships! Welcome to Coriolis 4.0.x"}],
       language: getLanguage(Persist.getLangCode()),
       route: {},
       sizeRatio: Persist.getSizeRatio()
@@ -164,6 +165,51 @@ export default class Coriolis extends React.Component {
   }
 
   /**
+   * Handle postMessage from the cmdr.coriolis.io link popup.
+   * Validates the origin and stores the CMDR link.
+   * @param  {MessageEvent} event
+   */
+  _onCmdrLinkMessage(event) {
+    const ALLOWED_ORIGINS = [
+      'https://cmdr.coriolis.io',
+      'http://localhost:8000',
+    ];
+    if (!ALLOWED_ORIGINS.includes(event.origin)) {
+      return; // Ignore messages from unknown origins
+    }
+    const data = event.data;
+    if (data && data.type === 'cmdr-link' && data.cmdrName && data.apiKey) {
+      Persist.addCmdrLink(data.cmdrName, data.apiKey, event.origin);
+    }
+  }
+
+  /**
+   * Check the URL hash for redirect-based CMDR link data.
+   * When the link popup's window.opener is null (due to login redirects or
+   * COOP headers), the popup redirects back here with link data encoded in
+   * the hash: #/cmdr-linked/BASE64_JSON
+   */
+  _checkCmdrLinkHash() {
+    const hash = window.location.hash;
+    const prefix = '#/cmdr-linked/';
+    if (hash && hash.indexOf(prefix) === 0) {
+      try {
+        const encoded = hash.substring(prefix.length);
+        const data = JSON.parse(atob(encoded));
+        if (data.cmdrName && data.apiKey && data.host) {
+          Persist.addCmdrLink(data.cmdrName, data.apiKey, data.host);
+        }
+      } catch (e) {
+        console && console.error && console.error('Failed to parse CMDR link hash', e);
+      }
+      // Clean the hash so it doesn't persist in the URL
+      window.location.hash = '';
+      // If this was opened as a popup, try to close it
+      try { window.close(); } catch (e) { /* ignore */ }
+    }
+  }
+
+  /**
    * Propagate the sizeRatio change
    * @param  {number} sizeRatio Size ratio / scale
    */
@@ -254,7 +300,7 @@ export default class Coriolis extends React.Component {
   _tooltip(content, rect, opts) {
     if (!content && this.state.tooltip) {
       this.setState({ tooltip: null });
-    } else if (content && Persist.showTooltips()) {
+    } else if (content && Persist.showTooltips() && this.state.noTouch) {
       this.setState({ tooltip: <Tooltip rect={rect} options={opts}>{content}</Tooltip> });
     }
   }
@@ -356,7 +402,22 @@ export default class Coriolis extends React.Component {
     Persist.addListener('language', this._onLanguageChange);
     Persist.addListener('sizeRatio', this._onSizeRatioChange);
 
+    // Listen for postMessage from cmdr.coriolis.io link popup
+    window.addEventListener('message', this._onCmdrLinkMessage.bind(this));
+
+    // Check for redirect-based CMDR link data in the URL hash
+    // (fallback when window.opener is null in the popup)
+    this._checkCmdrLinkHash();
+
     Router.start();
+
+    // Auto-sync all builds to cmdr.coriolis.io on page load if enabled
+    if (Persist.syncBuilds()) {
+      const link = Persist.getActiveCmdrLink();
+      if (link) {
+        syncAllBuilds(link);
+      }
+    }
   }
 
   /**
@@ -384,7 +445,7 @@ export default class Coriolis extends React.Component {
 
     return (
       <AppContext.Provider value={contextValue}>
-        <div style={{ minHeight: '100%' }} onClick={this._closeMenu}
+        <div style={{ minHeight: '100%' }} onClick={() => { this._closeMenu(); this._tooltip(); }}
              className={this.state.noTouch ? 'no-touch' : null}>
           <Header announcements={this.state.announcements} appCacheUpdate={this.state.appCacheUpdate}
                   currentMenu={currentMenu}/>

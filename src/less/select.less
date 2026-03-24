@@ -52,7 +52,7 @@ select {
   background-color: @bg;
   border: 1px solid @primary;
   text-align: center;
-  transition: max-height 0.3s ease-in-out, opacity 0.3s ease-in-out;
+  transition: max-height 0.2s ease-in-out, opacity 0.2s ease-in-out;
 
   .tablet({
     max-height: 300px;
@@ -313,7 +313,7 @@ select {
   text-align: center;
   border-radius: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   box-sizing: border-box;
   background-color: @bg;
   color: @primary-disabled;
@@ -383,7 +383,7 @@ select {
   text-align: center;
   border-radius: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   box-sizing: border-box;
   background-color: @bg;
   color: @primary-disabled;
@@ -489,7 +489,7 @@ select {
   font-size: 14px;
   border-radius: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   box-sizing: border-box;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -526,7 +526,7 @@ select {
   box-sizing: border-box;
   border-radius: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
 }
 
 // Special styling for named modules to handle longer text
@@ -554,7 +554,7 @@ select {
   text-align: center;
   border-radius: 0;
   cursor: pointer;
-  transition: all 0.2s ease;
+  transition: all 0.15s ease;
   box-sizing: border-box;
   background-color: @bg;
   color: @primary-disabled;
@@ -649,7 +649,7 @@ select {
 // Slide animation for menu sections
 .menu-section-wrapper {
   overflow: hidden;
-  transition: max-height 0.6s ease-in-out, opacity 0.5s ease-in-out, margin 0.6s ease-in-out;
+  transition: max-height 0.35s ease-in-out, opacity 0.3s ease-in-out, margin 0.35s ease-in-out;
   max-height: 0;
   opacity: 0;
   margin: 0;
@@ -664,7 +664,7 @@ select {
 
   // Slightly faster collapse (but still slower than before)
   &:not(.open) {
-    transition: max-height 0.5s ease-in-out, opacity 0.4s ease-in-out, margin 0.5s ease-in-out;
+    transition: max-height 0.25s ease-in-out, opacity 0.2s ease-in-out, margin 0.25s ease-in-out;
   }
 }
 
@@ -689,7 +689,7 @@ select {
   color: @primary;
   outline: none;
   box-sizing: border-box;
-  transition: border-color 0.2s ease;
+  transition: border-color 0.15s ease;
 
   &::placeholder {
     color: @primary-disabled;

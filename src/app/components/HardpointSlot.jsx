@@ -88,8 +88,11 @@ export default class HardpointSlot extends Slot {
       let { termtip, tooltip } = this.context;
       let validMods = Modifications.modules[m.grp] ? (Modifications.modules[m.grp].modifications || []) : [];
       let showModuleResistances = Persist.showModuleResistances();
+      // Check if module has engineering disabled (e.g., Mk II Plasma Shock Accelerator)
+      let canBeEngineered = m.engineering !== false && m.engineering !== 'False';
       // Show modifications button if there are available modifications OR if module has a blueprint/mods applied
-      let hasModifications = validMods.length > 0 || (m.blueprint && m.blueprint.name) || (m.mods && Object.keys(m.mods).length > 0);
+      // But only if engineering is not explicitly disabled for this module
+      let hasModifications = canBeEngineered && (validMods.length > 0 || (m.blueprint && m.blueprint.name) || (m.mods && Object.keys(m.mods).length > 0));
 
       // Modifications tooltip shows blueprint and grade, if available
       let modTT = translate('modified');
@@ -159,7 +162,7 @@ export default class HardpointSlot extends Slot {
                                                               onMouseOut={tooltip.bind(null, null)}><DamageAbsolute/></span> : ''}
             {classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='r'
                                                                                                         onMouseOver={termtip.bind(null, modTT)}
-                                                                                                        onMouseOut={tooltip.bind(null, null)}><Modified/></span> : null}
+                                                                                                        onMouseOut={tooltip.bind(null, null)}><Modified/>{m.blueprint && m.blueprint.grade ? <sub className='eng-grade'>{m.blueprint.grade}</sub> : null}</span> : null}
           </div>
 
           <div className={'r'}>{formats.round(m.getMass())}{u.T}</div>
