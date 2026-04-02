@@ -326,20 +326,21 @@ export function shipFromLoadoutJSON(json) {
         internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
         fighterSlotNum++;
     } else {
+        // Some ships skip internal slot indexes because military/restricted slots occupy those numbers in the journal
+        // Anaconda skips 12 and 13, Dropship skips 7 and 8, T9 skips 9 and 10, T10 skips 9 and 10, Vulture skips 4
+        if ((internalSlotNum === 11 && shipModel === 'anaconda') ||
+            (internalSlotNum === 7 && shipModel === 'federation_dropship') ||
+            (internalSlotNum === 9 && shipModel === 'type_9_heavy') ||
+            (internalSlotNum === 9 && shipModel === 'type_10_defender')) {
+          internalSlotNum += 2;
+        } else if (internalSlotNum === 4 && shipModel === 'vulture') {
+          internalSlotNum++;
+        }
+
         let internalName = 'Slot';
         if (internalSlotNum < 10) {
           internalName += '0' + internalSlotNum + '_Size' + shipTemplate.slots.internal[i];
         } else {
-            // For some reason, some ships skip internal slot indexes, so we need to check for them
-            // Anaconda skips 12 and 13, Dropship skips 7 and 8, T9 skips 9 and 10, T10 skips 9 and 10
-          if ((internalSlotNum === 11 && shipModel === 'anaconda') || (internalSlotNum === 7 && shipModel === 'federation_dropship') || (internalSlotNum === 9 && shipModel === 'type_9_heavy') || (internalSlotNum === 9 && shipModel === 'type_10_defender')) {
-            internalSlotNum++;
-            internalSlotNum++;
-          }
-          // Vulture skips 4
-          else if (internalSlotNum === 4 && shipModel === 'vulture') {
-            internalSlotNum++;
-          }
           internalName += internalSlotNum + '_Size' + shipTemplate.slots.internal[i];
         }
         internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
