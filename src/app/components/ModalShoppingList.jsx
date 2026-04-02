@@ -103,7 +103,9 @@ export default class ModalShoppingList extends TranslatedComponent {
    */
   _checkCmdrLink() {
     const link = Persist.getActiveCmdrLink();
-    if (!link) return;
+    if (!link) {
+      return;
+    }
 
     this.setState({ cmdrLinked: true });
 
@@ -121,7 +123,10 @@ export default class ModalShoppingList extends TranslatedComponent {
         b => b.shipType === shipId && b.buildName === buildName && b.linkedShip
       );
 
-      if (!linkedBuild) return;
+
+      if (!linkedBuild) {
+        return;
+      }
 
       this.setState({ buildLinked: true });
 
