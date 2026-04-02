@@ -137,14 +137,6 @@ export class Persist extends EventEmitter {
     let syncBuilds = _get(LS_KEY_SYNC_BUILDS);
     this._syncBuilds = syncBuilds === null ? false : !!syncBuilds;
 
-    let cmdrLinksData = _get(LS_KEY_CMDR_LINKS);
-    this.cmdrLinks = cmdrLinksData && typeof cmdrLinksData == 'object'
-      ? cmdrLinksData
-      : { links: [], activeIndex: -1 };
-
-    let syncBuilds = _get(LS_KEY_SYNC_BUILDS);
-    this._syncBuilds = syncBuilds === null ? false : !!syncBuilds;
-
     if (LS) {
       window.addEventListener('storage', this.onStorageChange);
     }
