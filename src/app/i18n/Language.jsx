@@ -9,7 +9,7 @@ import * as PL from './pl';
 import * as PT from './pt';
 import * as CN from './cn';
 import * as KO from './ko';
-import * as KA from './ka';
+import * as KA from './geo';
 import * as d3 from 'd3';
 
 let fallbackTerms = EN.terms;
