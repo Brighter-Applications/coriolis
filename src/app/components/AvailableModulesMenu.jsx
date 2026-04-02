@@ -467,9 +467,10 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     // Filter out any module with "unrecognised" in name or ID
     if (name.includes('unrecognised') || id.includes('unrecognised')) return false;
 
-    // Filter out specific error/placeholder modules by ID
-    // Don't use generic endsWith('z') as it filters out Guardian 5A Power Distributor (ID: 2Z)
-    if (id === '1z' || id === '0z' || id === '4m' || id === '4n') return false;
+    // Filter out specific error/placeholder modules by ID — only if they have no name
+    // (e.g. '1z' is also used by the Rocket Propelled FSD Disruptor, a valid PowerPlay module)
+    if ((id === '0z' || id === '4m' || id === '4n') && !mod.name) return false;
+    if (id === '1z' && !mod.name) return false;
 
     // Filter out modules with rating 'Z' which is used for unrecognised modules
     if (mod.rating === 'Z' && name.includes('unrecognised')) return false;
@@ -788,8 +789,9 @@ export default class AvailableModulesMenu extends TranslatedComponent {
 
     // For named modules, show the name (but shorter)
     if (mod.name) {
-      // Shorten common long names for better fit
-      let shortName = mod.name
+      // Prefer 'special' value when available as it's shorter/more concise
+      let shortName = mod.special || mod.name;
+      shortName = shortName
         .replace('Fragment Cannon', 'Frag')
         .replace('Pulse Laser', 'Pulse')
         .replace('Multi-cannon', 'MC')
@@ -1365,10 +1367,12 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       if (isBulkhead) {
         displayName = mod.name.toUpperCase();
       } else {
+        // Prefer 'special' value when available as it's shorter/more concise
+        const label = mod.special || mod.name;
         if (mod.class && mod.rating) {
-          displayName = `${mod.class}${mod.rating} ${mod.name}`.toUpperCase();
+          displayName = `${mod.class}${mod.rating} ${label}`.toUpperCase();
         } else {
-          displayName = mod.name.toUpperCase();
+          displayName = label.toUpperCase();
         }
       }
     } else {
