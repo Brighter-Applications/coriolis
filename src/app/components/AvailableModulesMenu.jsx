@@ -467,10 +467,10 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     // Filter out any module with "unrecognised" in name or ID
     if (name.includes('unrecognised') || id.includes('unrecognised')) return false;
 
-    // Filter out specific error/placeholder modules by ID — only if they have no name
+    // Filter out specific error/placeholder modules by ID — only if they have no name or ukName
     // (e.g. '1z' is also used by the Rocket Propelled FSD Disruptor, a valid PowerPlay module)
-    if ((id === '0z' || id === '4m' || id === '4n') && !mod.name) return false;
-    if (id === '1z' && !mod.name) return false;
+    if ((id === '0z') && !mod.name && !mod.ukName) return false;
+    if (id === '1z' && !mod.name && !mod.ukName) return false;
 
     // Filter out modules with rating 'Z' which is used for unrecognised modules
     if (mod.rating === 'Z' && name.includes('unrecognised')) return false;
