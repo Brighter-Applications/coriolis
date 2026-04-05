@@ -3,6 +3,7 @@ import cn from 'classnames';
 import SlotSection from './SlotSection';
 import StandardSlot from './StandardSlot';
 import Module from '../shipyard/Module';
+import * as ModuleUtils from '../shipyard/ModuleUtils';
 import * as ShipRoles from '../shipyard/ShipRoles';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 
@@ -37,10 +38,12 @@ export default class StandardSlotSection extends SlotSection {
    */
   _optimizeStandard() {
     this.selectedRefId = 'maxjump';
-    this.props.ship.useLightestStandard();
+    const ship = this.props.ship;
+    const scoFsd = ModuleUtils.findStandard('fsd', ship.standard[2].maxClass, 'A', 'Frame Shift Drive (SCO)');
+    ship.useLightestStandard(scoFsd ? { fsd: scoFsd.id } : undefined);
     this.props.onChange();
-    this.props.onCargoChange(this.props.ship.cargoCapacity);
-    this.props.onFuelChange(this.props.ship.fuelCapacity);
+    this.props.onCargoChange(ship.cargoCapacity);
+    this.props.onFuelChange(ship.fuelCapacity);
     this._close();
   }
 
