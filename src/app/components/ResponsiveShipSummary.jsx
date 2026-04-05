@@ -654,22 +654,22 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                     <span className='res-label-full'>ABS</span>
                     <span className='res-label-abbr'>ABS</span>
                   </td>
-                  <td className='res-value'>{int(ship && sgMetrics.summary > 0 ? sgMetrics.summary : 0)}<span className='unit-narrow-hide'>{u.MJ}</span></td>
+                  <td className='res-value'>{int(ship && sgMetrics.summary > 0 ? sgMetrics.summary / sgMetrics.absolute.total : 0)}<span className='unit-narrow-hide'>{u.MJ}</span></td>
                   <td className='res-label'>
                     <span className='res-label-full'>EXPL</span>
                     <span className='res-label-abbr'>EXPL</span>
                   </td>
-                  <td className='res-value'>{int(ship && sgMetrics.summary > 0 ? sgMetrics.summary / sgMetrics.explosive.base : 0)}<span className='unit-narrow-hide'>{u.MJ}</span></td>
+                  <td className='res-value'>{int(ship && sgMetrics.summary > 0 ? sgMetrics.summary / sgMetrics.explosive.total : 0)}<span className='unit-narrow-hide'>{u.MJ}</span></td>
                   <td className='res-label'>
                     <span className='res-label-full'>KIN</span>
                     <span className='res-label-abbr'>KIN</span>
                   </td>
-                  <td className='res-value'>{int(ship && sgMetrics.summary ? sgMetrics.summary / sgMetrics.kinetic.base : 0)}<span className='unit-narrow-hide'>{u.MJ}</span></td>
+                  <td className='res-value'>{int(ship && sgMetrics.summary ? sgMetrics.summary / sgMetrics.kinetic.total : 0)}<span className='unit-narrow-hide'>{u.MJ}</span></td>
                   <td className='res-label'>
                     <span className='res-label-full'>THRM</span>
                     <span className='res-label-abbr'>THRM</span>
                   </td>
-                  <td className='res-value'>{int(ship && sgMetrics.summary ? sgMetrics.summary / sgMetrics.thermal.base : 0)}<span className='unit-narrow-hide'>{u.MJ}</span></td>
+                  <td className='res-value'>{int(ship && sgMetrics.summary ? sgMetrics.summary / sgMetrics.thermal.total : 0)}<span className='unit-narrow-hide'>{u.MJ}</span></td>
                 </tr>
                 <tr>
                   <td className='label'>
