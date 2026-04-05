@@ -125,7 +125,7 @@ const HPTCAT = {
   'lasers': ['pl', 'ul', 'bl'],
   'projectiles': ['mc', 'advmc', 'c', 'fc', 'pa', 'rg'],
   'ordnance': ['mr', 'amr', 'tp', 'nl'],
-  'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp','rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'],
+  'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp', 'rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'],
   'guardian': ['gpc', 'ggc', 'gsc'],
   'mining': ['ml', 'scl', 'sdm', 'abl', 'mvr', 'pwa'],
   'system': ['hs', 'csl'],
@@ -952,6 +952,21 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       const groups = mainCategories[mainCategoryName];
 
       if (groups && groups.length > 0) {
+        // Sort groups within this category to match the defined order in HPTCAT/INTCAT
+        groups.sort((a, b) => {
+          // Check all category maps for the ordering
+          for (const catMap of [HPTCAT, INTCAT]) {
+            for (const [, groupList] of Object.entries(catMap)) {
+              const idxA = groupList.indexOf(a.groupKey);
+              const idxB = groupList.indexOf(b.groupKey);
+              if (idxA >= 0 && idxB >= 0) return idxA - idxB;
+              if (idxA >= 0) return -1;
+              if (idxB >= 0) return 1;
+            }
+          }
+          return 0;
+        });
+
         // Add main category header
         const displayCategoryName = this._getMainCategoryDisplayName(mainCategoryName);
         list.push(<div key={`main-${mainCategoryName}`} className="select-group cap">{displayCategoryName}</div>);
