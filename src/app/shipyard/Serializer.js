@@ -38,6 +38,27 @@ function standardToSchema(standard) {
 }
 
 /**
+ * Generates ship-loadout JSON Schema bulkhead object
+ * @param  {Object} bulkheads Bulkheads slot
+ * @return {Object}           JSON Schema Bulkhead
+ */
+function bulkheadToSchema(bulkheads) {
+  let o = {
+    name: BulkheadNames[bulkheads.m.index]
+  };
+
+  if (bulkheads.m.mods && Object.keys(bulkheads.m.mods).length > 0) {
+    o.modifications = bulkheads.m.mods;
+  }
+
+  if (bulkheads.m.blueprint && Object.keys(bulkheads.m.blueprint).length > 0) {
+    o.blueprint = bulkheads.m.blueprint;
+  }
+
+  return o;
+}
+
+/**
  * Generates ship-loadout JSON Schema slot object
  * @param  {Object} slot Slot model
  * @return {Object}      JSON Schema Slot
@@ -97,7 +118,7 @@ export function toDetailedBuild(buildName, ship) {
     }],
     components: {
       standard: {
-        bulkheads: BulkheadNames[ship.bulkheads.m.index],
+        bulkheads: bulkheadToSchema(ship.bulkheads),
         cargoHatch: { enabled: Boolean(ship.cargoHatch.enabled), priority: ship.cargoHatch.priority + 1 },
         powerPlant: standardToSchema(standard[0]),
         thrusters: standardToSchema(standard[1]),
