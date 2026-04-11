@@ -84,7 +84,7 @@ export const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
   'CobraMkIII': 'cobra_mk_iii',
   'CobraMkIV': 'cobra_mk_iv',
   'CobraMkV': 'cobramkv',
-  'Corsair': 'corsair',
+  'Corsair': 'imperial_corsair',
   'Cutter': 'imperial_cutter',
   'DiamondBackXL': 'diamondback_explorer',
   'DiamondBack': 'diamondback',
@@ -218,7 +218,12 @@ function _shipModelFromEDName(edName) {
  * @return {string} the Coriolis model of the ship
  */
 export function shipModelFromJson(json) {
-  return _shipModelFromEDName(json.name || json.Ship);
+  const edName = json.name || json.Ship;
+  const model = _shipModelFromEDName(edName);
+  if (model) return model;
+  // Fallback: check if the name is already a valid Coriolis ship ID (e.g. 'imperial_corsair')
+  const id = edName.toLowerCase();
+  return Ships[id] ? id : undefined;
 }
 
 /**

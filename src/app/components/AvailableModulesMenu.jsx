@@ -6,6 +6,7 @@ import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { MountFixed, MountGimballed, MountTurret, Warning, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall } from './SvgIcons';
 import ModalConfirmCG from './ModalConfirmCG';
 import Persist from '../stores/Persist';
+import Module from '../shipyard/Module';
 
 
 const PRESS_THRESHOLD = 500; // mouse/touch down threshold
@@ -124,7 +125,7 @@ const HPTCAT = {
   'lasers': ['pl', 'ul', 'bl'],
   'projectiles': ['mc', 'advmc', 'c', 'fc', 'pa', 'rg'],
   'ordnance': ['mr', 'amr', 'tp', 'nl'],
-  'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp','rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'],
+  'experimental': ['axmc', 'axmce', 'axmr', 'axmre', 'ntp', 'rfl', 'tbrfl', 'tbsc', 'tbem', 'xs', 'sfn'],
   'guardian': ['gpc', 'ggc', 'gsc'],
   'mining': ['ml', 'scl', 'sdm', 'abl', 'mvr', 'pwa'],
   'system': ['hs', 'csl'],
@@ -216,6 +217,115 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       searchQuery: ''
       // Don't override allModules - it's already in initialState
     };
+  }
+
+  /**
+   * Build tooltip content for a module, showing its stats and diff vs currently fitted module
+   * @param {Object} rawMod  The raw module data object
+   * @return {React.Component|null}
+   */
+  _buildModuleTooltip(rawMod) {
+    const { language } = this.context;
+    const { formats, translate, units } = language;
+    const { m: currentMod, diffDetails } = this.props;
+
+    const mod = new Module(rawMod);
+    const rows = [];
+
+    // Name / class+rating header — orange bg, dark brown text, matching engineering menu headings
+    const classRating = mod.class && mod.rating ? `${mod.class}${mod.rating} ` : '';
+    rows.push(<div key='name' className='cap' style={{ margin: '-0.5em -0.5em 0.4em -0.5em', padding: '0.2em 0.5em', background: '#FF8C0D', color: 'rgba(56,30,0,0.85)', textAlign: 'left', fontWeight: 'bold', textTransform: 'uppercase' }}>{classRating}{translate(mod.name || mod.grp)}</div>);
+
+    // Power
+    if (mod.grp === 'pp') {
+      const val = mod.getPowerGeneration();
+      if (val) rows.push(<div key='pgen'>{translate('pgen')}: {formats.round(val)}{units.MW}</div>);
+    } else {
+      const val = mod.getPowerUsage();
+      if (val) rows.push(<div key='power'>{translate('power')}: {formats.round(val)}{units.MW}</div>);
+    }
+
+    // Mass
+    const mass = mod.getMass();
+    if (mass) rows.push(<div key='mass'>{translate('mass')}: {formats.round(mass)}{units.T}</div>);
+
+    // Integrity
+    const integrity = mod.getIntegrity();
+    if (integrity) rows.push(<div key='integrity'>{translate('integrity')}: {formats.round(integrity)}</div>);
+
+    // Weapons stats
+    if (mod.getDps()) rows.push(<div key='dps'>{translate('DPS')}: {formats.round1(mod.getDps())}{mod.getClip() ? ` (${formats.round1(mod.getSDps())})` : ''}</div>);
+    if (mod.getDamage()) rows.push(<div key='dmg'>{translate('shotdmg')}: {formats.round1(mod.getDamage())}</div>);
+    if (mod.getEps()) rows.push(<div key='eps'>{translate('EPS')}: {formats.round1(mod.getEps())}{units.MW}</div>);
+    if (mod.getRoF()) rows.push(<div key='rof'>{translate('ROF')}: {formats.f1(mod.getRoF())}{units.ps}</div>);
+    if (mod.getRange()) rows.push(<div key='range'>{translate('range', mod.grp)}: {formats.f1(mod.getRange() / 1000)}{units.km}</div>);
+    if (mod.getFalloff()) rows.push(<div key='falloff'>{translate('falloff')}: {formats.round(mod.getFalloff() / 1000)}{units.km}</div>);
+    if (mod.getAmmo()) rows.push(<div key='ammo'>{translate('ammunition')}: {formats.int(mod.getClip())}/{formats.int(mod.getAmmo())}</div>);
+    if (mod.getReload()) rows.push(<div key='reload'>{translate('wep_reload')}: {formats.round(mod.getReload())}{units.s}</div>);
+    if (mod.getPiercing()) rows.push(<div key='piercing'>{translate('piercing')}: {formats.int(mod.getPiercing())}</div>);
+
+    // Shield booster
+    if (mod.getShieldBoost()) rows.push(<div key='shieldboost'>+{formats.pct1(mod.getShieldBoost())}</div>);
+
+    // Hull reinforcement
+    if (mod.getHullReinforcement()) rows.push(<div key='hr'>{translate('hullreinforcement')}: {formats.round(mod.getHullReinforcement())}</div>);
+
+    // Module reinforcement protection
+    if (mod.getProtection()) rows.push(<div key='prot'>{translate('protection')}: {formats.pct(mod.getProtection())}</div>);
+
+    // Power distributor
+    if (mod.grp === 'pd') {
+      rows.push(<div key='wep'>{translate('WEP')}: {mod.wepcap}{units.MJ} / {mod.weprate}{units.MW}</div>);
+      rows.push(<div key='sys'>{translate('SYS')}: {mod.syscap}{units.MJ} / {mod.sysrate}{units.MW}</div>);
+      rows.push(<div key='eng'>{translate('ENG')}: {mod.engcap}{units.MJ} / {mod.engrate}{units.MW}</div>);
+    }
+
+    // FSD
+    if (mod.grp === 'fsd') {
+      if (mod.getOptMass()) rows.push(<div key='optmass'>{translate('optmass')}: {formats.int(mod.getOptMass())}{units.T}</div>);
+      if (mod.getMaxFuelPerJump()) rows.push(<div key='maxfuel'>{translate('maxfuel')}: {formats.round(mod.getMaxFuelPerJump())}{units.T}</div>);
+    }
+
+    // Thrusters
+    if (mod.grp === 'th' || mod.grp === 't') {
+      if (mod.getMinMass()) rows.push(<div key='minmass'>{translate('minmass')}: {formats.int(mod.getMinMass())}{units.T}</div>);
+      if (mod.getOptMass()) rows.push(<div key='optmass'>{translate('optmass')}: {formats.int(mod.getOptMass())}{units.T}</div>);
+      if (mod.getMaxMass()) rows.push(<div key='maxmass'>{translate('maxmass')}: {formats.int(mod.getMaxMass())}{units.T}</div>);
+    }
+
+    // Fuel scoop / tank
+    if (mod.fuel) rows.push(<div key='fuel'>{translate('fuel')}: {mod.fuel}{units.T}</div>);
+    if (mod.cargo) rows.push(<div key='cargo'>{translate('cargo')}: {mod.cargo}{units.T}</div>);
+
+    // Scan stats
+    if (mod.getScanTime()) rows.push(<div key='scantime'>{translate('scantime')}: {formats.f1(mod.getScanTime())}{units.s}</div>);
+    if (mod.getScanAngle()) rows.push(<div key='scanangle'>{translate('scan angle')}: {formats.f2(mod.getScanAngle())}°</div>);
+
+    // Cost
+    const cost = rawMod.cost;
+    if (cost) rows.push(<div key='cost'>{translate('cost')}: {formats.int(Math.round(cost * (1 - Persist.getModuleDiscount())))}{units.CR}</div>);
+
+    if (rows.length === 0) return null;
+
+    // Diff vs currently fitted module
+    let diffContent = null;
+    if (currentMod && diffDetails && rawMod.id !== currentMod.id) {
+      try {
+        diffContent = diffDetails(rawMod, currentMod);
+      } catch (e) {
+        // diffDetails may throw if ship context is missing
+      }
+    }
+
+    return (
+      <div style={{ whiteSpace: 'nowrap', minWidth: '10em' }}>
+        {rows}
+        {diffContent && <div style={{ marginTop: '0.4em' }}>
+          <div className='cap' style={{ margin: '0 -0.5em 0.3em -0.5em', padding: '0.2em 0.5em', background: '#FF8C0D', color: 'rgba(56,30,0,0.85)', fontWeight: 'bold', textTransform: 'uppercase' }}>{translate('diff')}</div>
+          {diffContent}
+        </div>}
+      </div>
+    );
   }
 
   /**
@@ -357,9 +467,10 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     // Filter out any module with "unrecognised" in name or ID
     if (name.includes('unrecognised') || id.includes('unrecognised')) return false;
 
-    // Filter out specific error/placeholder modules by ID
-    // Don't use generic endsWith('z') as it filters out Guardian 5A Power Distributor (ID: 2Z)
-    if (id === '1z' || id === '0z' || id === '4m' || id === '4n') return false;
+    // Filter out specific error/placeholder modules by ID — only if they have no name or ukName
+    // (e.g. '1z' is also used by the Rocket Propelled FSD Disruptor, a valid PowerPlay module)
+    if ((id === '0z') && !mod.name && !mod.ukName) return false;
+    if (id === '1z' && !mod.name && !mod.ukName) return false;
 
     // Filter out modules with rating 'Z' which is used for unrecognised modules
     if (mod.rating === 'Z' && name.includes('unrecognised')) return false;
@@ -563,6 +674,11 @@ export default class AvailableModulesMenu extends TranslatedComponent {
            data-id={mod.id}
            onClick={validSlot ? this._selectModule.bind(this, onSelect, mod) : null}
            onKeyDown={validSlot ? this._keyDown.bind(this, this._selectModule.bind(this, onSelect, mod)) : null}
+           onMouseEnter={(e) => {
+             const content = this._buildModuleTooltip(mod);
+             if (content) this.context.tooltip(content, e.currentTarget.getBoundingClientRect(), { orientation: 'e' });
+           }}
+           onMouseLeave={() => this.context.tooltip(null)}
            ref={slotItem => {
              if (slotItem) {
                this.slotItems.set(mod.id, slotItem);
@@ -673,8 +789,9 @@ export default class AvailableModulesMenu extends TranslatedComponent {
 
     // For named modules, show the name (but shorter)
     if (mod.name) {
-      // Shorten common long names for better fit
-      let shortName = mod.name
+      // Prefer 'special' value when available as it's shorter/more concise
+      let shortName = mod.special || mod.name;
+      shortName = shortName
         .replace('Fragment Cannon', 'Frag')
         .replace('Pulse Laser', 'Pulse')
         .replace('Multi-cannon', 'MC')
@@ -696,6 +813,11 @@ export default class AvailableModulesMenu extends TranslatedComponent {
            data-id={mod.id}
            onClick={validSlot ? this._selectModule.bind(this, onSelect, mod) : null}
            onKeyDown={validSlot ? this._keyDown.bind(this, this._selectModule.bind(this, onSelect, mod)) : null}
+           onMouseEnter={(e) => {
+             const content = this._buildModuleTooltip(mod);
+             if (content) this.context.tooltip(content, e.currentTarget.getBoundingClientRect(), { orientation: 'e' });
+           }}
+           onMouseLeave={() => this.context.tooltip(null)}
            ref={slotItem => {
              if (slotItem) {
                this.slotItems.set(mod.id, slotItem);
@@ -830,6 +952,21 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       const groups = mainCategories[mainCategoryName];
 
       if (groups && groups.length > 0) {
+        // Sort groups within this category to match the defined order in HPTCAT/INTCAT
+        groups.sort((a, b) => {
+          // Check all category maps for the ordering
+          for (const catMap of [HPTCAT, INTCAT]) {
+            for (const [, groupList] of Object.entries(catMap)) {
+              const idxA = groupList.indexOf(a.groupKey);
+              const idxB = groupList.indexOf(b.groupKey);
+              if (idxA >= 0 && idxB >= 0) return idxA - idxB;
+              if (idxA >= 0) return -1;
+              if (idxB >= 0) return 1;
+            }
+          }
+          return 0;
+        });
+
         // Add main category header
         const displayCategoryName = this._getMainCategoryDisplayName(mainCategoryName);
         list.push(<div key={`main-${mainCategoryName}`} className="select-group cap">{displayCategoryName}</div>);
@@ -1245,10 +1382,12 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       if (isBulkhead) {
         displayName = mod.name.toUpperCase();
       } else {
+        // Prefer 'special' value when available as it's shorter/more concise
+        const label = mod.special || mod.name;
         if (mod.class && mod.rating) {
-          displayName = `${mod.class}${mod.rating} ${mod.name}`.toUpperCase();
+          displayName = `${mod.class}${mod.rating} ${label}`.toUpperCase();
         } else {
-          displayName = mod.name.toUpperCase();
+          displayName = label.toUpperCase();
         }
       }
     } else {
@@ -1270,6 +1409,11 @@ export default class AvailableModulesMenu extends TranslatedComponent {
            data-id={mod.id}
            onClick={validSlot ? this._selectModule.bind(this, onSelect, mod) : null}
            onKeyDown={validSlot ? this._keyDown.bind(this, this._selectModule.bind(this, onSelect, mod)) : null}
+           onMouseEnter={(e) => {
+             const content = this._buildModuleTooltip(mod);
+             if (content) this.context.tooltip(content, e.currentTarget.getBoundingClientRect(), { orientation: 'e' });
+           }}
+           onMouseLeave={() => this.context.tooltip(null)}
            ref={slotItem => {
              if (slotItem) {
                this.slotItems.set(mod.id, slotItem);
