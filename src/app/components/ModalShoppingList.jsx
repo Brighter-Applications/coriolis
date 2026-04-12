@@ -229,6 +229,66 @@ export default class ModalShoppingList extends TranslatedComponent {
   }
 
   /**
+   * Map from Coriolis standard-slot index to the EDMC / journal slot name.
+   */
+  static STANDARD_SLOT_NAMES = [
+    'PowerPlant',        // standard[0]
+    'MainEngines',       // standard[1]
+    'FrameShiftDrive',   // standard[2]
+    'LifeSupport',       // standard[3]
+    'PowerDistributor',  // standard[4]
+    'Radar',             // standard[5]  (Sensors)
+    'FuelTank',          // standard[6]
+  ];
+
+  /**
+   * Determine the EDMC / journal slot name for a given costList entry.
+   * Returns null if the slot cannot be identified.
+   * @param {Object} slot  An entry from ship.costList
+   * @return {string|null}
+   */
+  _resolveSlotName(slot) {
+    const ship = this.props.ship;
+
+    // Bulkheads
+    if (slot === ship.bulkheads) return 'Armour';
+
+    // Standard modules (PowerPlant, Thrusters, FSD, LifeSupport, etc.)
+    const stdIdx = ship.standard ? ship.standard.indexOf(slot) : -1;
+    if (stdIdx !== -1 && stdIdx < ModalShoppingList.STANDARD_SLOT_NAMES.length) {
+      return ModalShoppingList.STANDARD_SLOT_NAMES[stdIdx];
+    }
+
+    // Internal & hardpoint slots have an .id like "Slot01_Size5"
+    // EDMC uses the journal slot name which follows a different convention,
+    // so we fall back to null and let the caller use item-name matching.
+    return null;
+  }
+
+  /**
+   * Extract engineering state from a current-ship loadout entry.
+   * Works with both EDMC format and Companion API format.
+   * @param {Object} slotData  A single loadout entry
+   * @return {{ blueprint: string|null, grade: number, experimental: string|null }}
+   */
+  static _extractEngineering(slotData) {
+    const eng = slotData.engineering || slotData.engineer;
+    if (!eng) return { blueprint: null, grade: 0, experimental: null };
+
+    const blueprint = eng.blueprintName || eng.recipeName || null;
+    const grade = eng.level || eng.recipeLevel || 0;
+
+    let experimental = null;
+    if (eng.experimentalEffect) {
+      experimental = eng.experimentalEffect;
+    } else if (slotData.specialModifications && slotData.specialModifications.length > 0) {
+      experimental = Object.keys(slotData.specialModifications[0])[0];
+    }
+
+    return { blueprint, grade, experimental };
+  }
+
+  /**
    * Calculate materials needed only for modules that differ between target and current ship.
    * @param {Object} linkedShip  Ship data from CMDR API (optional)
    * @return {Object} Materials needed { materialName: count }
@@ -242,39 +302,42 @@ export default class ModalShoppingList extends TranslatedComponent {
       return this.state.mats;
     }
 
-    // Build a lookup of current modules by their FD name (symbol)
-    // Store as arrays to handle duplicate modules (multiple of the same type)
-    const currentModules = {};
+    // Build TWO lookups of the current ship's loadout:
+    //   1. bySlot  — keyed by EDMC slot name (e.g. "Armour", "LifeSupport")
+    //   2. byItem  — keyed by FD item name, as arrays (for duplicate modules)
+    const bySlot = {};
+    const byItem = {};
     const loadout = linkedShip.loadout;
 
-    // Handle both array format (EDMC) and object format (Companion API)
     if (Array.isArray(loadout)) {
       // EDMC format: array of {slot, item, engineering, ...}
       for (const slotData of loadout) {
-        if (slotData && slotData.item) {
-          const fdName = slotData.item.toLowerCase();
-          if (!currentModules[fdName]) {
-            currentModules[fdName] = [];
-          }
-          currentModules[fdName].push(slotData);
+        if (!slotData) continue;
+        if (slotData.slot) {
+          bySlot[slotData.slot.toLowerCase()] = slotData;
+        }
+        if (slotData.item) {
+          const key = slotData.item.toLowerCase();
+          if (!byItem[key]) byItem[key] = [];
+          byItem[key].push(slotData);
         }
       }
-    } else {
+    } else if (loadout && typeof loadout === 'object') {
       // Companion API format: {slotName: {module: {name, ...}}}
       for (const slotName in loadout) {
         const slot = loadout[slotName];
-        if (slot && slot.module) {
-          const fdName = slot.module.name.toLowerCase();
-          if (!currentModules[fdName]) {
-            currentModules[fdName] = [];
-          }
-          currentModules[fdName].push(slot);
+        if (!slot) continue;
+        bySlot[slotName.toLowerCase()] = slot;
+        if (slot.module && slot.module.name) {
+          const key = slot.module.name.toLowerCase();
+          if (!byItem[key]) byItem[key] = [];
+          byItem[key].push(slot);
         }
       }
     }
 
-    // Track which current modules have been matched (to handle duplicates)
-    const matchedIndices = {};
+    // Track which byItem entries have been consumed (for duplicate handling)
+    const matchedItemIndices = {};
 
     // Iterate through target build modules and compare
     let matchCount = 0;
@@ -284,73 +347,61 @@ export default class ModalShoppingList extends TranslatedComponent {
       if (!module.m || !module.m.blueprint) continue;
       if (!module.m.blueprint.grade || !module.m.blueprint.grades) continue;
 
-      // Find corresponding current module(s)
-      const fdName = module.m.symbol ? module.m.symbol.toLowerCase() : null;
-      const currentSlots = fdName ? currentModules[fdName] : null;
-
-      // Find the current state of this module
+      // --- Locate the corresponding module in the current ship ---
       let currentSlot = null;
-      let currentEngineering = null;
-      let currentBlueprint = null;
-      let currentGrade = 0;
-      let currentExperimental = null;
 
-      if (currentSlots && currentSlots.length > 0) {
-        // Initialize tracking for this module type if needed
-        if (!matchedIndices[fdName]) {
-          matchedIndices[fdName] = new Set();
-        }
+      // Strategy 1: Match by slot name (reliable for standard modules & bulkheads)
+      const slotName = this._resolveSlotName(module);
+      if (slotName) {
+        currentSlot = bySlot[slotName.toLowerCase()] || null;
+      }
 
-        // Find an unmatched module of this type
-        for (let i = 0; i < currentSlots.length; i++) {
-          if (matchedIndices[fdName].has(i)) continue;
-
-          currentSlot = currentSlots[i];
-          matchedIndices[fdName].add(i);
-
-          // Extract current engineering state
-          currentEngineering = currentSlot.engineering || currentSlot.engineer;
-          if (currentEngineering) {
-            currentBlueprint = currentEngineering.blueprintName || currentEngineering.recipeName;
-            currentGrade = currentEngineering.level || currentEngineering.recipeLevel || 0;
-
-            if (currentEngineering.experimentalEffect) {
-              currentExperimental = currentEngineering.experimentalEffect;
-            } else if (currentSlot.specialModifications && currentSlot.specialModifications.length > 0) {
-              currentExperimental = Object.keys(currentSlot.specialModifications[0])[0];
-            }
+      // Strategy 2: Fall back to matching by FD item name (for internals & hardpoints)
+      if (!currentSlot && module.m.symbol) {
+        const fdName = module.m.symbol.toLowerCase();
+        const candidates = byItem[fdName];
+        if (candidates && candidates.length > 0) {
+          if (!matchedItemIndices[fdName]) matchedItemIndices[fdName] = new Set();
+          for (let i = 0; i < candidates.length; i++) {
+            if (matchedItemIndices[fdName].has(i)) continue;
+            currentSlot = candidates[i];
+            matchedItemIndices[fdName].add(i);
+            break;
           }
-          break;
         }
       }
+
+      // Extract current engineering state
+      const current = currentSlot
+        ? ModalShoppingList._extractEngineering(currentSlot)
+        : { blueprint: null, grade: 0, experimental: null };
 
       const targetBlueprint = module.m.blueprint.fdname;
       const targetGrade = module.m.blueprint.grade;
       const targetExperimental = module.m.blueprint.special ? module.m.blueprint.special.edname : null;
 
       // Determine what materials are needed based on current vs target state
-      let startGrade = 1; // Default: start from grade 1
+      let startGrade = 1;
       let needExperimental = false;
 
-      if (!currentEngineering) {
-        // Case: No engineering on current module → need everything
+      if (!current.blueprint) {
+        // No engineering on current module → need everything
         startGrade = 1;
         needExperimental = !!targetExperimental;
-      } else if (currentBlueprint !== targetBlueprint) {
-        // Case 1: Blueprint TYPE changed → start from scratch (grade 1), experimental is wiped
+      } else if (current.blueprint !== targetBlueprint) {
+        // Blueprint type changed → start from scratch
         startGrade = 1;
         needExperimental = !!targetExperimental;
-      } else if (currentGrade < targetGrade) {
-        // Case 2: Same blueprint, GRADE increased → only need missing grades
-        startGrade = currentGrade + 1;
-        // Experimental: need it if different or missing
-        needExperimental = targetExperimental !== currentExperimental;
-      } else if (currentGrade === targetGrade && currentExperimental !== targetExperimental) {
-        // Case 3: Same blueprint, same grade, different/missing experimental
-        startGrade = targetGrade + 1; // Don't calculate any blueprint grades
+      } else if (current.grade < targetGrade) {
+        // Same blueprint, grade increased → only need missing grades
+        startGrade = current.grade + 1;
+        needExperimental = targetExperimental !== current.experimental;
+      } else if (current.grade === targetGrade && current.experimental !== targetExperimental) {
+        // Same blueprint & grade, different experimental
+        startGrade = targetGrade + 1; // Skip blueprint grades
         needExperimental = !!targetExperimental;
       } else {
-        // Case 4: Everything matches
+        // Everything matches
         matchCount++;
         continue;
       }
