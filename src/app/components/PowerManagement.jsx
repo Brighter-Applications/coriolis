@@ -126,7 +126,6 @@ export default class PowerManagement extends TranslatedComponent {
         }
 
         // If this is a Guardian Shield Reinforcement Package or Guardian Hull Reinforcement Package, or Guardian Module Reinforcement Package, it cannot change priority
-        console.log(slot);
         let priorityField;
         if (m.symbol) {
           if (m.symbol.match(/GuardianShield/i) || m.symbol.match(/GuardianHull/i) || m.symbol.match(/GuardianModule/i)) {
@@ -171,7 +170,7 @@ export default class PowerManagement extends TranslatedComponent {
   /**
    * Add listeners when about to mount and sort power list
    */
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     this._sort(this.props.ship, this.state.predicate, this.state.desc);
     this.resizeListener = this.context.onWindowResize(this._updateWidth);
   }
@@ -188,7 +187,7 @@ export default class PowerManagement extends TranslatedComponent {
    * @param  {Object} nextProps   Incoming/Next properties
    * @param  {Object} nextState   Incoming/Next state
    */
-  componentWillUpdate(nextProps, nextState) {
+  UNSAFE_componentWillUpdate(nextProps, nextState) {
     if (this.props.ship != nextProps.ship) {
       this._sort(nextProps.ship, nextState.predicate, nextState.desc);
     }

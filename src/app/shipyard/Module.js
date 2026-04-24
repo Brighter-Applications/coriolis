@@ -44,6 +44,11 @@ export default class Module {
     let baseVal = this[name];
     let result = this.mods  && this.mods[name] ? this.mods[name] : null;
 
+    // DEBUG for EPT
+    if (this.name === 'Enhanced Performance' && (name === 'minmass' || name === 'maxmass' || name === 'optmass')) {
+      console.log(`getModValue(${name}):`, 'this.mods=', this.mods, 'this.mods[' + name + ']=', this.mods ? this.mods[name] : 'N/A', 'result=', result);
+    }
+
     if ((!raw) && this.blueprint && this.blueprint.special) {
       // This module has a special effect, see if we need to alter our returned value
       const modifierActions = Modifications.modifierActions[this.blueprint.special.edname];
@@ -65,7 +70,7 @@ export default class Module {
     }
 
     // Sanitise the resultant value to 4dp equivalent
-    return isNaN(result) ? result : Math.round(result);
+    return (result == null || isNaN(result)) ? result : Math.round(result);
   }
 
   /**
@@ -673,21 +678,14 @@ export default class Module {
   }
 
   /**
-   * Get the minimum mass for this module
+   * Get the minimum mass for this module.
+   * If no direct minmass modifier exists, inherits the optmass modifier
+   * (related modifier pattern, matching EDSY's getRelatedAttrModifier).
    * @param {Boolean} [modified=true] Whether to take modifications into account
    * @return {Number} the minimum mass of this module
    */
   getMinMass(modified = true) {
-    // Modifier is optmass
-    let result = 0;
-    if (this['minmass']) {
-      result = this['minmass'];
-      if (result && modified) {
-        let mult = this.getModValue('optmass') / 10000;
-        if (mult) { result = result * (1 + mult); }
-      }
-    }
-    return result;
+    return this._getMassWithRelatedModifier('minmass', modified);
   }
 
   /**
@@ -700,18 +698,73 @@ export default class Module {
   }
 
   /**
-   * Get the maximum mass for this module
+   * Get the maximum mass for this module.
+   * If no direct maxmass modifier exists, inherits the optmass modifier
+   * (related modifier pattern, matching EDSY's getRelatedAttrModifier).
    * @param {Boolean} [modified=true] Whether to take modifications into account
    * @return {Number} the maximum mass of this module
    */
   getMaxMass(modified = true) {
-    // Modifier is optmass
-    let result = 0;
-    if (this['maxmass']) {
-      result = this['maxmass'];
-      if (result && modified && !ModuleUtils.isShieldGenerator(this['grp'])) {
-        let mult = this.getModValue('optmass') / 10000;
-        if (mult) { result = result * (1 + mult); }
+    return this._getMassWithRelatedModifier('maxmass', modified);
+  }
+
+  /**
+   * Helper for getMinMass/getMaxMass: applies the related modifier pattern.
+   * When engineering modifies optmass but not minmass/maxmass directly,
+   * the optmass modifier is inherited, matching EDSY's behavior where
+   * engminmass/engmaxmass inherit the engoptmass modifier.
+   * @param {String} name 'minmass' or 'maxmass'
+   * @param {Boolean} modified Whether to take modifications into account
+   * @return {Number} the mass value
+   * @private
+   */
+  _getMassWithRelatedModifier(name, modified) {
+    let result = this[name];
+    if (result == null || isNaN(result)) {
+      return null;
+    }
+    if (modified) {
+      // Check for a direct modifier on this mass property
+      let mod = this.getModValue(name);
+
+      // DEBUG
+      if (this.name === 'Enhanced Performance') {
+        console.log(`_getMassWithRelatedModifier(${name}):`, 'base=', this[name], 'direct mod=', mod);
+      }
+
+      if (mod == null || isNaN(mod)) {
+        // No direct modifier; inherit from optmass (related modifier).
+        // For shield generators, optmass only affects minmass (always) and maxmass (only when positive).
+        // This matches the in-game behaviour where a negative optmass mod shrinks the min end of the
+        // mass curve but leaves the max end unchanged.
+        const isShield = this.grp === 'sg' || this.grp === 'bsg' || this.grp === 'psg';
+        if (isShield) {
+          const optmassMod = this.getModValue('optmass');
+          if (optmassMod != null && !isNaN(optmassMod)) {
+            if (name === 'minmass') {
+              mod = optmassMod;
+            } else if (name === 'maxmass' && optmassMod > 0) {
+              mod = optmassMod;
+            }
+            // else: maxmass with negative optmass → no modification
+          }
+        } else {
+          mod = this.getModValue('optmass');
+        }
+
+        // DEBUG
+        if (this.name === 'Enhanced Performance') {
+          console.log(`  No direct ${name} mod, inheriting from optmass:`, mod);
+        }
+      }
+      if (mod != null && !isNaN(mod)) {
+        // optmass is a percentage type, stored scaled by 10000
+        result = result * (1 + mod / 10000);
+
+        // DEBUG
+        if (this.name === 'Enhanced Performance') {
+          console.log(`  Modified ${name}:`, this[name], '* (1 +', mod, '/ 10000) =', result);
+        }
       }
     }
     return result;
@@ -726,8 +779,9 @@ export default class Module {
   getMinMul(type = null, modified = true) {
     // Modifier is optmul
     let result = 0;
-    if (this['minmul' + type]) {
-      result = this['minmul' + type];
+    const propName = 'minmul' + (type || '');
+    if (type && this[propName]) {
+      result = this[propName];
     } else if (this['minmul']) {
       result = this['minmul'];
     }
@@ -747,8 +801,9 @@ export default class Module {
   getOptMul(type = null, modified = true) {
     // Modifier is optmul
     let result = 0;
-    if (this['optmul' + type]) {
-      result = this['optmul' + type];
+    const propName = 'optmul' + (type || '');
+    if (type && this[propName]) {
+      result = this[propName];
     } else if (this['optmul']) {
       result = this['optmul'];
     }
@@ -756,6 +811,13 @@ export default class Module {
       let mult = this.getModValue('optmul') / 10000;
       if (mult) { result = result * (1 + mult); }
     }
+
+    // DEBUG for EPT
+    if (this.name === 'Enhanced Performance' && type === 'speed') {
+      const multVal = this.getModValue('optmul');
+      console.log(`getOptMul('speed'):`, 'base=', this[propName] || this['optmul'], 'mod=', multVal, 'result=', result);
+    }
+
     return result;
   }
 
@@ -768,15 +830,19 @@ export default class Module {
   getMaxMul(type = null, modified = true) {
     // Modifier is optmul
     let result = 0;
-    if (this['maxmul' + type]) {
-      result = this['maxmul' + type];
+    const propName = 'maxmul' + (type || '');
+
+    if (type && this[propName]) {
+      result = this[propName];
     } else if (this['maxmul']) {
       result = this['maxmul'];
     }
+
     if (result && modified) {
       let mult = this.getModValue('optmul') / 10000;
       if (mult) { result = result * (1 + mult); }
     }
+
     return result;
   }
 
@@ -927,8 +993,9 @@ export default class Module {
     const burst = this.get('burst', modified) || 1;
     const burstRoF = this.get('burstrof', modified) || 1;
     const intRoF = this.get('rof', modified);
+    const charge = this.get('charge', modified) || 0;
 
-    return burst / (((burst - 1) / burstRoF) + 1 / intRoF);
+    return burst / (((burst - 1) / burstRoF) + 1 / intRoF + charge);
   }
 
   /**

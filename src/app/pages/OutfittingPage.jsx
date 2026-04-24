@@ -6,8 +6,9 @@ import Router from '../Router';
 import Persist from '../stores/Persist';
 import * as Utils from '../utils/UtilityFunctions';
 import Ship from '../shipyard/Ship';
+import { getDefaultEdIDs } from '../shipyard/ModuleUtils';
 import * as _ from 'lodash';
-import { toDetailedBuild } from '../shipyard/Serializer';
+import { toDetailedBuild, toSLEF } from '../shipyard/Serializer';
 import { outfitURL } from '../utils/UrlGenerators';
 import {
   FloppyDisk,
@@ -18,9 +19,11 @@ import {
   LinkIcon,
   ShoppingIcon,
   MatIcon,
+  PersonIcon,
 } from '../components/SvgIcons';
 import LZString from 'lz-string';
 import ShipSummaryTable from '../components/ShipSummaryTable';
+import ResponsiveShipSummary from '../components/ResponsiveShipSummary';
 import StandardSlotSection from '../components/StandardSlotSection';
 import HardpointSlotSection from '../components/HardpointSlotSection';
 import InternalSlotSection from '../components/InternalSlotSection';
@@ -35,6 +38,8 @@ import OutfittingSubpages from '../components/OutfittingSubpages';
 import ModalExport from '../components/ModalExport';
 import ModalPermalink from '../components/ModalPermalink';
 import ModalShoppingList from '../components/ModalShoppingList';
+import ModalBuildLink from '../components/ModalBuildLink';
+import { syncSingleBuild } from '../utils/BuildSync';
 
 /**
  * Document Title Generator
@@ -66,6 +71,10 @@ export default class OutfittingPage extends Page {
     this._fuelUpdated = this._fuelUpdated.bind(this);
     this._opponentUpdated = this._opponentUpdated.bind(this);
     this._engagementRangeUpdated = this._engagementRangeUpdated.bind(this);
+    this._toggleSummaryView = this._toggleSummaryView.bind(this);
+    this._toggleStatBar = this._toggleStatBar.bind(this);
+    this._toggleOutfitting = this._toggleOutfitting.bind(this);
+    this._saveToCmdr = this._saveToCmdr.bind(this);
     this._sectionMenuRefs = {};
   }
 
@@ -112,6 +121,10 @@ export default class OutfittingPage extends Page {
       opponentWep,
       engagementRange
     } = this._obtainControlFromCode(ship, code);
+
+    // Get summary view preference from localStorage, default to responsive (true)
+    const useResponsiveSummary = localStorage.getItem('summaryView') !== 'classic';
+
     return {
       error: null,
       title: this._getTitle(buildName),
@@ -136,7 +149,10 @@ export default class OutfittingPage extends Page {
       opponentSys,
       opponentEng,
       opponentWep,
-      engagementRange
+      engagementRange,
+      useResponsiveSummary,
+      statBarCollapsed: false,
+      outfittingCollapsed: false
     };
   }
 
@@ -425,6 +441,14 @@ export default class OutfittingPage extends Page {
     Persist.saveBuild(shipId, newBuildName, code);
     this._updateRoute(shipId, newBuildName, code);
 
+    // Auto-sync to cmdr.coriolis.io if enabled
+    if (Persist.syncBuilds()) {
+      const link = Persist.getActiveCmdrLink();
+      if (link) {
+        syncSingleBuild(link, shipId, newBuildName, code);
+      }
+    }
+
     let opponent, opponentBuild, opponentSys, opponentEng, opponentWep;
     if (
       shipId === this.state.opponent.id &&
@@ -469,6 +493,15 @@ export default class OutfittingPage extends Page {
       Persist.deleteBuild(shipId, buildName);
       Persist.saveBuild(shipId, newBuildName, code);
       this._updateRoute(shipId, newBuildName, code);
+
+      // Auto-sync renamed build to cmdr.coriolis.io if enabled
+      if (Persist.syncBuilds()) {
+        const link = Persist.getActiveCmdrLink();
+        if (link) {
+          syncSingleBuild(link, shipId, newBuildName, code);
+        }
+      }
+
       this.setState({
         buildName: newBuildName,
         code,
@@ -560,9 +593,35 @@ export default class OutfittingPage extends Page {
       <ModalExport
         title={(buildName || ship.name) + ' ' + translate('export')}
         description={translate('PHRASE_EXPORT_DESC')}
-        data={toDetailedBuild(buildName, ship, ship.toString())}
+        formats={[
+          {
+            name: 'JSON',
+            data: toDetailedBuild(buildName, ship, ship.toString())
+          },
+          {
+            name: 'SLEF',
+            data: toSLEF(buildName, ship)
+          }
+        ]}
       />
     );
+  }
+
+  /**
+   * Toggle between responsive and classic summary views
+   */
+  _toggleSummaryView() {
+    const newValue = !this.state.useResponsiveSummary;
+    localStorage.setItem('summaryView', newValue ? 'responsive' : 'classic');
+    this.setState({ useResponsiveSummary: newValue });
+  }
+
+  _toggleStatBar() {
+    this.setState({ statBarCollapsed: !this.state.statBarCollapsed });
+  }
+
+  _toggleOutfitting() {
+    this.setState({ outfittingCollapsed: !this.state.outfittingCollapsed });
   }
 
   /**
@@ -648,7 +707,7 @@ export default class OutfittingPage extends Page {
    * @param  {Object} nextProps   Incoming/Next properties
    * @param  {Object} nextContext Incoming/Next conext
    */
-  componentWillReceiveProps(nextProps, nextContext) {
+  UNSAFE_componentWillReceiveProps(nextProps, nextContext) {
     if (this.context.route !== nextContext.route) {
       // Only reinit state if the route has changed
       this.setState(this._initState(nextProps, nextContext));
@@ -658,7 +717,7 @@ export default class OutfittingPage extends Page {
   /**
    * Add listeners when about to mount
    */
-  componentWillMount() {
+  UNSAFE_componentWillMount() {
     document.addEventListener('keydown', this._keyDown);
   }
 
@@ -682,17 +741,18 @@ export default class OutfittingPage extends Page {
   _inaraShoppingList() {
     const ship = this.state.ship;
 
-    const shipId = Ships[ship.id].eddbID;
-    // Provide unique list of non-PP module EDDB IDs
+    const shipId = Ships[ship.id].edID;
+    const defaultEdIDs = getDefaultEdIDs(ship.id);
+    // Provide unique list of non-PP, non-default module Frontier IDs (edID)
     const modIds = ship.internal
       .concat(ship.bulkheads, ship.standard, ship.hardpoints)
-      .filter(slot => slot !== null && slot.m !== null && !slot.m.pp)
-      .map(slot => slot.m.eddbID)
+      .filter(slot => slot !== null && slot.m !== null && !slot.m.pp && slot.m.edID && !defaultEdIDs.has(slot.m.edID))
+      .map(slot => slot.m.edID)
       .filter((v, i, a) => a.indexOf(v) === i);
 
     // Open up the relevant URL
     window.open(
-      'https://inara.cz/inapi/corisearch.php?s=' + shipId + '&m=' + modIds.join(',')
+      'https://inara.cz/inapi/outfitsearch.php?s=' + shipId + '&m=' + modIds.join(',')
     );
   }
 
@@ -703,6 +763,24 @@ export default class OutfittingPage extends Page {
     this.context.showModal(<ModalShoppingList
       ship={this.state.ship}
       buildName={this.state.buildName} />);
+  }
+
+  /**
+   * Open ModalBuildLink to save/link this build to cmdr-coriolis
+   */
+  _saveToCmdr() {
+    const { ship, shipId, buildName } = this.state;
+    const code = ship.toString();
+    const url = window.location.href;
+    this.context.showModal(
+      <ModalBuildLink
+        shipId={shipId}
+        shipDisplayName={ship.name}
+        buildName={buildName}
+        code={code}
+        url={url}
+      />
+    );
   }
 
   /**
@@ -862,6 +940,7 @@ export default class OutfittingPage extends Page {
               placeholder={translate('Enter Name')}
               maxLength={50}
             />
+            <div className="build-actions">
             <button
               onClick={canSave && this._saveBuild}
               disabled={!canSave}
@@ -934,21 +1013,70 @@ export default class OutfittingPage extends Page {
             >
               <MatIcon className="lg" />
             </button>
+            <button
+              className={(!Persist.getActiveCmdrLink() || !savedCode || !Persist.hasBuilds()) ? 'disabled' : ''}
+              onClick={Persist.getActiveCmdrLink() && savedCode && Persist.hasBuilds() && this._saveToCmdr}
+              disabled={!Persist.getActiveCmdrLink() || !savedCode || !Persist.hasBuilds()}
+              onMouseOver={termtip.bind(
+                null,
+                !Persist.getActiveCmdrLink()
+                  ? 'link a CMDR account first'
+                  : !savedCode || !Persist.hasBuilds()
+                    ? 'name and save the build first'
+                    : 'save build to CMDR Coriolis'
+              )}
+              onMouseOut={hide}
+            >
+              <PersonIcon className="lg" />
+            </button>
+            </div>
           </div>
         </div>
 
-        {/* Main tables */}
-        <ShipSummaryTable
-          ship={ship}
-          fuel={fuel}
-          cargo={cargo}
-          marker={shipSummaryMarker}
-          pips={{
-            sys: this.state.sys,
-            wep: this.state.wep,
-            eng: this.state.eng
-          }}
-        />
+        {/* Summary view toggle */}
+        <div className="summary-toggle">
+          {this.state.useResponsiveSummary && <div className="text-toggle" onClick={this._toggleStatBar}>
+            {this.state.statBarCollapsed ? '▼ ' + translate('Expand Stat Bar') + ' ▼' : '▲ ' + translate('Collapse Stat Bar') + ' ▲'}
+          </div>}
+          <div className="text-toggle" onClick={this._toggleSummaryView}>
+            {this.state.useResponsiveSummary ? '◀ ' + translate('Switch to Classic View') : translate('Switch to Responsive View') + ' ▶'}
+          </div>
+        </div>
+
+        {/* Main tables - conditional rendering based on view preference */}
+        {this.state.useResponsiveSummary ? (
+          <ResponsiveShipSummary
+            ship={ship}
+            fuel={fuel}
+            cargo={cargo}
+            marker={shipSummaryMarker}
+            collapsed={this.state.statBarCollapsed}
+            pips={{
+              sys: this.state.sys,
+              wep: this.state.wep,
+              eng: this.state.eng
+            }}
+          />
+        ) : (
+          <ShipSummaryTable
+            ship={ship}
+            fuel={fuel}
+            cargo={cargo}
+            marker={shipSummaryMarker}
+            pips={{
+              sys: this.state.sys,
+              wep: this.state.wep,
+              eng: this.state.eng
+            }}
+          />
+        )}
+
+        {/* Outfitting toggle */}
+        <div className={this.state.outfittingCollapsed ? 'outfitting-toggle pulse' : 'outfitting-toggle'} onClick={this._toggleOutfitting}>
+          {this.state.outfittingCollapsed ? '▼ Show Outfitting ▼' : '▲ Hide Outfitting ▲'}
+        </div>
+
+        {!this.state.outfittingCollapsed && <div className="outfitting-sections">
         <StandardSlotSection
           ship={ship}
           fuel={fuel}
@@ -987,40 +1115,43 @@ export default class OutfittingPage extends Page {
           currentMenu={menu}
           sectionMenuRefs={this._sectionMenuRefs}
         />
+        </div>}
 
         {/* Control of ship and opponent */}
-        <div className="group quarter">
-          <div className="group half">
-            <h2 style={{ verticalAlign: 'middle', textAlign: 'left' }}>
-              {translate('ship control')}
-            </h2>
+        <div className="ship-control-row">
+          <div className="group quarter">
+            <div className="group half">
+              <h2 style={{ verticalAlign: 'middle', textAlign: 'left' }}>
+                {translate('ship control')}
+              </h2>
+            </div>
+            <div className="group half">
+              <Boost
+                marker={boostMarker}
+                ship={ship}
+                boost={boost}
+                onChange={this._boostUpdated}
+              />
+            </div>
           </div>
-          <div className="group half">
-            <Boost
-              marker={boostMarker}
-              ship={ship}
-              boost={boost}
-              onChange={this._boostUpdated}
+          <div className="group quarter">
+            <Pips
+              sys={sys}
+              eng={eng}
+              wep={wep}
+              mcSys={mcSys}
+              mcEng={mcEng}
+              mcWep={mcWep}
+              onChange={this._pipsUpdated}
             />
           </div>
-        </div>
-        <div className="group quarter">
-          <Pips
-            sys={sys}
-            eng={eng}
-            wep={wep}
-            mcSys={mcSys}
-            mcEng={mcEng}
-            mcWep={mcWep}
-            onChange={this._pipsUpdated}
-          />
-        </div>
-        <div className="group quarter">
-          <Fuel
-            fuelCapacity={ship.fuelCapacity}
-            fuel={fuel}
-            onChange={this._fuelUpdated}
-          />
+          <div className="group quarter">
+            <Fuel
+              fuelCapacity={ship.fuelCapacity}
+              fuel={fuel}
+              onChange={this._fuelUpdated}
+            />
+          </div>
         </div>
         <div className="group quarter">
           {ship.cargoCapacity > 0 ? (

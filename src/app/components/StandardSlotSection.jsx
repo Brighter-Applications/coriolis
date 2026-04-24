@@ -3,6 +3,7 @@ import cn from 'classnames';
 import SlotSection from './SlotSection';
 import StandardSlot from './StandardSlot';
 import Module from '../shipyard/Module';
+import * as ModuleUtils from '../shipyard/ModuleUtils';
 import * as ShipRoles from '../shipyard/ShipRoles';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 
@@ -37,10 +38,12 @@ export default class StandardSlotSection extends SlotSection {
    */
   _optimizeStandard() {
     this.selectedRefId = 'maxjump';
-    this.props.ship.useLightestStandard();
+    const ship = this.props.ship;
+    const scoFsd = ModuleUtils.findStandard('fsd', ship.standard[2].maxClass, 'A', 'Frame Shift Drive (SCO)');
+    ship.useLightestStandard(scoFsd ? { fsd: scoFsd.id } : undefined);
     this.props.onChange();
-    this.props.onCargoChange(this.props.ship.cargoCapacity);
-    this.props.onFuelChange(this.props.ship.fuelCapacity);
+    this.props.onCargoChange(ship.cargoCapacity);
+    this.props.onFuelChange(ship.fuelCapacity);
     this._close();
   }
 
@@ -162,7 +165,7 @@ export default class StandardSlotSection extends SlotSection {
       selected={currentMenu == st[0]}
       onChange={this.props.onChange}
       ship={ship}
-      warning={m => m instanceof Module ? m.getPowerGeneration() < ship.powerRetracted : m.pgen < ship.powerRetracted}
+      warning={m => m instanceof Module ? m.getPowerGeneration() <= ship.powerRetracted : m.pgen <= ship.powerRetracted}
     />;
 
     slots[2] = <StandardSlot
@@ -174,7 +177,7 @@ export default class StandardSlotSection extends SlotSection {
       selected={currentMenu == st[1]}
       onChange={this.props.onChange}
       ship={ship}
-      warning={m => m instanceof Module ? m.getMaxMass() < (ship.unladenMass + cargo + fuel - st[1].m.mass + m.mass) : m.maxmass < (ship.unladenMass + cargo + fuel - st[1].m.mass + m.mass)}
+      warning={m => m instanceof Module ? m.getMaxMass() < (ship.ladenMass - st[1].m.getMass() + m.getMass()) : m.maxmass < (ship.ladenMass - st[1].m.getMass() + (m.mass || 0))}
     />;
 
 
@@ -247,17 +250,49 @@ export default class StandardSlotSection extends SlotSection {
     let planetaryDisabled = this.props.ship.internal.length < 4;
     return <div className='select' onClick={(e) => e.stopPropagation()} onContextMenu={stopCtxPropagation}>
       <ul>
-        <li className='lc' tabIndex="0" onClick={this._optimizeStandard} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['maxjump'] = smRef}>{translate('Maximize Jump Range')}</li>
+        <li className='lc' tabIndex="0" onClick={this._optimizeStandard} onKeyDown={this._keyDown} ref={smRef => {
+          if (smRef) {
+            this.sectionRefMap.set('maxjump', smRef);
+          }
+        }}>{translate('Maximize Jump Range')}</li>
       </ul>
       <div className='select-group cap'>{translate('roles')}</div>
       <ul>
-        <li className='lc' tabIndex="0" onClick={this._multiPurpose.bind(this, false, 0)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['multipurpose'] = smRef}>{translate('Multi-purpose')}</li>
-        <li className='lc' tabIndex="0" onClick={this._multiPurpose.bind(this, true, 2)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['combat'] = smRef}>{translate('Combat')}</li>
-        <li className='lc' tabIndex="0" onClick={this._optimizeCargo.bind(this, true)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['trader'] = smRef}>{translate('Trader')}</li>
-        <li className='lc' tabIndex="0" onClick={this._optimizeExplorer.bind(this, false)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['explorer'] = smRef}>{translate('Explorer')}</li>
-        <li className={cn('lc', { disabled:  planetaryDisabled })} tabIndex={planetaryDisabled ? '' : '0'} onClick={!planetaryDisabled && this._optimizeExplorer.bind(this, true)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['planetary'] = smRef}>{translate('Planetary Explorer')}</li>
-        <li className='lc' tabIndex="0" onClick={this._optimizeMiner.bind(this, true)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['miner'] = smRef}>{translate('Miner')}</li>
-        <li className='lc' tabIndex="0" onClick={this._optimizeRacer.bind(this)} onKeyDown={this._keyDown} ref={smRef => this.sectionRefArr['racer'] = smRef}>{translate('Racer')}</li>
+        <li className='lc' tabIndex="0" onClick={this._multiPurpose.bind(this, false, 0)} onKeyDown={this._keyDown} ref={smRef => {
+          if (smRef) {
+            this.sectionRefMap.set('multipurpose', smRef);
+          }
+        }}>{translate('Multi-purpose')}</li>
+        <li className='lc' tabIndex="0" onClick={this._multiPurpose.bind(this, true, 2)} onKeyDown={this._keyDown} ref={smRef => {
+          if (smRef) {
+            this.sectionRefMap.set('combat', smRef);
+          }
+        }}>{translate('Combat')}</li>
+        <li className='lc' tabIndex="0" onClick={this._optimizeCargo.bind(this, true)} onKeyDown={this._keyDown} ref={smRef => {
+          if (smRef) {
+            this.sectionRefMap.set('trader', smRef);
+          }
+        }}>{translate('Trader')}</li>
+        <li className='lc' tabIndex="0" onClick={this._optimizeExplorer.bind(this, false)} onKeyDown={this._keyDown} ref={smRef => {
+          if (smRef) {
+            this.sectionRefMap.set('explorer', smRef);
+          }
+        }}>{translate('Explorer')}</li>
+        <li className={cn('lc', { disabled:  planetaryDisabled })} tabIndex={planetaryDisabled ? '' : '0'} onClick={!planetaryDisabled && this._optimizeExplorer.bind(this, true)} onKeyDown={this._keyDown} ref={smRef => {
+          if (smRef) {
+            this.sectionRefMap.set('planetary', smRef);
+          }
+        }}>{translate('Planetary Explorer')}</li>
+        <li className='lc' tabIndex="0" onClick={this._optimizeMiner.bind(this, true)} onKeyDown={this._keyDown} ref={smRef => {
+          if (smRef) {
+            this.sectionRefMap.set('miner', smRef);
+          }
+        }}>{translate('Miner')}</li>
+        <li className='lc' tabIndex="0" onClick={this._optimizeRacer.bind(this)} onKeyDown={this._keyDown} ref={smRef => {
+          if (smRef) {
+            this.sectionRefMap.set('racer', smRef);
+          }
+        }}>{translate('Racer')}</li>
       </ul>
     </div>;
   }

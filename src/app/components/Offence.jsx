@@ -138,7 +138,7 @@ export default class Offence extends TranslatedComponent {
    * @param  {Object} nextProps   Incoming/Next properties
    * @return {boolean}            Returns true if the component should be rerendered
    */
-  componentWillReceiveProps(nextProps) {
+  UNSAFE_componentWillReceiveProps(nextProps) {
     if (this.props.marker != nextProps.marker || this.props.eng != nextProps.eng) {
       const damage = Calc.offenceMetrics(nextProps.ship, nextProps.opponent, nextProps.wep, nextProps.opponentSys, nextProps.engagementrange);
       this.setState({ damage });
@@ -265,8 +265,8 @@ export default class Offence extends TranslatedComponent {
     const totalArmourSDpsTooltipDetails = getSDpsTooltip(translate, formats, armourSDpsObject);
     const armourSDpsData = getSDpsData(translate, armourSDpsObject);
 
-    const timeToDepleteShields = Calc.timeToDeplete(opponentShields.total, totalShieldsSDps, totalSEps, pd.getWeaponsCapacity(), pd.getWeaponsRechargeRate() * (wep / 4));
-    const timeToDepleteArmour = Calc.timeToDeplete(opponentArmour.total, totalArmourSDps, totalSEps, pd.getWeaponsCapacity(), pd.getWeaponsRechargeRate() * (wep / 4));
+    const timeToDepleteShields = Calc.timeToDeplete(opponentShields.total, totalShieldsSDps, totalSEps, pd.getWeaponsCapacity(), Calc.wepRechargeRate(pd, wep));
+    const timeToDepleteArmour = Calc.timeToDeplete(opponentArmour.total, totalArmourSDps, totalSEps, pd.getWeaponsCapacity(), Calc.wepRechargeRate(pd, wep));
 
     return (
       <span id='offence'>
@@ -289,7 +289,7 @@ export default class Offence extends TranslatedComponent {
                 <th className='lft sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVE_SDPS_ARMOUR')} onMouseOut={tooltip.bind(null, null)}onClick={sortOrder.bind(this, 'esdpsh')}>{'sdps'}</th>
                 <th className='sortable' onMouseOver={termtip.bind(null, 'TT_EFFECTIVENESS_ARMOUR')} onMouseOut={tooltip.bind(null, null)}onClick={sortOrder.bind(this, 'eh')}>{'eft'}</th>
 
-                <th className='sortable'>{'dpe'}</th> 
+                <th className='sortable'>{'dpe'}</th>
               </tr>
             </thead>
             <tbody>

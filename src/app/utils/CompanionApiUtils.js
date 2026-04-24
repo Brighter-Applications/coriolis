@@ -1,9 +1,77 @@
-import React from 'react';
 import { Modifications, Modules, Ships } from 'coriolis-data/dist';
 import Module from '../shipyard/Module';
 import Ship from '../shipyard/Ship';
 import { getBlueprint } from '../utils/BlueprintFunctions';
 import * as ModuleUtils from '../shipyard/ModuleUtils';
+import { BulkheadNames } from "../shipyard/Constants";
+
+/**
+ * @typedef {keyof SHIP_FD_NAME_TO_CORIOLIS_NAME} CoriolisShipName
+ * @typedef {typeof SHIP_FD_NAME_TO_CORIOLIS_NAME[CoriolisShipName]} EDShipName
+ */
+
+// Mapping from fd's core internal to coriolis and vice versa
+export const CORE_INTERNAL_NAME_MAPPING = {
+  fdToCoriolis: {
+    PowerPlant: "powerPlant",
+    MainEngines: "thrusters",
+    Thrusters: "thrusters",
+    FrameShiftDrive: "frameShiftDrive",
+    LifeSupport: "lifeSupport",
+    Radar: "sensors",
+    FuelTank: "fuelTank",
+    PowerDistributor: "powerDistributor",
+    Armour: "bulkheads",
+    CargoHatch: "cargoHatch",
+  },
+  coriolisToFD: {
+    powerPlant: "PowerPlant",
+    thrusters: "MainEngines",
+    frameShiftDrive: "FrameShiftDrive",
+    lifeSupport: "LifeSupport",
+    sensors: "Radar",
+    fuelTank: "FuelTank",
+    powerDistributor: "PowerDistributor",
+    bulkheads: "Armour",
+    cargoHatch: "CargoHatch",
+    Sensors: "Radar",
+    FSD: "FrameShiftDrive",
+    Thrusters: "MainEngines",
+  },
+  // The FD name is different in the "item" key of the loadout object
+  // but just for some modules
+  fdToItemName: {
+    PowerPlant: "powerplant",
+    MainEngines: "engine",
+    Thrusters: "engine",
+    FrameShiftDrive: "hyperdrive",
+    FSD: "hyperdrive",
+    LifeSupport: "lifeSupport",
+    Radar: "sensors",
+    FuelTank: "fueltank",
+    PowerDistributor: "powerdistributor",
+    Armour: "armour",
+    CargoHatch: "modularcargobaydoor",
+  },
+};
+
+export const CORIOLIS_TO_FD_BULKHEAD_NAME_MAPPING = BulkheadNames.reduce(
+  (acc, cur, index) => {
+    switch (cur) {
+      case "Mirrored Surface Composite":
+        acc[cur] = "armour_mirrored";
+        break;
+      case "Reactive Surface Composite":
+        acc[cur] = "armour_reactive";
+        break;
+      default:
+        acc[cur] = `armour_grade${index + 1}`;
+        break;
+    }
+    return acc;
+  },
+  {},
+);
 
 // mapping from fd's ship model names to coriolis'
 export const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
@@ -12,8 +80,11 @@ export const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
   'Asp': 'asp',
   'Asp_Scout': 'asp_scout',
   'BelugaLiner': 'beluga',
+  'Explorer_NX': 'explorer_nx',
   'CobraMkIII': 'cobra_mk_iii',
   'CobraMkIV': 'cobra_mk_iv',
+  'CobraMkV': 'cobramkv',
+  'Corsair': 'imperial_corsair',
   'Cutter': 'imperial_cutter',
   'DiamondBackXL': 'diamondback_explorer',
   'DiamondBack': 'diamondback',
@@ -29,11 +100,13 @@ export const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
   'FerDeLance': 'fer_de_lance',
   'Hauler': 'hauler',
   'Independant_Trader': 'keelback',
+  'smallcombat01_nx': 'kestrel',
   'Krait_MkII': 'krait_mkii',
   'Mamba': 'mamba',
   'Mandalay': 'mandalay',
   'Krait_Light': 'krait_phantom',
   'Orca': 'orca',
+  'PantherMKII': 'panthermkii',
   'Python': 'python',
   'Python_nx': 'python_nx',
   'SideWinder': 'sidewinder',
@@ -42,6 +115,7 @@ export const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
   'Type8': 'type_8_transport',
   'Type9': 'type_9_heavy',
   'Type9_Military': 'type_10_defender',
+  'LakonMiner': 'type_11_prospector',
   'TypeX': 'alliance_chieftain',
   'TypeX_2': 'alliance_crusader',
   'TypeX_3': 'alliance_challenger',
@@ -52,13 +126,30 @@ export const SHIP_FD_NAME_TO_CORIOLIS_NAME = {
 
 // Mapping from hardpoint class to name in companion API
 export const HARDPOINT_NUM_TO_CLASS = {
-  0: 'Tiny',
-  1: 'Small',
-  2: 'Medium',
-  3: 'Large',
-  4: 'Huge'
+  0: "Tiny",
+  1: "Small",
+  2: "Medium",
+  3: "Large",
+  4: "Huge"
 };
 
+
+/**
+ * Find the pre-engineered Expanded Capacity Cargo Rack for a given class
+ * @param {Number} clss The class of the cargo rack (5 or 6)
+ * @return {Module} The pre-engineered module, or null
+ */
+function _findPreEngineeredCargoRack(clss) {
+  if (!Modules.internal.cr) return null;
+  for (const mod of Modules.internal.cr) {
+    if (mod.class === clss && mod.preEngineered &&
+        mod.preEngineered.blueprints &&
+        mod.preEngineered.blueprints.indexOf('CargoRack_IncreasedCapacity') !== -1) {
+      return new Module({ template: mod });
+    }
+  }
+  return null;
+}
 
 /**
  * Obtain a module given its ED ID
@@ -114,7 +205,11 @@ function _moduleFromEdId(edId) {
  * @return {string} the Coriolis model of the ship
  */
 function _shipModelFromEDName(edName) {
-  return SHIP_FD_NAME_TO_CORIOLIS_NAME[Object.keys(SHIP_FD_NAME_TO_CORIOLIS_NAME).find(elem => elem.toLowerCase() === edName.toLowerCase())];
+  return SHIP_FD_NAME_TO_CORIOLIS_NAME[
+    Object.keys(SHIP_FD_NAME_TO_CORIOLIS_NAME).find(
+      (elem) => elem.toLowerCase() === edName.toLowerCase(),
+    )
+  ];
 }
 
 /**
@@ -123,7 +218,12 @@ function _shipModelFromEDName(edName) {
  * @return {string} the Coriolis model of the ship
  */
 export function shipModelFromJson(json) {
-  return _shipModelFromEDName(json.name || json.Ship);
+  const edName = json.name || json.Ship;
+  const model = _shipModelFromEDName(edName);
+  if (model) return model;
+  // Fallback: check if the name is already a valid Coriolis ship ID (e.g. 'imperial_corsair')
+  const id = edName.toLowerCase();
+  return Ships[id] ? id : undefined;
 }
 
 /**
@@ -156,16 +256,23 @@ export function shipFromJson(json) {
 
   // Add the bulkheads
   const armourJson = json.modules.Armour.module;
-  if (armourJson.name.toLowerCase().endsWith('_armour_grade1')) {
+  const armourName = armourJson.name.toLowerCase();
+  // Ships like the Caspian Explorer have 6 bulkheads: a '_grade1_default'
+  // for Lightweight Alloy and '_grade1' for the Mk II Ablative variant.
+  // Standard ships have 5 bulkheads where '_grade1' is Lightweight Alloy.
+  const bulkheadOffset = shipTemplate.bulkheads.length > 5 ? 1 : 0;
+  if (armourName.endsWith('_armour_grade1_default')) {
     ship.useBulkhead(0, true);
-  } else if (armourJson.name.toLowerCase().endsWith('_armour_grade2')) {
-    ship.useBulkhead(1, true);
-  } else if (armourJson.name.toLowerCase().endsWith('_armour_grade3')) {
-    ship.useBulkhead(2, true);
-  } else if (armourJson.name.toLowerCase().endsWith('_armour_mirrored')) {
-    ship.useBulkhead(3, true);
-  } else if (armourJson.name.toLowerCase().endsWith('_armour_reactive')) {
-    ship.useBulkhead(4, true);
+  } else if (armourName.endsWith('_armour_grade1')) {
+    ship.useBulkhead(0 + bulkheadOffset, true);
+  } else if (armourName.endsWith('_armour_grade2')) {
+    ship.useBulkhead(1 + bulkheadOffset, true);
+  } else if (armourName.endsWith('_armour_grade3')) {
+    ship.useBulkhead(2 + bulkheadOffset, true);
+  } else if (armourName.endsWith('_armour_mirrored')) {
+    ship.useBulkhead(3 + bulkheadOffset, true);
+  } else if (armourName.endsWith('_armour_reactive')) {
+    ship.useBulkhead(4 + bulkheadOffset, true);
   } else {
     throw 'Unknown bulkheads "' + armourJson.name + '"';
   }
@@ -301,7 +408,18 @@ export function shipFromJson(json) {
       // No module
     } else {
       const internalJson = internalSlot.module;
-      const internal = _moduleFromEdId(internalJson.id);
+      let internal = _moduleFromEdId(internalJson.id);
+
+      // Check if this is a cargo rack with the Expanded Capacity pre-engineering
+      if (internal && rootModule && rootModule.engineer &&
+          rootModule.engineer.recipeName.toLowerCase() === 'cargorack_increasedcapacity') {
+        const preEngRack = _findPreEngineeredCargoRack(internal.class);
+        if (preEngRack) {
+          internal = preEngRack;
+          rootModule.WorkInProgress_modifications = null;
+        }
+      }
+
       rootModule = internalSlot;
       if (rootModule.WorkInProgress_modifications) _addModifications(internal, rootModule.WorkInProgress_modifications, rootModule.engineer.recipeName, rootModule.engineer.recipeLevel);
       ship.use(ship.internal[i], internal, true);

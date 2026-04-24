@@ -15,6 +15,10 @@ const LS_KEY_SIZE_RATIO = 'sizeRatio';
 const LS_KEY_TOOLTIPS = 'tooltips';
 const LS_KEY_MODULE_RESISTANCES = 'moduleResistances';
 const LS_KEY_ROLLS = 'matsPerGrade';
+const LS_KEY_PROMPT_CG = 'promptCG';
+const LS_KEY_ANIMATIONS = 'animations';
+const LS_KEY_CMDR_LINKS = 'cmdrLinks';
+const LS_KEY_SYNC_BUILDS = 'syncBuilds';
 
 let LS;
 
@@ -93,6 +97,7 @@ export class Persist extends EventEmitter {
     let moduleDiscount = _get(LS_KEY_MOD_DISCOUNT);
     let buildJson = _get(LS_KEY_BUILDS);
     let comparisonJson = _get(LS_KEY_COMPARISONS);
+    let promptCG = _get(LS_KEY_PROMPT_CG);
 
     this.onStorageChange = this.onStorageChange.bind(this);
     this.langCode = _getString(LS_KEY_LANG) || 'en';
@@ -106,7 +111,7 @@ export class Persist extends EventEmitter {
     this.state =  _get(LS_KEY_STATE);
     this.sizeRatio = _get(LS_KEY_SIZE_RATIO) || 1;
     this.matsPerGrade = matsPerGrade || {
-      1: 2,
+      1: 1,
       2: 2,
       3: 3,
       4: 4,
@@ -115,10 +120,51 @@ export class Persist extends EventEmitter {
     this.cmdrName = cmdrName || { selected: '', cmdrs: [] };
     this.tooltipsEnabled = tips === null ? true : tips;
     this.moduleResistancesEnabled = moduleResistances === null ? true : moduleResistances;
+    this._promptCG = promptCG === null ? true : promptCG;
+
+    let animations = _get(LS_KEY_ANIMATIONS);
+    this.animationsEnabled = animations === null ? true : animations;
+    // Apply body class on startup
+    if (!this.animationsEnabled && typeof document !== 'undefined') {
+      document.body.classList.add('no-animations');
+    }
+
+    let cmdrLinksData = _get(LS_KEY_CMDR_LINKS);
+    this.cmdrLinks = cmdrLinksData && typeof cmdrLinksData == 'object'
+      ? cmdrLinksData
+      : { links: [], activeIndex: -1 };
+
+    let syncBuilds = _get(LS_KEY_SYNC_BUILDS);
+    this._syncBuilds = syncBuilds === null ? false : !!syncBuilds;
 
     if (LS) {
       window.addEventListener('storage', this.onStorageChange);
     }
+  }
+
+  promptCG() {
+    return this._promptCG;
+  }
+
+  setPromptCG(value) {
+    this._promptCG = !!value;
+    _put(LS_KEY_PROMPT_CG, this._promptCG);
+    this.emit('promptCG', this._promptCG);
+  }
+
+  /**
+   * Sync builds setting — whether to automatically push local builds
+   * to cmdr-coriolis when a CMDR link is active.
+   * @param  {boolean} [value] Optional — set the value
+   * @return {boolean} Current value
+   */
+  syncBuilds(value) {
+    if (value !== undefined) {
+      this._syncBuilds = !!value;
+      _put(LS_KEY_SYNC_BUILDS, this._syncBuilds);
+      this.emit('syncBuilds', this._syncBuilds);
+    }
+    return this._syncBuilds;
   }
 
   /**
@@ -163,9 +209,17 @@ export class Persist extends EventEmitter {
           this.moduleResistancesEnabled = !!newValue && newValue.toLowerCase() == 'true';
           this.emit('moduleresistances', this.moduleResistancesEnabled);
           break;
+        case LS_KEY_PROMPT_CG:
+          this._promptCG = !!newValue && newValue.toLowerCase() == 'true';
+          this.emit('promptCG', this._promptCG);
+          break;
         case LS_KEY_ROLLS:
           this.matsPerGrade = JSON.parse(newValue);
           this.emit('matsPerGrade', this.matsPerGrade);
+          break;
+        case LS_KEY_CMDR_LINKS:
+          this.cmdrLinks = newValue ? JSON.parse(newValue) : { links: [], activeIndex: -1 };
+          this.emit('cmdrLinks', this.cmdrLinks);
           break;
       }
     } catch (e) {
@@ -208,6 +262,18 @@ export class Persist extends EventEmitter {
   }
 
   /**
+   * CG prompt setting
+   * @param  {boolean} show Optional - update setting
+   * @return {boolean} True if CG prompt should be shown
+   */
+  promptCGModules(show) {
+    if (show !== undefined) {
+      this.setPromptCG(show);
+    }
+    return this.promptCG();
+  }
+
+  /**
    * Show module resistances setting
    * @param  {boolean} show Optional - update setting
    * @return {boolean} True if module resistances should be shown
@@ -220,6 +286,28 @@ export class Persist extends EventEmitter {
     }
 
     return this.moduleResistancesEnabled;
+  }
+
+  /**
+   * Animations setting
+   * @param  {boolean} show Optional - update setting
+   * @return {boolean} True if animations are enabled
+   */
+  showAnimations(show) {
+    if (show !== undefined) {
+      this.animationsEnabled = !!show;
+      _put(LS_KEY_ANIMATIONS, this.animationsEnabled);
+      if (typeof document !== 'undefined') {
+        if (this.animationsEnabled) {
+          document.body.classList.remove('no-animations');
+        } else {
+          document.body.classList.add('no-animations');
+        }
+      }
+      this.emit('animations', this.animationsEnabled);
+    }
+
+    return this.animationsEnabled;
   }
 
   /**
@@ -583,6 +671,85 @@ export class Persist extends EventEmitter {
    */
   isEnabled() {
     return LS != null;
+  }
+
+  // -------------------------------------------------------------------
+  // CMDR Link management — links coriolis.io to cmdr.coriolis.io
+  // -------------------------------------------------------------------
+
+  /**
+   * Get all linked CMDRs
+   * @return {Object} { links: Array, activeIndex: number }
+   */
+  getCmdrLinks() {
+    return this.cmdrLinks;
+  }
+
+  /**
+   * Get the currently active CMDR link, or null
+   * @return {Object|null} { cmdrName, apiKey, host }
+   */
+  getActiveCmdrLink() {
+    const { links, activeIndex } = this.cmdrLinks;
+    if (activeIndex >= 0 && activeIndex < links.length) {
+      return links[activeIndex];
+    }
+    return null;
+  }
+
+  /**
+   * Add or update a CMDR link.
+   * If a link with the same cmdrName already exists, update its apiKey.
+   * @param {String} cmdrName  CMDR name
+   * @param {String} apiKey    API key for cmdr.coriolis.io
+   * @param {String} host      API host (e.g. 'https://cmdr.coriolis.io')
+   */
+  addCmdrLink(cmdrName, apiKey, host) {
+    const existing = this.cmdrLinks.links.findIndex(l => l.cmdrName === cmdrName);
+    if (existing >= 0) {
+      this.cmdrLinks.links[existing].apiKey = apiKey;
+      this.cmdrLinks.links[existing].host = host;
+    } else {
+      this.cmdrLinks.links.push({ cmdrName, apiKey, host });
+    }
+    // Auto-select the newly added/updated link
+    this.cmdrLinks.activeIndex = existing >= 0 ? existing : this.cmdrLinks.links.length - 1;
+    _put(LS_KEY_CMDR_LINKS, this.cmdrLinks);
+    this.emit('cmdrLinks', this.cmdrLinks);
+  }
+
+  /**
+   * Remove a CMDR link by index
+   * @param {number} index
+   */
+  removeCmdrLink(index) {
+    if (index < 0 || index >= this.cmdrLinks.links.length) return;
+    this.cmdrLinks.links.splice(index, 1);
+    if (this.cmdrLinks.activeIndex >= this.cmdrLinks.links.length) {
+      this.cmdrLinks.activeIndex = this.cmdrLinks.links.length - 1;
+    }
+    _put(LS_KEY_CMDR_LINKS, this.cmdrLinks);
+    this.emit('cmdrLinks', this.cmdrLinks);
+  }
+
+  /**
+   * Switch the active CMDR link
+   * @param {number} index
+   */
+  setActiveCmdrLink(index) {
+    if (index >= 0 && index < this.cmdrLinks.links.length) {
+      this.cmdrLinks.activeIndex = index;
+      _put(LS_KEY_CMDR_LINKS, this.cmdrLinks);
+      this.emit('cmdrLinks', this.cmdrLinks);
+    }
+  }
+
+  /**
+   * Check if any CMDR links exist
+   * @return {Boolean}
+   */
+  hasCmdrLinks() {
+    return this.cmdrLinks.links.length > 0;
   }
 }
 
