@@ -56,6 +56,7 @@ jobs:
     runs-on: [self-hosted, Linux, X64, aws, brapps, web]
     needs: check-pipeline-state
     steps:
+<<<<<<< feature/improve_workflow_and_deployment
       - name: Checkout repo
         uses: actions/checkout@v6
         with:
@@ -70,6 +71,23 @@ jobs:
           echo "Beta is at:  $(git rev-parse origin/beta)"
           git push origin origin/alpha:refs/heads/beta --force
           echo "Beta now matches alpha."
+=======
+      - name: Checkout beta
+        uses: actions/checkout@v6
+        with:
+          ref: beta
+          fetch-depth: 0
+          token: ${{ secrets.DEPLOY_TOKEN }}
+
+      - name: Merge alpha into beta
+        shell: bash
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          git fetch origin alpha
+          git merge origin/alpha -m "Merge alpha into beta (promote-to-beta workflow)"
+          git push origin beta
+>>>>>>> alpha
 
   # ------------------------------------------------------------------ #
   # Deploy to beta.coriolis.io (no rebuild — use existing artifact)    #
