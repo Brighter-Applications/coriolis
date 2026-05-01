@@ -1,3 +1,6 @@
+#4.0.11
+  * Fixed highliner tonnage, it was 250 and should have been 260
+
 #4.0.10
   * Fixed slot indexing for Lynx Highliner
 
