@@ -1,6 +1,10 @@
+#4.0.10
+  * Fixed slot indexing for Lynx Highliner
+
 #4.0.9
   * Switched to hashed filenames, to reduce caching issues on new releases
   * Improved release workflow, to be less user intensive and smoother and create releases
+
 #2.5.1
   * Passenger count on main page
   * AX Modules

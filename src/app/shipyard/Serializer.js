@@ -339,7 +339,8 @@ export function toSLEF(buildName, ship) {
     'Military': 'Military',
     'Limpets': 'LimpetController',
     'Fighter': 'FighterBay',
-    'Cargo': 'Cargo'
+    'Cargo': 'Cargo',
+    'MkIIPassenger': 'Passenger'
   };
   let slotNum = 1;
   const namedSlotCounters = {};

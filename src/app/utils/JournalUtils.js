@@ -291,6 +291,7 @@ export function shipFromLoadoutJSON(json) {
   let cargoSlotNum = 1;
   let limpetSlotNum = 1;
   let fighterSlotNum = 1;
+  let passengerSlotNum = 1;
   for (let i in shipTemplate.slots.internal) {
     if (!shipTemplate.slots.internal.hasOwnProperty(i)) {
       continue;
@@ -303,6 +304,7 @@ export function shipFromLoadoutJSON(json) {
     const isCargo = slotName === 'Cargo';
     const isLimpets = slotName === 'Limpets';
     const isFighter = slotName === 'Fighter';
+    const isPassenger = slotName === 'MkIIPassenger';
 
     // Named slots have their own naming conventions separate from the standard SlotNN_SizeN pattern
     let internalSlot = null;
@@ -325,6 +327,10 @@ export function shipFromLoadoutJSON(json) {
         const internalName = 'FighterBay0' + fighterSlotNum;
         internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
         fighterSlotNum++;
+    } else if (isPassenger) {
+        const internalName = 'Passenger0' + passengerSlotNum;
+        internalSlot = json.Modules.find(elem => elem.Slot.toLowerCase() === internalName.toLowerCase());
+        passengerSlotNum++;
     } else {
         // Some ships skip internal slot indexes because military/restricted slots occupy those numbers in the journal
         // Anaconda skips 12 and 13, Dropship skips 7 and 8, T9 skips 9 and 10, T10 skips 9 and 10, Vulture skips 4
