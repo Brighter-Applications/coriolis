@@ -422,6 +422,26 @@ export default class Coriolis extends React.Component {
   }
 
   /**
+   * Build the URL for the version link in the footer.
+   * On alpha/beta sites, links to the relevant branch.
+   * On the live site (or anything else), links to the release tag.
+   * @return {string} GitHub URL
+   */
+  _getVersionUrl() {
+    const repo = 'https://github.com/Brighter-Applications/coriolis';
+    const host = window.location.hostname.toLowerCase();
+
+    if (host.startsWith('alpha.')) {
+      return `${repo}/tree/alpha`;
+    }
+    if (host.startsWith('beta.')) {
+      return `${repo}/tree/beta`;
+    }
+    // Live site — link to the specific release
+    return `${repo}/releases/tag/v${window.CORIOLIS_VERSION}`;
+  }
+
+  /**
    * Renders the main app
    * @return {React.Component} The main app
    */
@@ -459,14 +479,8 @@ export default class Coriolis extends React.Component {
           {this.state.tooltip}
           <footer>
             <div className="right cap">
-              <a href="https://github.com/EDCD/coriolis" target="_blank" rel="noopener noreferrer"
+              <a href={this._getVersionUrl()} target="_blank" rel="noopener noreferrer"
                  title="Coriolis Github Project">{window.CORIOLIS_VERSION} - {window.CORIOLIS_DATE}</a>
-              <br/>
-              <a
-                href={'https://github.com/EDCD/coriolis/compare/edcd:develop@{' + window.CORIOLIS_DATE + '}...edcd:develop'}
-                target="_blank" rel="noopener noreferrer" title={'Coriolis Commits since' + window.CORIOLIS_DATE}>Commits
-                since last release
-                ({window.CORIOLIS_DATE})</a>
             </div>
           </footer>
         </div>
