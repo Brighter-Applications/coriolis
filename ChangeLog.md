@@ -1,15 +1,18 @@
-#2.5.1  
-  * Passenger count on main page  
-  * AX Modules  
-  * Engineering fixes  
-  * Use coriolis-data 2.5.1  
+#4.0.9
+  * Switched to hashed filenames, to reduce caching issues on new releases
+  * Improved release workflow, to be less user intensive and smoother and create releases
+#2.5.1
+  * Passenger count on main page
+  * AX Modules
+  * Engineering fixes
+  * Use coriolis-data 2.5.1
 
 #2.5.0
-  * willyb321 and myself have conquered engineering. Mainly him though...  
+  * willyb321 and myself have conquered engineering. Mainly him though...
   * Use coriolis-data 2.5.0
 
-#2.4.2  
-  Lots of kind people have helped out for this release! Check out the PR history!  
+#2.4.2
+  Lots of kind people have helped out for this release! Check out the PR history!
   * Uses coriolis-data update:
     * Fixes issues with repair limpets
     * Adds requirement data
@@ -17,7 +20,7 @@
   * Adds comma formatting to tooltip numbers
 
 #2.4.1
-  * Small patches and changes  
+  * Small patches and changes
 
 #2.4.0
   * Changed compression library to Pako
