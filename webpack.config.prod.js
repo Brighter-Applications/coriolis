@@ -3,9 +3,7 @@ const common = require('./webpack.common.js');
 
 const path = require('path');
 const CopyWebpackPlugin = require('copy-webpack-plugin');
-const MiniCssExtractPlugin = require('mini-css-extract-plugin');
 const { InjectManifest } = require('workbox-webpack-plugin');
-const { max } = require('lodash');
 
 module.exports = merge(common, {
   // devtool: 'source-map',
@@ -22,6 +20,7 @@ module.exports = merge(common, {
         'src/.htaccess',
         'src/iframe.html',
         'src/xdLocalStoragePostMessageApi.min.js',
+        'src/ship-mappings.json',
         { from: 'src/schemas', to: 'schemas' },
         {
           from: 'src/images/logo/*',
@@ -31,9 +30,6 @@ module.exports = merge(common, {
     /* new HtmlWebpackPlugin({
       // uaTracking: process.env.CORIOLIS_UA_TRACKING || '',
     }), */
-    new MiniCssExtractPlugin({
-      filename: '[contenthash:6].css',
-    }),
     // new BugsnagBuildReporterPlugin({
     //   apiKey: 'ba9fae819372850fb660755341fa6ef5',
     //   appVersion: `${pkgJson.version}-${buildDate.toISOString()}`

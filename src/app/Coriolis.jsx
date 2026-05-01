@@ -56,7 +56,7 @@ export default class Coriolis extends React.Component {
       noTouch: !('ontouchstart' in window || navigator.msMaxTouchPoints || navigator.maxTouchPoints),
       page: null,
       // Announcements must have an expiry date in format "YYYY-MM-DDTHH:MM:SSZ"
-      announcements: [{expiry: "2026-03-31T00:00:00Z", text: "Goodbye React 15. So long and thanks for all the Ships! Welcome to Coriolis 4.0.x"}],
+      announcements: [{expiry: "2026-04-28T00:00:00Z", text: "Lynx Highliner added!"}],
 
       language: getLanguage(Persist.getLangCode()),
       route: {},
@@ -422,6 +422,26 @@ export default class Coriolis extends React.Component {
   }
 
   /**
+   * Build the URL for the version link in the footer.
+   * On alpha/beta sites, links to the relevant branch.
+   * On the live site (or anything else), links to the release tag.
+   * @return {string} GitHub URL
+   */
+  _getVersionUrl() {
+    const repo = 'https://github.com/Brighter-Applications/coriolis';
+    const host = window.location.hostname.toLowerCase();
+
+    if (host.startsWith('alpha.')) {
+      return `${repo}/tree/alpha`;
+    }
+    if (host.startsWith('beta.')) {
+      return `${repo}/tree/beta`;
+    }
+    // Live site — link to the specific release
+    return `${repo}/releases/tag/v${window.CORIOLIS_VERSION}`;
+  }
+
+  /**
    * Renders the main app
    * @return {React.Component} The main app
    */
@@ -459,14 +479,8 @@ export default class Coriolis extends React.Component {
           {this.state.tooltip}
           <footer>
             <div className="right cap">
-              <a href="https://github.com/EDCD/coriolis" target="_blank" rel="noopener noreferrer"
+              <a href={this._getVersionUrl()} target="_blank" rel="noopener noreferrer"
                  title="Coriolis Github Project">{window.CORIOLIS_VERSION} - {window.CORIOLIS_DATE}</a>
-              <br/>
-              <a
-                href={'https://github.com/EDCD/coriolis/compare/edcd:develop@{' + window.CORIOLIS_DATE + '}...edcd:develop'}
-                target="_blank" rel="noopener noreferrer" title={'Coriolis Commits since' + window.CORIOLIS_DATE}>Commits
-                since last release
-                ({window.CORIOLIS_DATE})</a>
             </div>
           </footer>
         </div>

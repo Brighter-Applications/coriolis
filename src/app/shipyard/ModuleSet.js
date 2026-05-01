@@ -125,6 +125,7 @@ export default class ModuleSet {
       if (key === 'crl' && !eligible) {
         continue;
       }
+
       if (key == 'pcq' && !(ship.luxuryCabins && ship.luxuryCabins  === true)) {
         continue;
       }
