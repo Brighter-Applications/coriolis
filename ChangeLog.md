@@ -1,3 +1,6 @@
+#4.0.12
+  * Resolved issue with Builds Menu throwing an error when the user has no builds.
+
 #4.0.11
   * Fixed highliner tonnage, it was 250 and should have been 260
 

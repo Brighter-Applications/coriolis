@@ -636,21 +636,21 @@ export default class Header extends TranslatedComponent {
         </div>
 
         <div className='l menu'>
-          <div className={cn('menu-header', { selected: openedMenu == 'b', disabled: !hasBuilds })} onClick={hasBuilds && this._openBuilds}>
+          <div className={cn('menu-header', { selected: openedMenu == 'b', disabled: !hasBuilds })} onClick={hasBuilds ? this._openBuilds : undefined}>
             <Hammer className={cn('warning', { 'warning-disabled': !hasBuilds })} /><span className='menu-item-label'>{translate('builds')}</span>
           </div>
           {openedMenu == 'b' ? this._getBuildsMenu() : null}
         </div>
 
         <div className='l menu'>
-          <div className={cn('menu-header', { selected: openedMenu == 'comp', disabled: !hasBuilds })} onClick={hasBuilds && this._openComp}>
+          <div className={cn('menu-header', { selected: openedMenu == 'comp', disabled: !hasBuilds })} onClick={hasBuilds ? this._openComp : undefined}>
             <StatsBars className={cn('warning', { 'warning-disabled': !hasBuilds })} /><span className='menu-item-label'>{translate('compare')}</span>
           </div>
           {openedMenu == 'comp' ? this._getComparisonsMenu() : null}
         </div>
 
         <div className='l menu'>
-          <div className={cn('menu-header', { selected: openedMenu == 'announce', disabled: this.props.announcements.length === 0})} onClick={this.props.announcements.length !== 0 && this._openAnnounce}>
+          <div className={cn('menu-header', { selected: openedMenu == 'announce', disabled: this.props.announcements.length === 0})} onClick={this.props.announcements.length !== 0 ? this._openAnnounce : undefined}>
             <span className='menu-item-label'>{translate('announcements')}</span>
           </div>
           {openedMenu == 'announce' ? this._getAnnouncementsMenu() : null}
