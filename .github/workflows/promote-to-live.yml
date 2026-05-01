@@ -110,21 +110,20 @@ jobs:
     runs-on: [self-hosted, Linux, X64, aws, brapps, web]
     needs: check-version
     steps:
-      - name: Checkout live
+      - name: Checkout repo
         uses: actions/checkout@v6
         with:
-          ref: live
           fetch-depth: 0
           token: ${{ secrets.DEPLOY_TOKEN }}
 
-      - name: Merge beta into live
+      - name: Update live to match beta
         shell: bash
         run: |
-          git config user.name "github-actions[bot]"
-          git config user.email "github-actions[bot]@users.noreply.github.com"
-          git fetch origin beta
-          git merge origin/beta -m "Merge beta into live (promote-to-live workflow)"
-          git push origin live
+          git fetch origin beta live
+          echo "Beta is at: $(git rev-parse origin/beta)"
+          echo "Live is at: $(git rev-parse origin/live)"
+          git push origin origin/beta:refs/heads/live --force
+          echo "Live now matches beta."
 
   # ------------------------------------------------------------------ #
   # Deploy to coriolis.io (no rebuild — use existing artifact)         #
