@@ -579,12 +579,18 @@ export default class Ship {
             value = value * 100;
           }
 
-          // Apply the modification
-          if (modification.hidden) {
-            this.setModification(m, featureName, value, false);
-          } else {
-            this.setModification(m, featureName, value, false);
+          // For subsequent blueprints, combine with existing modifications
+          // rather than overwriting them. Pre-engineered modules stack their
+          // blueprint effects multiplicatively (matching in-game behaviour).
+          if (i > 0 && m.mods && m.mods[featureName] != null) {
+            const existing = m.mods[featureName];
+            const multiplier = modification.type === 'percentage' ? 10000 : 100;
+            // Combine multiplicatively: (1 + a) * (1 + b) - 1
+            value = ((1 + existing / multiplier) * (1 + value / multiplier) - 1) * multiplier;
           }
+
+          // Apply the modification
+          this.setModification(m, featureName, value, false);
         }
       }
     }

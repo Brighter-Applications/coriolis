@@ -1,3 +1,7 @@
+#4.0.13
+  * Fixed fuelmul on V1 SCO Drive
+  * Fixing double engineered module calculations
+
 #4.0.12
   * Resolved issue with Builds Menu throwing an error when the user has no builds.
 
