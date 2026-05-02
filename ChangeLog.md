@@ -1,3 +1,6 @@
+#4.0.14
+  * Fixed JSON/SLEF Exports to include proper engineering and FSD Ranges
+
 #4.0.13
   * Fixed fuelmul on V1 SCO Drive
   * Fixing double engineered module calculations
