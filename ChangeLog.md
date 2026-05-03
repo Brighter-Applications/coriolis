@@ -1,3 +1,5 @@
+#4.0.17
+  * CMDR-Coriolis started accepting MaterialTrade events from the journal
 #4.0.16
   * CMDR-Coriolis started accepting MaterialCollected events from the journal
 #4.0.15
