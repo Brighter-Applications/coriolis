@@ -1,3 +1,5 @@
+#4.0.16
+  * CMDR-Coriolis started accepting MaterialCollected events from the journal
 #4.0.15
   * Adding to documentation for CMDR-Coriolis new Journal API
   * Georgian Translation update
