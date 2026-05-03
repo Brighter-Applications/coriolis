@@ -5,7 +5,9 @@ Coriolis CMDR provides two APIs for third-party tools to send commander data. Bo
 - **EDMC Plugin API** — For tools like EDMC that pre-process journal events into a structured schema. The client does the transformation.
 - **Journal API** — For tools like EDD and EDDI that want to send raw journal entries as-is. The server does the transformation.
 
-Both APIs can be used simultaneously. Data from either API updates the same commander profile, ships, materials, and stored modules.
+Both APIs can be used simultaneously by users, depending on their preference of tooling. Data from either API updates the same commander profile, ships, materials, and stored modules.
+
+A sample app using the Journal API, written in Python, [can be seen here](https://github.com/Brighter-Applications/cmdr-coriolis-client)
 
 ---
 
@@ -24,6 +26,54 @@ Authorization: Bearer <api_key>
 ```
 
 `X-Api-Key` is recommended because some server configurations (e.g. Apache mod_wsgi) strip the `Authorization` header by default.
+
+### User-Agent
+
+All requests **must** include a custom `User-Agent` header identifying your application. Requests using default library user agents (e.g. `python-requests/2.31.0` or `Python-urllib/3.11`) will be rejected with a `403 Forbidden` response.
+
+```
+User-Agent: MyApp/1.0
+```
+
+### Full request example (curl)
+
+```bash
+curl -X POST https://cmdr.coriolis.io/api/journal/ \
+  -H "X-Api-Key: YOUR_API_KEY_HERE" \
+  -H "Content-Type: application/json" \
+  -H "User-Agent: MyApp/1.0" \
+  -d '{"cmdr": "CMDR Name", "entry": {"timestamp": "2026-05-01T16:47:37Z", "event": "Commander", "Name": "CMDR Name"}}'
+```
+
+### Full request example (Python)
+
+```python
+import requests
+import json
+
+API_KEY = "YOUR_API_KEY_HERE"
+CMDR_NAME = "CMDR Name"
+
+entry = {
+    "timestamp": "2026-05-01T16:47:37Z",
+    "event": "Commander",
+    "Name": "CMDR Name"
+}
+
+response = requests.post(
+    "https://cmdr.coriolis.io/api/journal/",
+    headers={
+        "X-Api-Key": API_KEY,
+        "Content-Type": "application/json",
+        "User-Agent": "MyApp/1.0",
+    },
+    data=json.dumps({"cmdr": CMDR_NAME, "entry": entry}),
+    timeout=15,
+)
+
+print(response.status_code, response.json())
+# 200 {"ok": true, "processed": 1}
+```
 
 ---
 
@@ -70,12 +120,12 @@ Send a single entry:
 
 ```json
 {
-  "cmdr": "HollowPointPC",
+  "cmdr": "CMDR Name",
   "entry": {
     "timestamp": "2026-05-01T16:47:37Z",
     "event": "Commander",
-    "FID": "F2692420",
-    "Name": "HollowPointPC"
+    "FID": "F11115555",
+    "Name": "CMDR Name"
   }
 }
 ```
@@ -86,7 +136,7 @@ Or send a batch of entries:
 {
   "cmdr": "HollowPointPC",
   "entries": [
-    { "timestamp": "2026-05-01T16:47:37Z", "event": "Commander", "Name": "HollowPointPC" },
+    { "timestamp": "2026-05-01T16:47:37Z", "event": "Commander", "Name": "CMDR Name" },
     { "timestamp": "2026-05-01T16:47:37Z", "event": "Materials", "Raw": [...], "Manufactured": [...], "Encoded": [...] },
     { "timestamp": "2026-05-01T16:47:49Z", "event": "Loadout", "Ship": "python", "ShipID": 7, ... }
   ]
@@ -129,7 +179,7 @@ When the game starts, the journal emits several events in quick succession. You 
 
 ```json
 {
-  "cmdr": "HollowPointPC",
+  "cmdr": "CMDR Name",
   "entries": [
     { "timestamp":"2026-05-01T16:47:37Z", "event":"Commander", "FID":"F2692420", "Name":"HollowPointPC" },
     { "timestamp":"2026-05-01T16:47:37Z", "event":"Materials", "Raw":[ { "Name":"iron", "Count":158 } ], "Manufactured":[ { "Name":"salvagedalloys", "Name_Localised":"Salvaged Alloys", "Count":66 } ], "Encoded":[ { "Name":"bulkscandata", "Name_Localised":"Anomalous Bulk Scan Data", "Count":294 } ] },
@@ -143,7 +193,7 @@ When the game starts, the journal emits several events in quick succession. You 
 
 ```json
 {
-  "cmdr": "HollowPointPC",
+  "cmdr": "CMDR Name",
   "entry": {
     "timestamp":"2026-05-01T20:32:53Z",
     "event":"EngineerCraft",
