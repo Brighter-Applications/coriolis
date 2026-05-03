@@ -159,6 +159,7 @@ The Journal API processes the following events:
 | `StoredModules` | Replaces the stored modules inventory |
 | `Materials` | Replaces the full material inventory |
 | `MaterialCollected` | Increments the count of a single collected material |
+| `MaterialTrade` | Decrements the paid material and increments the received material |
 | `EngineerCraft` | Updates engineering on the current ship's module |
 
 All other events are silently ignored — you can safely send every journal line without filtering (but please don't, think of the bandwidth and server load).
