@@ -1,3 +1,6 @@
+#4.0.15
+  * Adding to documentation for CMDR-Coriolis new Journal API
+  * Georgian Translation update
 #4.0.14
   * Fixed JSON/SLEF Exports to include proper engineering and FSD Ranges
 
