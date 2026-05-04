@@ -1,3 +1,5 @@
+#4.0.18
+  * Introducing an error boundary to help error reporting
 #4.0.17
   * CMDR-Coriolis started accepting MaterialTrade events from the journal
 #4.0.16
