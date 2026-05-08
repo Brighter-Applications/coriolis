@@ -56,7 +56,15 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
     const canJump = ship.getSlotStatus(ship.standard[2]) == 3;
     const sgMetrics = Calc.shieldMetrics(ship, pips.sys);
     const distBoost = canBoost ? Calc.calcBoost(ship) : 'No Boost';
-    const restingHeat = Math.sqrt(((ship.standard[0].m.pgen * ship.standard[0].m.eff) / ship.heatCapacity) / 0.2);
+    const modifiedEff = ship.standard[0].m.getThermalEfficiency();
+    const baseEff = ship.standard[0].m.eff;
+    // Armoured PP heateff bonus is bugged in-game (doesn't actually reduce heat)
+    // but Low Emissions and other blueprints work correctly
+    const blueprint = ship.standard[0].m.blueprint;
+    const isArmoured = blueprint && blueprint.fdname === 'PowerPlant_Armoured';
+    const ppEff = isArmoured ? Math.max(modifiedEff, baseEff) : modifiedEff;
+    const thermalLoad = ship.powerRetracted * ppEff;
+    const restingHeat = ship.heatDissipation ? Math.sqrt(thermalLoad / ship.heatDissipation) / 1.5 : 0;
     const armourMetrics = Calc.armourMetrics(ship);
 
     /**
@@ -496,8 +504,8 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
               <tbody>
                 <tr>
                   <td className='label'>
-                    <span className='label-full'>HEAT ({translate('BETA')})</span>
-                    <span className='label-abbr'>HEAT ({translate('BETA')})</span>
+                    <span className='label-full'>HEAT (IDL)</span>
+                    <span className='label-abbr'>HEAT</span>
                   </td>
                   <td className='value'>{formats.pct(restingHeat)}</td>
                 </tr>

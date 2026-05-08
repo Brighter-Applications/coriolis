@@ -54,7 +54,15 @@ export default class ShipSummaryTable extends TranslatedComponent {
     const sgMetrics = Calc.shieldMetrics(ship, pips.sys);
     const distBoost = canBoost ?  Calc.calcBoost(ship) : 'No Boost';
     //const shipBoost = ship.boostInterval(ship)
-    const restingHeat = Math.sqrt(((ship.standard[0].m.pgen * ship.standard[0].m.eff) / ship.heatCapacity) / 0.2);
+    const modifiedEff = ship.standard[0].m.getThermalEfficiency();
+    const baseEff = ship.standard[0].m.eff;
+    // Armoured PP heateff bonus is bugged in-game (doesn't actually reduce heat)
+    // but Low Emissions and other blueprints work correctly
+    const blueprint = ship.standard[0].m.blueprint;
+    const isArmoured = blueprint && blueprint.fdname === 'PowerPlant_Armoured';
+    const ppEff = isArmoured ? Math.max(modifiedEff, baseEff) : modifiedEff;
+    const thermalLoad = ship.powerRetracted * ppEff;
+    const restingHeat = ship.heatDissipation ? Math.sqrt(thermalLoad / ship.heatDissipation) / 1.5 : 0;
     const armourMetrics = Calc.armourMetrics(ship);
     let shieldColour = 'blue';
     if (shieldGenerator && shieldGenerator.m.grp === 'psg') {
@@ -88,7 +96,7 @@ export default class ShipSummaryTable extends TranslatedComponent {
                 <th onMouseEnter={termtip.bind(null, 'hull hardness', { cap: 0 })} onMouseLeave={hide} rowSpan={2}>{translate('hrd')}</th>
                 <th rowSpan={2}>{translate('crew')}</th>
                 <th onMouseEnter={termtip.bind(null, 'mass lock factor', { cap: 0 })} onMouseLeave={hide} rowSpan={2}>{translate('MLF')}</th>
-                <th rowSpan={2}>{translate('resting heat (Beta)')}</th>
+                <th rowSpan={2}>{translate('resting heat')}</th>
               </tr>
               <tr>
                 <th onMouseEnter={termtip.bind(null, 'TT_SUMMARY_BOOST_INTERVAL', { cap: 0 })} onMouseLeave={hide}>{translate('distro')}</th>
