@@ -22,6 +22,15 @@ export default class ChangelogPage extends Page {
     this.state = { title: 'Changelog - Coriolis' };
   }
 
+  componentDidMount() {
+    // Mark all announcements as seen when the changelog is opened
+    if (announcements.length > 0) {
+      const ids = announcements.map(a => a.id);
+      localStorage.setItem('seenAnnouncementIds', JSON.stringify(ids));
+      window.dispatchEvent(new CustomEvent('announcementsSeen'));
+    }
+  }
+
   renderPage() {
     const prefix = getVersionPrefix();
 

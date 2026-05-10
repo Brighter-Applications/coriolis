@@ -1,3 +1,6 @@
+#4.0.27
+  * Fixed duplicate search box when selecting an empty slot and typing
+  * Fixed announcements to mark all as read when you visit the ChangeLog page
 #4.0.26
   * Build Options Menu introduced on mobile devices to replace icons
 #4.0.25

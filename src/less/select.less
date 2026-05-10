@@ -669,6 +669,10 @@ select {
 }
 
 // Module search container and back button - both sticky at top
+.select:has(.back-button) {
+  padding-top: 0.5em;
+}
+
 .back-button {
   position: sticky !important;
   top: 0;
@@ -678,7 +682,7 @@ select {
   left: 0 !important;
   max-width: calc(100% - 44px);
   margin: 0 auto !important;
-  padding-top: calc(0.5em + 3px);
+  padding-top: 0.5em;
   padding-bottom: 0.5em;
 }
 
@@ -733,4 +737,16 @@ select {
   &:hover:not(:focus) {
     border-color: fade(@primary, 50%);
   }
+}
+
+// When CategoryMenu is in search mode, the nested AvailableModulesMenu's
+// .select shouldn't take over the outer container's layout
+.category-menu .select {
+  position: static;
+  left: auto;
+  width: 100%;
+  max-height: none;
+  border: none;
+  background: none;
+  overflow: visible;
 }

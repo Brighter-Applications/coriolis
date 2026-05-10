@@ -61,20 +61,29 @@ export default class Coriolis extends React.Component {
       // Announcements loaded from generated data (see generate-announcements.js)
       announcements: announcementsData,
       showAnnouncementBanner: false,
+      pulseExpired: false,
 
       language: getLanguage(Persist.getLangCode()),
       route: {},
       sizeRatio: Persist.getSizeRatio()
     };
 
-    // Show banner for newest announcement if not already seen
+    // Show banner only for the newest announcement if it has not been seen yet
     const validAnnouncements = this.state.announcements.slice(0, 7);
     if (validAnnouncements.length > 0) {
-      const lastSeenId = parseInt(localStorage.getItem('lastSeenAnnouncementId') || '0');
-      if (validAnnouncements[0].id > lastSeenId) {
+      let seenIds = [];
+      try {
+        seenIds = JSON.parse(localStorage.getItem('seenAnnouncementIds') || '[]');
+      } catch (e) { seenIds = []; }
+      const newest = validAnnouncements[0];
+      if (!seenIds.includes(newest.id)) {
         this.state.showAnnouncementBanner = true;
       }
     }
+
+    // Stop bell pulse after 10s regardless of state
+    setTimeout(() => this.setState({ pulseExpired: true }), 10000);
+
     Router('', (r) => this._setPage(ShipyardPage, r));
     Router('/import?', (r) => this._importBuild(r));
     Router('/import/:data', (r) => this._importBuild(r));
@@ -288,6 +297,20 @@ export default class Coriolis extends React.Component {
   }
 
   /**
+   * Returns true if any announcement in the visible slice has not been seen.
+   * Used to control the bell pulse independently of the banner state.
+   */
+  _hasUnseenAnnouncements() {
+    const visible = this.state.announcements.slice(0, 7);
+    if (visible.length === 0) return false;
+    let seenIds = [];
+    try {
+      seenIds = JSON.parse(localStorage.getItem('seenAnnouncementIds') || '[]');
+    } catch (e) { seenIds = []; }
+    return visible.some(a => !seenIds.includes(a.id));
+  }
+
+  /**
    * Sets the open menu state
    * @param  {string|object} currentMenu The reference to the current menu
    */
@@ -420,6 +443,13 @@ export default class Coriolis extends React.Component {
     // Listen for postMessage from cmdr.coriolis.io link popup
     window.addEventListener('message', this._onCmdrLinkMessage.bind(this));
 
+    // Listen for announcements-seen events (e.g. when the user opens the
+    // changelog page). Clears the bell pulse and hides the banner.
+    window.addEventListener('announcementsSeen', () => {
+      this.setState({ showAnnouncementBanner: false });
+      this.forceUpdate();
+    });
+
     // Check for redirect-based CMDR link data in the URL hash
     // (fallback when window.opener is null in the popup)
     this._checkCmdrLinkHash();
@@ -482,9 +512,10 @@ export default class Coriolis extends React.Component {
       <AppContext.Provider value={contextValue}>
         <div style={{ minHeight: '100%' }} onClick={() => { this._closeMenu(); this._tooltip(); }}
              className={this.state.noTouch ? 'no-touch' : null}>
-          <Header announcements={this.state.announcements} hasUnseenAnnouncements={this.state.showAnnouncementBanner} appCacheUpdate={this.state.appCacheUpdate}
+          <Header announcements={this.state.announcements} hasUnseenAnnouncements={!this.state.pulseExpired && this._hasUnseenAnnouncements()} appCacheUpdate={this.state.appCacheUpdate}
                   onAnnouncementsSeen={() => {
-                    if (this.state.announcements.length > 0) localStorage.setItem('lastSeenAnnouncementId', this.state.announcements[0].id.toString());
+                    // Bell click no longer marks everything as seen -
+                    // individual entries are tracked per-id (banner, changelog).
                     this.setState({ showAnnouncementBanner: false });
                   }}
                   currentMenu={currentMenu}/>

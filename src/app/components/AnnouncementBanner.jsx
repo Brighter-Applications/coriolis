@@ -18,10 +18,16 @@ export default class AnnouncementBanner extends React.Component {
   }
 
   componentDidMount() {
-    // Mark as seen after 4 seconds
+    // Mark as seen after 4 seconds (only this specific announcement)
     this._cookieTimer = setTimeout(() => {
       if (this.props.announcement) {
-        localStorage.setItem('lastSeenAnnouncementId', this.props.announcement.id.toString());
+        const raw = localStorage.getItem('seenAnnouncementIds');
+        let seen = [];
+        try { seen = raw ? JSON.parse(raw) : []; } catch (e) { seen = []; }
+        if (!seen.includes(this.props.announcement.id)) {
+          seen.push(this.props.announcement.id);
+          localStorage.setItem('seenAnnouncementIds', JSON.stringify(seen));
+        }
       }
     }, 4000);
 
