@@ -1,3 +1,5 @@
+#4.0.26
+  * Build Options Menu introduced on mobile devices to replace icons
 #4.0.25
   * Revamped Announcements and created Changelog page
 #4.0.24
