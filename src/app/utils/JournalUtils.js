@@ -355,6 +355,13 @@ export function shipFromLoadoutJSON(json) {
 
     if (!internalSlot) {
       // This can happen with old imports that don't contain new slots
+      // Default PAS slot to Advanced Planetary Approach Suite (Odyssey)
+      if (isPlanetary) {
+        let apas = _moduleFromFdName('int_planetapproachsuite_advanced');
+        if (apas) {
+          ship.use(ship.internal[i], apas, true);
+        }
+      }
     } else {
       const internalJson = internalSlot;
       let internal = _moduleFromFdName(internalJson.Item);

@@ -429,6 +429,13 @@ export function shipFromJson(json) {
 
     if (!internalSlot) {
       // This can happen with old imports that don't contain new slots
+      // Default PAS slot to Advanced Planetary Approach Suite (Odyssey)
+      if (slotName === 'PlanetaryApproachSuite') {
+        let apas = _moduleFromEdId(128975719);
+        if (apas) {
+          ship.use(ship.internal[i], apas, true);
+        }
+      }
     } else if (!internalSlot.module) {
       // No module
     } else {
