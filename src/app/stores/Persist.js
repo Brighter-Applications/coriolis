@@ -381,7 +381,7 @@ export class Persist extends EventEmitter {
    * @return {Boolean} True if any builds have been saved
    */
   hasBuilds() {
-    return Object.keys(this.builds).length > 0;
+    return this.builds && Object.keys(this.builds).length > 0;
   }
 
   /**
