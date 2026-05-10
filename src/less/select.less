@@ -40,7 +40,7 @@ select {
   color: @primary-disabled;
   position: absolute;
   left: -1px;
-  padding: 0.5em 0;
+  padding: 0 0 0.5em 0;
   width: 100%;
   margin: 0;
   max-height: 500px;
@@ -668,7 +668,20 @@ select {
   }
 }
 
-// Module search container
+// Module search container and back button - both sticky at top
+.back-button {
+  position: sticky !important;
+  top: 0;
+  z-index: 11;
+  background-color: @bg;
+  transform: none !important;
+  left: 0 !important;
+  max-width: calc(100% - 44px);
+  margin: 0 auto !important;
+  padding-top: calc(0.5em + 3px);
+  padding-bottom: 0.5em;
+}
+
 .module-search-container {
   position: sticky;
   top: 0;
@@ -676,7 +689,23 @@ select {
   padding: 0.75em;
   background-color: @bg;
   border-bottom: 1px solid @primary;
-  margin: 0;
+}
+
+.back-button ~ .module-search-container {
+  top: 2.8em;
+  padding-top: calc(0.4em + 2px);
+  box-shadow: none;
+
+  &::before {
+    content: '';
+    position: absolute;
+    top: -5em;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: @bg;
+    z-index: -1;
+  }
 }
 
 .module-search-input {
