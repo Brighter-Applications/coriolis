@@ -153,7 +153,8 @@ export default class OutfittingPage extends Page {
       useResponsiveSummary,
       statBarCollapsed: false,
       outfittingCollapsed: false,
-      analysisCollapsed: false
+      analysisCollapsed: false,
+      buildActionsOpen: false
     };
   }
 
@@ -941,8 +942,8 @@ export default class OutfittingPage extends Page {
               placeholder={translate('Enter Name')}
               maxLength={50}
             />
-            <div className="build-actions">
             <button
+              className="build-action-save"
               onClick={canSave && this._saveBuild}
               disabled={!canSave}
               onMouseOver={termtip.bind(null, 'save')}
@@ -950,6 +951,11 @@ export default class OutfittingPage extends Page {
             >
               <FloppyDisk className="lg" />
             </button>
+            <div className="build-actions">
+            <button className="build-actions-toggle" onClick={() => this.setState({ buildActionsOpen: !this.state.buildActionsOpen })}>
+              {this.state.buildActionsOpen ? '▲ Build Options ▲' : '▼ Build Options ▼'}
+            </button>
+            <div className={cn('build-actions-list', { open: this.state.buildActionsOpen })}>
             <button
               onClick={canRename && this._renameBuild}
               disabled={!canRename}
@@ -959,6 +965,7 @@ export default class OutfittingPage extends Page {
               <span style={{ textTransform: 'none', fontSize: '1.8em' }}>
                 a|
               </span>
+              <span className="build-action-label">{translate('rename')}</span>
             </button>
             <button
               onClick={canReload && this._reloadBuild}
@@ -967,6 +974,7 @@ export default class OutfittingPage extends Page {
               onMouseOut={hide}
             >
               <Reload className="lg" />
+              <span className="build-action-label">{translate('reload')}</span>
             </button>
             <button
               className={'danger'}
@@ -976,6 +984,7 @@ export default class OutfittingPage extends Page {
               onMouseOut={hide}
             >
               <Bin className="lg" />
+              <span className="build-action-label">{translate('delete')}</span>
             </button>
             <button
               onClick={code && this._resetBuild}
@@ -984,6 +993,7 @@ export default class OutfittingPage extends Page {
               onMouseOut={hide}
             >
               <Switch className="lg" />
+              <span className="build-action-label">{translate('reset')}</span>
             </button>
             <button
               onClick={buildName && this._exportBuild}
@@ -992,6 +1002,7 @@ export default class OutfittingPage extends Page {
               onMouseOut={hide}
             >
               <Download className="lg" />
+              <span className="build-action-label">{translate('export')}</span>
             </button>
             <button
               onClick={this._inaraShoppingList}
@@ -999,6 +1010,7 @@ export default class OutfittingPage extends Page {
               onMouseOut={hide}
             >
               <ShoppingIcon className="lg" />
+              <span className="build-action-label">{translate('stations')}</span>
             </button>
             <button
               onClick={this._genShortlink}
@@ -1006,6 +1018,7 @@ export default class OutfittingPage extends Page {
               onMouseOut={hide}
             >
               <LinkIcon className="lg" />
+              <span className="build-action-label">{translate('shortlink')}</span>
             </button>
             <button
               onClick={this._genShoppingList}
@@ -1013,6 +1026,7 @@ export default class OutfittingPage extends Page {
               onMouseOut={hide}
             >
               <MatIcon className="lg" />
+              <span className="build-action-label">{translate('materials')}</span>
             </button>
             <button
               className={(!Persist.getActiveCmdrLink() || !savedCode || !Persist.hasBuilds()) ? 'disabled' : ''}
@@ -1029,7 +1043,9 @@ export default class OutfittingPage extends Page {
               onMouseOut={hide}
             >
               <PersonIcon className="lg" />
+              <span className="build-action-label">{translate('save to CMDR')}</span>
             </button>
+            </div>
             </div>
           </div>
         </div>
