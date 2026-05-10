@@ -338,6 +338,7 @@ export default class CategoryMenu extends TranslatedComponent {
               value={searchQuery}
               onChange={this._handleSearchChange}
               onClick={(e) => e.stopPropagation()}
+              autoFocus={this.context.noTouch}
             />
           </div>
           <AvailableModulesMenuWithSearch
@@ -369,6 +370,7 @@ export default class CategoryMenu extends TranslatedComponent {
             value={searchQuery}
             onChange={this._handleSearchChange}
             onClick={(e) => e.stopPropagation()}
+            autoFocus={this.context.noTouch}
           />
         </div>
 
@@ -412,6 +414,10 @@ class AvailableModulesMenuWithSearch extends AvailableModulesMenu {
 
   componentDidMount() {
     super.componentDidMount();
+    // Auto-focus search input on desktop (not mobile, to avoid keyboard popup)
+    if (this.context.noTouch && this.searchInputRef.current) {
+      this.searchInputRef.current.focus();
+    }
     // Trigger search filtering after mount
     if (this.props.searchQuery) {
       this._filterModulesBySearch();

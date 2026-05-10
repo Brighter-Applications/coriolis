@@ -1736,6 +1736,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
               value={searchQuery}
               onChange={this._handleSearchChange}
               onClick={(e) => e.stopPropagation()}
+              autoFocus={this.context.noTouch}
             />
           </div>
         )}
