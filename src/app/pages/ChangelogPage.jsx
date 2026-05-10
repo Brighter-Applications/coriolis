@@ -31,7 +31,6 @@ export default class ChangelogPage extends Page {
         {announcements.map(a => (
           <div key={a.id} id={`v${a.version}`} className='changelog-entry'>
             <h2>{prefix}{a.version}</h2>
-            <h3>{a.text}</h3>
             <ul>
               {a.changes.map((change, i) => (
                 <li key={i}>{change}</li>
@@ -39,6 +38,7 @@ export default class ChangelogPage extends Page {
             </ul>
           </div>
         ))}
+        <p>Only versions since 4.0.9 are tracked, as there was a huge gap in the use of ChangeLog for several years.</p>
       </div>
     );
   }

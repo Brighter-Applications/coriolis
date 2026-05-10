@@ -1,6 +1,6 @@
 /**
  * generate-announcements.js
- * 
+ *
  * Reads ChangeLog.md and package.json to generate src/app/data/announcements.json
  * Run at build time or as part of the promotion workflow.
  */
@@ -24,13 +24,21 @@ sections.forEach((section, index) => {
     .filter(Boolean);
 
   if (version && bullets.length > 0) {
-    entries.push({
-      id: sections.length - index,
-      version: version,
-      text: bullets[0], // First bullet as the tagline
-      changes: bullets
-    });
-  }
+    // Split version into major, minor, patch, using . as the separator
+    const parts = version.split('.');
+    const major = parseInt(parts[0], 10);
+    const minor = parseInt(parts[1], 10);
+    const patch = parseInt(parts[2], 10);
+    // Only include announcements from version 4.0.9 onwards
+    if (major > 4 || (major === 4 && minor > 0) || (major === 4 && minor === 0 && patch >= 9)) {
+      entries.push({
+        id: sections.length - index,
+        version: version,
+        text: bullets[0], // First bullet as the tagline
+        changes: bullets
+      });
+    };
+  };
 });
 
 // Output all entries (announcements modal shows last 7, changelog shows all)
