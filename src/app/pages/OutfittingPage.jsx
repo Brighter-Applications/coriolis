@@ -152,7 +152,8 @@ export default class OutfittingPage extends Page {
       engagementRange,
       useResponsiveSummary,
       statBarCollapsed: false,
-      outfittingCollapsed: false
+      outfittingCollapsed: false,
+      analysisCollapsed: false
     };
   }
 
@@ -1118,7 +1119,10 @@ export default class OutfittingPage extends Page {
         </div>}
 
         {/* Control of ship and opponent */}
-        <div className="ship-control-row">
+        <div className={this.state.analysisCollapsed ? 'outfitting-toggle pulse' : 'outfitting-toggle'} onClick={() => this.setState({ analysisCollapsed: !this.state.analysisCollapsed })}>
+          {this.state.analysisCollapsed ? '▼ Show Combat Analysis, Profiles & Cost ▼' : '▲ Hide Combat Analysis, Profiles & Cost ▲'}
+        </div>
+        {!this.state.analysisCollapsed && <><div className="ship-control-row">
           <div className="group quarter">
             <div className="group half">
               <h2 style={{ verticalAlign: 'middle', textAlign: 'left' }}>
@@ -1202,7 +1206,7 @@ export default class OutfittingPage extends Page {
           opponentSys={opponentSys}
           opponentEng={opponentEng}
           opponentWep={opponentWep}
-        />
+        /></>}
       </div>
     );
   }
