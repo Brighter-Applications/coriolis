@@ -1,0 +1,133 @@
+[
+  {
+    "id": 46,
+    "version": "4.0.24",
+    "text": "Builds Button on Firefox fix when no builds saved",
+    "changes": [
+      "Builds Button on Firefox fix when no builds saved"
+    ]
+  },
+  {
+    "id": 45,
+    "version": "4.0.23",
+    "text": "Ensuring the Advanced Planetary Approach Suite is added to imported ships for consistency",
+    "changes": [
+      "Ensuring the Advanced Planetary Approach Suite is added to imported ships for consistency"
+    ]
+  },
+  {
+    "id": 44,
+    "version": "4.0.22",
+    "text": "Auto Select Module Search on Available Modules Menu opening",
+    "changes": [
+      "Auto Select Module Search on Available Modules Menu opening"
+    ]
+  },
+  {
+    "id": 43,
+    "version": "4.0.21",
+    "text": "Fixing layout issue on module selection menu",
+    "changes": [
+      "Fixing layout issue on module selection menu"
+    ]
+  },
+  {
+    "id": 42,
+    "version": "4.0.20",
+    "text": "Made power and costs section collapsible",
+    "changes": [
+      "Made power and costs section collapsible"
+    ]
+  },
+  {
+    "id": 41,
+    "version": "4.0.19",
+    "text": "Fixed Sync Builds option in Settings menu. It now updates the icon to a tick, or cross, when clicked.",
+    "changes": [
+      "Fixed Sync Builds option in Settings menu. It now updates the icon to a tick, or cross, when clicked."
+    ]
+  },
+  {
+    "id": 40,
+    "version": "4.0.18",
+    "text": "Introducing an error boundary to help error reporting",
+    "changes": [
+      "Introducing an error boundary to help error reporting"
+    ]
+  },
+  {
+    "id": 39,
+    "version": "4.0.17",
+    "text": "CMDR-Coriolis started accepting MaterialTrade events from the journal",
+    "changes": [
+      "CMDR-Coriolis started accepting MaterialTrade events from the journal"
+    ]
+  },
+  {
+    "id": 38,
+    "version": "4.0.16",
+    "text": "CMDR-Coriolis started accepting MaterialCollected events from the journal",
+    "changes": [
+      "CMDR-Coriolis started accepting MaterialCollected events from the journal"
+    ]
+  },
+  {
+    "id": 37,
+    "version": "4.0.15",
+    "text": "Adding to documentation for CMDR-Coriolis new Journal API",
+    "changes": [
+      "Adding to documentation for CMDR-Coriolis new Journal API",
+      "Georgian Translation update"
+    ]
+  },
+  {
+    "id": 36,
+    "version": "4.0.14",
+    "text": "Fixed JSON/SLEF Exports to include proper engineering and FSD Ranges",
+    "changes": [
+      "Fixed JSON/SLEF Exports to include proper engineering and FSD Ranges"
+    ]
+  },
+  {
+    "id": 35,
+    "version": "4.0.13",
+    "text": "Fixed fuelmul on V1 SCO Drive",
+    "changes": [
+      "Fixed fuelmul on V1 SCO Drive",
+      "Fixing double engineered module calculations"
+    ]
+  },
+  {
+    "id": 34,
+    "version": "4.0.12",
+    "text": "Resolved issue with Builds Menu throwing an error when the user has no builds.",
+    "changes": [
+      "Resolved issue with Builds Menu throwing an error when the user has no builds."
+    ]
+  },
+  {
+    "id": 33,
+    "version": "4.0.11",
+    "text": "Fixed highliner tonnage, it was 250 and should have been 260",
+    "changes": [
+      "Fixed highliner tonnage, it was 250 and should have been 260"
+    ]
+  },
+  {
+    "id": 32,
+    "version": "4.0.10",
+    "text": "Fixed slot indexing for Lynx Highliner",
+    "changes": [
+      "Fixed slot indexing for Lynx Highliner"
+    ]
+  },
+  {
+    "id": 31,
+    "version": "4.0.9",
+    "text": "Switched to hashed filenames, to reduce caching issues on new releases",
+    "changes": [
+      "Switched to hashed filenames, to reduce caching issues on new releases",
+      "Improved release workflow, to be less user intensive and smoother and create releases"
+    ]
+  }
+]

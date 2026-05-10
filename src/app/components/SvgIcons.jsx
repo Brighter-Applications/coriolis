@@ -377,6 +377,15 @@ export class Notification extends SvgIcon {
 }
 
 /**
+ * Bell - Notification bell
+ */
+export class Bell extends SvgIcon {
+  svg() {
+    return <path d='M16 0c-1.1 0-2 0.9-2 2v1.3c-4.6 0.9-8 5-8 9.7v6l-4 4v2h28v-2l-4-4v-6c0-4.7-3.4-8.8-8-9.7v-1.3c0-1.1-0.9-2-2-2zM16 32c-2.2 0-4-1.8-4-4h8c0 2.2-1.8 4-4 4z'/>;
+  }
+}
+
+/**
  * Power - Lightning Bolt
  */
 export class Power extends SvgIcon {

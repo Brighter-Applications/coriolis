@@ -1,3 +1,5 @@
+#4.0.25
+  * Revamped Announcements and created Changelog page
 #4.0.24
   * Builds Button on Firefox fix when no builds saved
 #4.0.23
