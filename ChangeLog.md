@@ -1,3 +1,5 @@
+#4.0.24
+  * Builds Button on Firefox fix when no builds saved
 #4.0.23
   * Ensuring the Advanced Planetary Approach Suite is added to imported ships for consistency
 #4.0.22
