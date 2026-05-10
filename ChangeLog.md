@@ -1,3 +1,5 @@
+#4.0.21
+  * Fixing layout issue on module selection menu
 #4.0.20
   * Made power and costs section collapsible
 #4.0.19
