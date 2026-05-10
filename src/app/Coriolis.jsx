@@ -8,6 +8,8 @@ import { getLanguage } from './i18n/Language';
 import Persist from './stores/Persist';
 
 import Announcement from './components/Announcement';
+import AnnouncementBanner from './components/AnnouncementBanner';
+import announcementsData from './data/announcements.json';
 import Header from './components/Header';
 import Tooltip from './components/Tooltip';
 import ModalExport from './components/ModalExport';
@@ -17,6 +19,7 @@ import ModalPermalink from './components/ModalPermalink';
 import * as CompanionApiUtils from './utils/CompanionApiUtils';
 import * as JournalUtils from './utils/JournalUtils';
 import AboutPage from './pages/AboutPage';
+import ChangelogPage from './pages/ChangelogPage';
 import NotFoundPage from './pages/NotFoundPage';
 import OutfittingPage from './pages/OutfittingPage';
 import ComparisonPage from './pages/ComparisonPage';
@@ -55,13 +58,23 @@ export default class Coriolis extends React.Component {
     this.state = {
       noTouch: !('ontouchstart' in window || navigator.msMaxTouchPoints || navigator.maxTouchPoints),
       page: null,
-      // Announcements must have an expiry date in format "YYYY-MM-DDTHH:MM:SSZ"
-      announcements: [{expiry: "2026-04-28T00:00:00Z", text: "Lynx Highliner added!"}],
+      // Announcements loaded from generated data (see generate-announcements.js)
+      announcements: announcementsData,
+      showAnnouncementBanner: false,
 
       language: getLanguage(Persist.getLangCode()),
       route: {},
       sizeRatio: Persist.getSizeRatio()
     };
+
+    // Show banner for newest announcement if not already seen
+    const validAnnouncements = this.state.announcements.slice(0, 7);
+    if (validAnnouncements.length > 0) {
+      const lastSeenId = parseInt(localStorage.getItem('lastSeenAnnouncementId') || '0');
+      if (validAnnouncements[0].id > lastSeenId) {
+        this.state.showAnnouncementBanner = true;
+      }
+    }
     Router('', (r) => this._setPage(ShipyardPage, r));
     Router('/import?', (r) => this._importBuild(r));
     Router('/import/:data', (r) => this._importBuild(r));
@@ -72,6 +85,7 @@ export default class Coriolis extends React.Component {
     Router('/comparison?', (r) => this._setPage(ComparisonPage, r));
     Router('/comparison/:code', (r) => this._setPage(ComparisonPage, r));
     Router('/about', (r) => this._setPage(AboutPage, r));
+    Router('/changelog', (r) => this._setPage(ChangelogPage, r));
     Router('*', (r) => this._setPage(null, r));
   }
 
@@ -468,11 +482,17 @@ export default class Coriolis extends React.Component {
       <AppContext.Provider value={contextValue}>
         <div style={{ minHeight: '100%' }} onClick={() => { this._closeMenu(); this._tooltip(); }}
              className={this.state.noTouch ? 'no-touch' : null}>
-          <Header announcements={this.state.announcements} appCacheUpdate={this.state.appCacheUpdate}
+          <Header announcements={this.state.announcements} hasUnseenAnnouncements={this.state.showAnnouncementBanner} appCacheUpdate={this.state.appCacheUpdate}
+                  onAnnouncementsSeen={() => {
+                    if (this.state.announcements.length > 0) localStorage.setItem('lastSeenAnnouncementId', this.state.announcements[0].id.toString());
+                    this.setState({ showAnnouncementBanner: false });
+                  }}
                   currentMenu={currentMenu}/>
-          <div className="announcement-container">{this.state.announcements.map((a, index) => <Announcement
-            key={index}
-            text={a.text}/>)}</div>
+          <div className="announcement-container"></div>
+          {this.state.showAnnouncementBanner && <AnnouncementBanner
+            announcement={this.state.announcements[0]}
+            onDismiss={() => this.setState({ showAnnouncementBanner: false })}
+          />}
           {this.state.error ? this.state.error : this.state.page ? React.createElement(this.state.page, { currentMenu }) :
             <NotFoundPage/>}
           {this.state.modal}
