@@ -1,3 +1,5 @@
+#4.0.23
+  * Ensuring the Advanced Planetary Approach Suite is added to imported ships for consistency
 #4.0.22
   * Auto Select Module Search on Available Modules Menu opening
 #4.0.21
