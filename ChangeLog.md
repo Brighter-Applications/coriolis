@@ -1,3 +1,5 @@
+#4.0.22
+  * Auto Select Module Search on Available Modules Menu opening
 #4.0.21
   * Fixing layout issue on module selection menu
 #4.0.20
