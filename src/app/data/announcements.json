@@ -1,5 +1,13 @@
 [
   {
+    "id": 47,
+    "version": "4.0.25",
+    "text": "Revamped Announcements and created Changelog page",
+    "changes": [
+      "Revamped Announcements and created Changelog page"
+    ]
+  },
+  {
     "id": 46,
     "version": "4.0.24",
     "text": "Builds Button on Firefox fix when no builds saved",
