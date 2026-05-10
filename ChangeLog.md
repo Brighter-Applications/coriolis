@@ -1,3 +1,5 @@
+#4.0.20
+  * Made power and costs section collapsible
 #4.0.19
   * Fixed Sync Builds option in Settings menu. It now updates the icon to a tick, or cross, when clicked.
 #4.0.18
