@@ -259,6 +259,7 @@ export default class Header extends TranslatedComponent {
    */
   _toggleSyncBuilds() {
     Persist.syncBuilds(!Persist.syncBuilds());
+    this.forceUpdate();
   }
 
   /**
