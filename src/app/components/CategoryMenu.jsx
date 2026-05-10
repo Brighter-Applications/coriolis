@@ -328,7 +328,10 @@ export default class CategoryMenu extends TranslatedComponent {
     // If searching, render AvailableModulesMenu with search pre-populated
     if (hasSearchQuery) {
       return (
-        <div>
+        <div
+          className={cn('select', 'category-menu', className)}
+          onContextMenu={stopCtxPropagation}
+        >
           <div className="module-search-container">
             <input
               ref={this.searchInputRef}
@@ -351,6 +354,7 @@ export default class CategoryMenu extends TranslatedComponent {
             diffDetails={ship ? diffDetails.bind(ship, this.context.language) : undefined}
             eligible={eligible}
             searchQuery={searchQuery}
+            hideSearch={true}
           />
         </div>
       );

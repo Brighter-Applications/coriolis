@@ -287,7 +287,7 @@ footer {
   padding: 0.6em 0.5em;
   border-bottom: 1px solid @primary-bg;
   text-decoration: none;
-  color: @primary;
+  color: @fg;
   transition: background-color 0.15s;
 
   &:last-child {
@@ -300,6 +300,10 @@ footer {
 
   &.latest {
     color: @warning;
+  }
+
+  &.unread {
+    color: @primary;
   }
 }
 

@@ -1694,7 +1694,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
    * @return {Object} React component
    */
   render() {
-    let { className, selectedCategory, onBack } = this.props;
+    let { className, selectedCategory, onBack, hideSearch } = this.props;
     let { list, searchQuery } = this.state;
 
     let classes = cn('select', className);
@@ -1702,7 +1702,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     // Determine if we should show search box
     // Show for optional internal, hardpoint, and utility slots (not for standard/core modules)
     const isCoreInternal = className && className.includes('standard');
-    const showSearch = !isCoreInternal;
+    const showSearch = !isCoreInternal && !hideSearch;
 
     // Show back button if a category is selected
     const showBackButton = selectedCategory && onBack;
