@@ -1,3 +1,5 @@
+#4.0.28
+  * Added new Google Tag to use Google Analytics
 #4.0.27
   * Fixed duplicate search box when selecting an empty slot and typing
   * Fixed announcements to mark all as read when you visit the ChangeLog page
