@@ -3,10 +3,12 @@ import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import cn from 'classnames';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
-import { MountFixed, MountGimballed, MountTurret, Warning, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall } from './SvgIcons';
+import { MountFixed, MountGimballed, MountTurret, Warning, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall, StarHollow, StarFilled, Reload } from './SvgIcons';
 import ModalConfirmCG from './ModalConfirmCG';
 import Persist from '../stores/Persist';
 import Module from '../shipyard/Module';
+import { getBlueprint } from '../utils/BlueprintFunctions';
+import { Modifications } from 'coriolis-data/dist';
 
 
 const PRESS_THRESHOLD = 500; // mouse/touch down threshold
@@ -146,6 +148,7 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     warning: PropTypes.func.isRequired,
     diffDetails: PropTypes.func.isRequired,
     m: PropTypes.object,
+    ship: PropTypes.object,
     eligible: PropTypes.func.isRequired,
     slot: PropTypes.object, // Add this line for slot restriction information
     selectedCategory: PropTypes.string, // Category to filter by ('current' for same as fitted module, or category name)
@@ -211,12 +214,15 @@ export default class AvailableModulesMenu extends TranslatedComponent {
     this._scrollToActiveModule = this._scrollToActiveModule.bind(this);
     this._handleSearchChange = this._handleSearchChange.bind(this);
     this._filterModulesBySearch = this._filterModulesBySearch.bind(this);
+    this._toggleFavouritesMode = this._toggleFavouritesMode.bind(this);
+    this._getSlotFavourites = this._getSlotFavourites.bind(this);
     this.searchInputRef = React.createRef();
 
     const initialState = this._initState(props, context);
     this.state = {
       ...initialState,
-      searchQuery: ''
+      searchQuery: '',
+      favouritesMode: false
       // Don't override allModules - it's already in initialState
     };
   }
@@ -421,7 +427,20 @@ export default class AvailableModulesMenu extends TranslatedComponent {
 
     // Filter by category if specified
     if (selectedCategory) {
-      if (selectedCategory === 'current' && m) {
+      if (selectedCategory.startsWith('favourites:')) {
+        // Favourites mode - show favourite modules in this category
+        const favCategory = selectedCategory.replace('favourites:', '');
+        const favourites = Persist.getFavourites();
+        // Filter favourites by category and eligibility
+        const filteredFavourites = favourites.filter(fav => {
+          if (!fav || !fav.grp) return false;
+          if (eligible && !eligible(fav)) return false;
+          return this._getModuleCategory(fav) === favCategory;
+        });
+        // Render favourites instead of normal modules
+        this._processFavouriteModules(filteredFavourites, list, onSelect, eligible, warning, termtip, tooltip, translate);
+        allModules = []; // Clear normal modules since we're showing favourites
+      } else if (selectedCategory === 'current' && m) {
         // Filter to modules in the same category as the currently fitted module
         const currentCategory = this._getModuleCategory(m);
         if (currentCategory) {
@@ -1040,6 +1059,191 @@ export default class AvailableModulesMenu extends TranslatedComponent {
         });
       }
     });
+  }
+
+  /**
+   * Process favourite modules and render them with engineering info
+   * @param {Array} favourites Array of favourite module data objects
+   * @param {Array} list The list to push React elements into
+   * @param {Function} onSelect Module selection callback
+   * @param {Function} eligible Eligibility check function
+   * @param {Function} warning Warning check function
+   * @param {Function} termtip Tooltip function
+   * @param {Function} tooltip Tooltip hide function
+   * @param {Function} translate Translation function
+   */
+  _processFavouriteModules(favourites, list, onSelect, eligible, warning, termtip, tooltip, translate) {
+    if (!favourites || favourites.length === 0) {
+      list.push(
+        <div key="no-favourites" className="select-group" style={{ padding: '1em', color: '#999' }}>
+          No favourites in this category
+        </div>
+      );
+      return;
+    }
+
+    list.push(<div key="fav-header" className="select-group cap">Favourites</div>);
+
+    favourites.forEach((fav, index) => {
+      const favKey = `fav-${fav.grp}-${fav.id}-${index}`;
+      const classRating = fav.class && fav.rating ? `${fav.class}${fav.rating}` : '';
+      const moduleName = fav.name || fav.grp;
+
+      // Build engineering description
+      let engineeringDesc = '';
+      if (fav.blueprint && fav.blueprint.name) {
+        engineeringDesc = `G${fav.blueprint.grade} ${fav.blueprint.name}`;
+        if (fav.blueprint.special && fav.blueprint.special.name) {
+          engineeringDesc += ` + ${fav.blueprint.special.name}`;
+        }
+      }
+
+      // Mount icon
+      let mountIcon = null;
+      if (fav.mount) {
+        switch (fav.mount) {
+          case 'F': mountIcon = <MountFixed className="mount-icon" />; break;
+          case 'G': mountIcon = <MountGimballed className="mount-icon" />; break;
+          case 'T': mountIcon = <MountTurret className="mount-icon" />; break;
+        }
+      }
+
+      // Check eligibility
+      let validSlot = eligible ? eligible(fav) : true;
+
+      let classNames = cn({
+        'special-module': true,
+        'favourite-module': true,
+        'c': validSlot,
+        'disabled': !validSlot
+      });
+
+      // Handler to apply the favourite module with engineering
+      const selectFavourite = () => {
+        this._applyFavouriteModule(fav, onSelect);
+      };
+
+      // Handler to remove from favourites
+      const removeFavourite = (e) => {
+        e.stopPropagation();
+        Persist.removeFavourite(fav);
+        // Rebuild the list state after removing a favourite
+        const newState = this._initState(this.props, this.context);
+        this.setState(newState);
+      };
+
+      list.push(
+        <div key={favKey}
+             className={classNames}
+             tabIndex={validSlot ? '0' : ''}
+             onClick={validSlot ? selectFavourite : null}
+             onKeyDown={validSlot ? this._keyDown.bind(this, selectFavourite) : null}>
+          <div className="module-content favourite-content">
+            <div className="favourite-info">
+              {mountIcon && <span className="module-mount">{mountIcon}</span>}
+              <span className="module-text">{classRating} {translate(moduleName).toUpperCase()}</span>
+            </div>
+            {engineeringDesc && (
+              <div className="favourite-engineering">
+                {engineeringDesc}
+              </div>
+            )}
+            <div className="favourite-remove"
+                 onClick={removeFavourite}
+                 onMouseOver={termtip.bind(null, 'Remove from favourites')}
+                 onMouseOut={tooltip.bind(null, null)}>
+              <StarFilled className="star-icon star-filled" />
+            </div>
+          </div>
+        </div>
+      );
+    });
+  }
+
+  /**
+   * Apply a favourite module with its engineering to the current slot
+   * @param {Object} fav The favourite data object
+   * @param {Function} onSelect The module selection callback
+   */
+  _applyFavouriteModule(fav, onSelect) {
+    // For bulkheads, the onSelect expects an object with an 'index' property
+    // and the ship needs the mods applied after selection
+    if (fav.grp === 'bh') {
+      // Bulkhead IDs are string identifiers (e.g. "bY"), not numeric indices.
+      // Find the correct index by matching the id against available bulkheads.
+      const ship = this.props.ship;
+      let bulkheadIndex = null;
+      if (ship && ship.availCS && ship.availCS.bulkheads) {
+        bulkheadIndex = ship.availCS.bulkheads.findIndex(bh => bh.id === fav.id);
+      }
+      if (bulkheadIndex === null || bulkheadIndex < 0) return;
+
+      // Select the bulkhead by index first
+      onSelect({ index: bulkheadIndex });
+
+      // Now apply engineering mods to the installed bulkhead
+      if (ship && ship.bulkheads && ship.bulkheads.m) {
+        if (fav.mods && Object.keys(fav.mods).length > 0) {
+          ship.bulkheads.m.mods = JSON.parse(JSON.stringify(fav.mods));
+        }
+        if (fav.blueprint) {
+          ship.bulkheads.m.blueprint = {};
+          if (fav.blueprint.name) {
+            const blueprint = getBlueprint(fav.blueprint.fdname || fav.blueprint.name, ship.bulkheads.m);
+            if (blueprint) {
+              ship.bulkheads.m.blueprint = JSON.parse(JSON.stringify(blueprint));
+              ship.bulkheads.m.blueprint.grade = fav.blueprint.grade;
+            } else {
+              ship.bulkheads.m.blueprint.name = fav.blueprint.name;
+              ship.bulkheads.m.blueprint.fdname = fav.blueprint.fdname;
+              ship.bulkheads.m.blueprint.grade = fav.blueprint.grade;
+            }
+          }
+          if (fav.blueprint.special && fav.blueprint.special.edname) {
+            const special = Modifications.specials[fav.blueprint.special.edname];
+            if (special) {
+              ship.bulkheads.m.blueprint.special = special;
+            }
+          }
+        }
+      }
+      return;
+    }
+
+    // Create a new Module instance from the favourite data
+    const mod = new Module({ grp: fav.grp, id: fav.id });
+    if (!mod) return;
+
+    // Apply the module first (this triggers ship.use via onSelect)
+    // We need to pre-apply the engineering data to the module before selecting it
+    if (fav.mods && Object.keys(fav.mods).length > 0) {
+      mod.mods = JSON.parse(JSON.stringify(fav.mods));
+    }
+
+    if (fav.blueprint) {
+      mod.blueprint = {};
+      if (fav.blueprint.name) {
+        // Reconstruct the blueprint object
+        const blueprint = getBlueprint(fav.blueprint.fdname || fav.blueprint.name, mod);
+        if (blueprint) {
+          mod.blueprint = JSON.parse(JSON.stringify(blueprint));
+          mod.blueprint.grade = fav.blueprint.grade;
+        } else {
+          mod.blueprint.name = fav.blueprint.name;
+          mod.blueprint.fdname = fav.blueprint.fdname;
+          mod.blueprint.grade = fav.blueprint.grade;
+        }
+      }
+      if (fav.blueprint.special && fav.blueprint.special.edname) {
+        const special = Modifications.specials[fav.blueprint.special.edname];
+        if (special) {
+          mod.blueprint.special = special;
+        }
+      }
+    }
+
+    // Select the module - this calls ship.use() which installs it in the slot
+    onSelect(mod);
   }
 
   /**
@@ -1690,12 +1894,60 @@ export default class AvailableModulesMenu extends TranslatedComponent {
   }
 
   /**
+   * Toggle between favourites mode and normal modules
+   */
+  _toggleFavouritesMode() {
+    this.setState(prev => {
+      const newMode = !prev.favouritesMode;
+      if (newMode) {
+        // Switching to favourites mode - build the favourites list
+        const { termtip, tooltip, language } = this.context;
+        const { onSelect, eligible, warning } = this.props;
+        const translate = language.translate;
+        const favourites = this._getSlotFavourites();
+        const list = [];
+        this._processFavouriteModules(favourites, list, onSelect, eligible, warning, termtip, tooltip, translate);
+        return { favouritesMode: true, favouritesList: list };
+      } else {
+        // Switching back to normal mode
+        return { favouritesMode: false, favouritesList: null };
+      }
+    });
+  }
+
+  /**
+   * Get favourites that are valid for this slot's module groups
+   * @return {Array} Filtered favourites
+   */
+  _getSlotFavourites() {
+    const { modules, eligible } = this.props;
+    const favourites = Persist.getFavourites();
+
+    // Build a set of valid module groups from the modules prop
+    const validGroups = new Set();
+    if (Array.isArray(modules)) {
+      modules.forEach(mod => { if (mod && mod.grp) validGroups.add(mod.grp); });
+    } else if (typeof modules === 'object') {
+      Object.keys(modules).forEach(groupKey => {
+        validGroups.add(groupKey);
+      });
+    }
+
+    return favourites.filter(fav => {
+      if (!fav || !fav.grp) return false;
+      if (validGroups.size > 0 && !validGroups.has(fav.grp)) return false;
+      if (eligible && !eligible(fav)) return false;
+      return true;
+    });
+  }
+
+  /**
    * Render component
    * @return {Object} React component
    */
   render() {
     let { className, selectedCategory, onBack, hideSearch } = this.props;
-    let { list, searchQuery } = this.state;
+    let { list, searchQuery, favouritesMode, favouritesList } = this.state;
 
     let classes = cn('select', className);
 
@@ -1706,6 +1958,9 @@ export default class AvailableModulesMenu extends TranslatedComponent {
 
     // Show back button if a category is selected
     const showBackButton = selectedCategory && onBack;
+
+    // For core/standard slots, check if there are relevant favourites
+    const hasFavourites = isCoreInternal && this._getSlotFavourites().length > 0;
 
     return (
       <div className={classes}
@@ -1740,7 +1995,21 @@ export default class AvailableModulesMenu extends TranslatedComponent {
             />
           </div>
         )}
-        {list}
+        {hasFavourites && (
+          <div
+            className={cn('favourites-toggle', { active: favouritesMode })}
+            tabIndex="0"
+            onClick={(e) => {
+              e.stopPropagation();
+              this._toggleFavouritesMode();
+            }}
+          >
+            <span className="favourites-toggle-text">
+              {favouritesMode ? <span><Reload className="favourites-toggle-icon" /> Modules</span> : '★ Favourites'}
+            </span>
+          </div>
+        )}
+        {favouritesMode && favouritesList ? favouritesList : list}
       </div>
     );
   }

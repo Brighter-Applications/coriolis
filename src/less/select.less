@@ -750,3 +750,121 @@ select {
   background: none;
   overflow: visible;
 }
+
+// Favourites toggle button
+.favourites-toggle {
+  display: block;
+  width: auto;
+  max-width: calc(100% - 40px);
+  margin: 8px auto;
+  padding: 8px 15px;
+  font-size: 13px;
+  text-align: center;
+  cursor: pointer;
+  box-sizing: border-box;
+  background-color: @bg;
+  color: @community;
+  border: 2px solid @community;
+  transition: all 0.15s ease;
+
+  .no-touch &:hover {
+    background-color: fade(@community, 15%);
+    color: @community;
+  }
+
+  &.active {
+    background-color: fade(@community, 20%);
+    color: @community;
+    border-color: @community;
+  }
+
+  .favourites-toggle-text {
+    font-size: 14px;
+    font-weight: bold;
+    text-transform: uppercase;
+  }
+
+  .favourites-toggle-icon.icon {
+    width: 16px;
+    height: 16px;
+    vertical-align: middle;
+    margin-right: 4px;
+    fill: @community;
+    stroke: none;
+  }
+}
+
+// Favourite star in slot
+.favourite-star {
+  position: absolute;
+  bottom: 2px;
+  left: 0;
+  display: inline-flex;
+  align-items: center;
+  cursor: pointer;
+  padding: 2px 4px;
+  transition: color 0.15s ease;
+
+  .star-icon {
+    width: 16px;
+    height: 16px;
+    color: @primary-disabled;
+    transition: color 0.15s ease;
+  }
+
+  .star-hollow {
+    color: @primary-disabled;
+  }
+
+  .star-filled {
+    color: @community;
+  }
+
+  .no-touch &:hover .star-icon {
+    color: @community;
+  }
+}
+
+// Favourite module in the available modules menu
+.favourite-module {
+  .favourite-content {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+    position: relative;
+  }
+
+  .favourite-info {
+    display: flex;
+    align-items: center;
+    gap: 4px;
+  }
+
+  .favourite-engineering {
+    font-size: 11px;
+    color: @secondary;
+    margin-top: 2px;
+    text-transform: none;
+    font-style: italic;
+  }
+
+  .favourite-remove {
+    position: absolute;
+    right: 0;
+    top: 50%;
+    transform: translateY(-50%);
+    cursor: pointer;
+    padding: 2px 4px;
+
+    .star-icon {
+      width: 14px;
+      height: 14px;
+      color: @community;
+    }
+
+    .no-touch &:hover .star-icon {
+      color: @warning;
+    }
+  }
+}

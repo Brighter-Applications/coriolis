@@ -14,7 +14,9 @@ import {
   Modified,
   CommunityGoalSmall,
   TechBrokerSmall,
-  PowerPlaySmall
+  PowerPlaySmall,
+  StarHollow,
+  StarFilled
 } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
@@ -214,6 +216,7 @@ export default class HardpointSlot extends Slot {
               <ListModifications/></button>
           </div> : null}
         </div>
+        {m && hasModifications && m.mods && Object.keys(m.mods).length > 0 ? <div className='favourite-star' onClick={(e) => { e.stopPropagation(); Persist.toggleFavourite(m); this.forceUpdate(); }} onMouseOver={termtip.bind(null, Persist.isFavourite(m) ? 'Remove from favourites' : 'Add to favourites')} onMouseOut={tooltip.bind(null, null)}>{Persist.isFavourite(m) ? <StarFilled className='star-icon star-filled' /> : <StarHollow className='star-icon star-hollow' />}</div> : null}
       </div>;
     } else {
       return <div className={'empty'}>{translate('empty')}</div>;

@@ -2,7 +2,7 @@ import React from 'react';
 import cn from 'classnames';
 import Slot from './Slot';
 import Persist from '../stores/Persist';
-import { ListModifications, Modified, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall } from './SvgIcons';
+import { ListModifications, Modified, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall, StarHollow, StarFilled } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { getBlueprint, blueprintTooltip } from '../utils/BlueprintFunctions';
@@ -158,6 +158,7 @@ export default class InternalSlot extends Slot {
           { m.getInfo() ? <div className='l'>{translate(m.getInfo())}</div> : null }
 	  { m && hasModifications ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button tabIndex="-1" onClick={(e) => this._toggleModifications(e)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
         </div>
+        { m && hasModifications && m.mods && Object.keys(m.mods).length > 0 ? <div className='favourite-star' onClick={(e) => { e.stopPropagation(); Persist.toggleFavourite(m); this.forceUpdate(); }} onMouseOver={termtip.bind(null, Persist.isFavourite(m) ? 'Remove from favourites' : 'Add to favourites')} onMouseOut={tooltip.bind(null, null)}>{Persist.isFavourite(m) ? <StarFilled className='star-icon star-filled' /> : <StarHollow className='star-icon star-hollow' />}</div> : null }
       </div>;
     } else {
       return <div className={'empty'}>{translate('empty')}</div>;
