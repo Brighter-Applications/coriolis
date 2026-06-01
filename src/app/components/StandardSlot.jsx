@@ -7,7 +7,7 @@ import { diffDetails } from '../utils/SlotFunctions';
 import AvailableModulesMenu from './AvailableModulesMenu';
 import ModificationsMenu from './ModificationsMenu';
 import * as ModuleUtils from '../shipyard/ModuleUtils';
-import { ListModifications, Modified } from './SvgIcons';
+import { ListModifications, Modified, StarHollow, StarFilled } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { getBlueprint, blueprintTooltip } from '../utils/BlueprintFunctions';
@@ -164,7 +164,7 @@ export default class StandardSlot extends TranslatedComponent {
       <div className={cn('slot', { selected: this.props.selected })} onClick={this.props.onOpen} onKeyDown={this._keyDown} onContextMenu={stopCtxPropagation} tabIndex="0" ref={ slotDiv => this.slotDiv = slotDiv }>
         <div className={cn('details-container', { warning: warning && warning(slot.m), disabled: m.grp !== 'bh' && !slot.enabled })}>
           <div className={'sz'}>{m.grp == 'bh' ? m.name.charAt(0) : slot.maxClass}</div>
-          <div>
+          <div className={'details'}>
             <div className={'l'}>{classRating} {m.getInfo() ? translate(m.ukName) : translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='r' onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified />{m.blueprint && m.blueprint.grade ? <sub className='eng-grade'>{m.blueprint.grade}</sub> : null}</span> : null }</div>
             <div className={'r'}>{formats.round(mass)}{units.T}</div>
 	    <div/>
@@ -188,6 +188,7 @@ export default class StandardSlot extends TranslatedComponent {
                 { m.getInfo() ? <div className='l'>{translate(m.getInfo())}</div> : null }
 	        { m.getInfo() ? <div className='r'></div> : canBeEngineered && validMods.length > 0 ? <div className='r' tabIndex="0" ref={ modButton => this.modButton = modButton }><button  tabIndex="-1" onClick={(e) => this._toggleModifications(e)} onContextMenu={stopCtxPropagation} onMouseOver={termtip.bind(null, 'modifications')} onMouseOut={tooltip.bind(null, null)}><ListModifications /></button></div> : null }
             </div>
+            { m.mods && Object.keys(m.mods).length > 0 ? <div className='favourite-star' onClick={(e) => { e.stopPropagation(); Persist.toggleFavourite(m); this.forceUpdate(); }} onMouseOver={termtip.bind(null, Persist.isFavourite(m) ? 'Remove from favourites' : 'Add to favourites')} onMouseOut={tooltip.bind(null, null)}>{Persist.isFavourite(m) ? <StarFilled className='star-icon star-filled' /> : <StarHollow className='star-icon star-hollow' />}</div> : null }
           </div>
         </div>
         <div className={cn('menu-section-wrapper', { open: selected && menu })}>

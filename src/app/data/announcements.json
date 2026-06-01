@@ -1,5 +1,30 @@
 [
   {
+    "id": 50,
+    "version": "4.0.28",
+    "text": "Added new Google Tag to use Google Analytics",
+    "changes": [
+      "Added new Google Tag to use Google Analytics"
+    ]
+  },
+  {
+    "id": 49,
+    "version": "4.0.27",
+    "text": "Fixed duplicate search box when selecting an empty slot and typing",
+    "changes": [
+      "Fixed duplicate search box when selecting an empty slot and typing",
+      "Fixed announcements to mark all as read when you visit the ChangeLog page"
+    ]
+  },
+  {
+    "id": 48,
+    "version": "4.0.26",
+    "text": "Build Options Menu introduced on mobile devices to replace icons",
+    "changes": [
+      "Build Options Menu introduced on mobile devices to replace icons"
+    ]
+  },
+  {
     "id": 47,
     "version": "4.0.25",
     "text": "Revamped Announcements and created Changelog page",
