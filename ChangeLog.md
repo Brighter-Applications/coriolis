@@ -1,3 +1,5 @@
+#4.0.29
+  * Added Favouriting for Engineered modules
 #4.0.28
   * Added new Google Tag to use Google Analytics
 #4.0.27
