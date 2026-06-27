@@ -1,3 +1,5 @@
+#4.0.30
+  * Fixing tooltip issues, including crashes when selecting experimentals
 #4.0.29
   * Added Favouriting for Engineered modules
 #4.0.28
