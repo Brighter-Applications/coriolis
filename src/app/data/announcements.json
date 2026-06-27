@@ -1,5 +1,13 @@
 [
   {
+    "id": 51,
+    "version": "4.0.29",
+    "text": "Added Favouriting for Engineered modules",
+    "changes": [
+      "Added Favouriting for Engineered modules"
+    ]
+  },
+  {
     "id": 50,
     "version": "4.0.28",
     "text": "Added new Google Tag to use Google Analytics",

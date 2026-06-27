@@ -55,6 +55,10 @@ export default class Coriolis extends React.Component {
     this._importBuild = this._importBuild.bind(this);
 
     this.emitter = new EventEmitter();
+    // Track the most recent pointer type (mouse, touch, pen) so we can
+    // suppress tooltips for touch interactions without permanently blocking
+    // them on hybrid devices that report touch capability.
+    this._lastPointerType = 'mouse';
     this.state = {
       noTouch: !('ontouchstart' in window || navigator.msMaxTouchPoints || navigator.maxTouchPoints),
       page: null,
@@ -338,7 +342,14 @@ export default class Coriolis extends React.Component {
   _tooltip(content, rect, opts) {
     if (!content && this.state.tooltip) {
       this.setState({ tooltip: null });
-    } else if (content && Persist.showTooltips() && this.state.noTouch) {
+    } else if (content && Persist.showTooltips()) {
+      // Allow tooltips unless the last interaction was a touch event.
+      // This avoids the old noTouch gate which permanently blocked tooltips
+      // on hybrid devices (laptops with touchscreens) even when using a mouse.
+      // Instead we track the most recent pointer type and suppress only for touch.
+      if (this._lastPointerType === 'touch') {
+        return;
+      }
       this.setState({ tooltip: <Tooltip rect={rect} options={opts}>{content}</Tooltip> });
     }
   }
@@ -437,6 +448,10 @@ export default class Coriolis extends React.Component {
     window.addEventListener('resize', () => this.emitter.emit('windowResize'));
     document.getElementById('coriolis').addEventListener('scroll', () => this._tooltip());
     document.addEventListener('keydown', this._keyDown);
+    // Track pointer type so we can distinguish mouse from touch at tooltip-show time.
+    // pointerdown fires before the synthetic mouseOver, giving us an accurate read.
+    window.addEventListener('pointerdown', (e) => { this._lastPointerType = e.pointerType; });
+    window.addEventListener('pointerenter', (e) => { this._lastPointerType = e.pointerType; }, true);
     Persist.addListener('language', this._onLanguageChange);
     Persist.addListener('sizeRatio', this._onSizeRatioChange);
 
