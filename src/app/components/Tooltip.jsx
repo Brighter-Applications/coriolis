@@ -63,7 +63,8 @@ export default class Tooltip extends TranslatedComponent {
    * @param  {DomElement} elem Tooltip contents container
    */
   _adjustDimensions() {
-    if (this.elem) {
+    if (this.elem && !this._adjusting) {
+      this._adjusting = true;
       let o = this.state.orientation;
       let rect = this.elem.getBoundingClientRect();
 
@@ -76,6 +77,7 @@ export default class Tooltip extends TranslatedComponent {
       // Without this guard, componentDidUpdate -> setState -> componentDidUpdate
       // can cycle indefinitely on browsers with sub-pixel rounding differences.
       if (width === this.state.width && height === this.state.height) {
+        this._adjusting = false;
         return;
       }
 
@@ -107,6 +109,7 @@ export default class Tooltip extends TranslatedComponent {
    * @param  {Object} nextProps   Incoming/Next properties
    */
   UNSAFE_componentWillReceiveProps(nextProps) {
+    this._adjusting = false; // Allow re-measurement for new tooltip content
     this.setState(this._initialDimensions(nextProps));
   }
 

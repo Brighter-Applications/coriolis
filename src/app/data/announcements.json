@@ -1,5 +1,13 @@
 [
   {
+    "id": 52,
+    "version": "4.0.30",
+    "text": "Fixing tooltip issues, including crashes when selecting experimentals",
+    "changes": [
+      "Fixing tooltip issues, including crashes when selecting experimentals"
+    ]
+  },
+  {
     "id": 51,
     "version": "4.0.29",
     "text": "Added Favouriting for Engineered modules",
