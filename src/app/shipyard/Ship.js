@@ -494,7 +494,7 @@ export default class Ship {
    */
   setModuleBlueprint(m, bp) {
     // Check if this is a pre-engineered module that cannot be re-engineered
-    if (m.preEngineered && !m.preEngineered.reengineerable) {
+    if (m.preEngineered && !m.preEngineered.reengineerable && !m.preEngineered.gradeChangeable) {
       // Don't allow changing the blueprint on a locked pre-engineered module
       return;
     }

@@ -131,7 +131,7 @@ export function preEngineeredTooltip(translate, m, grp) {
         {translate('Pre-engineered with')}: {m.preEngineered.blueprints.map(bp => {
           const blueprint = getBlueprint(bp, m);
           return translate(blueprint.name);
-        }).join(' + ')} {translate('grade')} {m.preEngineered.grade}
+        }).join(' + ')} {translate('grade')} {m.blueprint && m.blueprint.grade ? m.blueprint.grade : m.preEngineered.grade}
       </div>
       <table width='100%'>
         <thead>

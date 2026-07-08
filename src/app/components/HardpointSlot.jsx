@@ -112,7 +112,7 @@ export default class HardpointSlot extends Slot {
         if (m.preEngineered && m.preEngineered.blueprints) {
           const blueprintNames = _.split(m.preEngineered.blueprints, ',');
           const blueprints = blueprintNames.map(name => getBlueprint(name.trim(), m));
-          const blueprintHeader = blueprints.map(bp => <div className='blueprintList' key={bp.name}>{`Blueprint: ${translate(bp.name)} ${translate('Grade:')} ${m.preEngineered.grade}`}</div>);
+          const blueprintHeader = blueprints.map(bp => <div className='blueprintList' key={bp.name}>{`Blueprint: ${translate(bp.name)} ${translate('Grade:')} ${m.blueprint.grade || m.preEngineered.grade}`}</div>);
 
           if (m.blueprint.special && m.blueprint.special.id >= 0) {
             blueprintHeader.push(<div className='blueprintList' key={m.blueprint.special.name}>{`Experimental: ${translate(m.blueprint.special.name)}`}</div>);
