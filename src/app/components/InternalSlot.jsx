@@ -105,13 +105,19 @@ export default class InternalSlot extends Slot {
       }
 
       let cgttip = '';
-      // Get availability icon (CG, Tech Broker, or PowerPlay)
+      // Get availability icon (CG, Tech Broker, PowerPlay, or Merc Coin)
       const availabilityIcon = this._getAvailabilityIcon(m);
       if (m && (m.powerplay === 'True' || m.powerplay === true)) {
         cgttip = 'PowerPlay Module';
       }
+      else if (m && m.mercModule) {
+        cgttip = 'Merc Coin Module';
+      }
       else if (m && m.preEngineered && m.preEngineered.availability === 'CG') {
         cgttip = 'Community Goal Module';
+      }
+      else if (m && m.preEngineered && m.preEngineered.availability === 'MercCoin') {
+        cgttip = 'Merc Coin Module';
       }
       else if (m && m.preEngineered && m.preEngineered.availability === undefined) {
         cgttip = 'Tech Broker Module';

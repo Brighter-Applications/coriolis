@@ -90,17 +90,23 @@ export default class StandardSlot extends TranslatedComponent {
 
     // Availability icon (CG, Tech Broker, PowerPlay, Merc Coin)
     let availabilityIcon = null;
+    let availabilityTip = '';
     if (m) {
       if (m.powerplay === 'True' || m.powerplay === true) {
         availabilityIcon = <PowerPlaySmall className='powerplay' />;
+        availabilityTip = 'PowerPlay Module';
       } else if (m.mercModule) {
         availabilityIcon = <MercCoinSmall className='merccoin' />;
+        availabilityTip = 'Merc Coin Module';
       } else if (m.preEngineered && m.preEngineered.availability === 'CG') {
         availabilityIcon = <CommunityGoalSmall className='community' />;
+        availabilityTip = 'Community Goal Module';
       } else if (m.preEngineered && m.preEngineered.availability === 'MercCoin') {
         availabilityIcon = <MercCoinSmall className='merccoin' />;
+        availabilityTip = 'Merc Coin Module';
       } else if (m.preEngineered && typeof m.preEngineered.availability === 'undefined') {
         availabilityIcon = <TechBrokerSmall className='techbroker' />;
+        availabilityTip = 'Tech Broker Module';
       }
     }
 
@@ -181,7 +187,7 @@ export default class StandardSlot extends TranslatedComponent {
         <div className={cn('details-container', { warning: warning && warning(slot.m), disabled: m.grp !== 'bh' && !slot.enabled })}>
           <div className={'sz'}>{m.grp == 'bh' ? m.name.charAt(0) : slot.maxClass}</div>
           <div className={'details'}>
-            <div className={'l'}>{availabilityIcon}{classRating} {m.getInfo() ? translate(m.ukName) : translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='r' onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified />{m.blueprint && m.blueprint.grade ? <sub className='eng-grade'>{m.blueprint.grade}</sub> : null}</span> : null }</div>
+            <div className={'l'}>{availabilityIcon ? <span onMouseOver={termtip.bind(null, availabilityTip)} onMouseOut={tooltip.bind(null, null)}>{availabilityIcon}</span> : ''}{classRating} {m.getInfo() ? translate(m.ukName) : translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='r' onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified />{m.blueprint && m.blueprint.grade ? <sub className='eng-grade'>{m.blueprint.grade}</sub> : null}</span> : null }</div>
             <div className={'r'}>{formats.round(mass)}{units.T}</div>
 	    <div/>
             <div className={'cb'}>
