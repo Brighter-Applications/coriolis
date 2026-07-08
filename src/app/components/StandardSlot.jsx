@@ -7,7 +7,7 @@ import { diffDetails } from '../utils/SlotFunctions';
 import AvailableModulesMenu from './AvailableModulesMenu';
 import ModificationsMenu from './ModificationsMenu';
 import * as ModuleUtils from '../shipyard/ModuleUtils';
-import { ListModifications, Modified, StarHollow, StarFilled } from './SvgIcons';
+import { ListModifications, Modified, StarHollow, StarFilled, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall, MercCoinSmall } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { getBlueprint, blueprintTooltip } from '../utils/BlueprintFunctions';
@@ -88,6 +88,22 @@ export default class StandardSlot extends TranslatedComponent {
     let showModuleResistances = Persist.showModuleResistances();
     let mass = m.getMass() || m.cargo || m.fuel || 0;
 
+    // Availability icon (CG, Tech Broker, PowerPlay, Merc Coin)
+    let availabilityIcon = null;
+    if (m) {
+      if (m.powerplay === 'True' || m.powerplay === true) {
+        availabilityIcon = <PowerPlaySmall className='powerplay' />;
+      } else if (m.mercModule) {
+        availabilityIcon = <MercCoinSmall className='merccoin' />;
+      } else if (m.preEngineered && m.preEngineered.availability === 'CG') {
+        availabilityIcon = <CommunityGoalSmall className='community' />;
+      } else if (m.preEngineered && m.preEngineered.availability === 'MercCoin') {
+        availabilityIcon = <MercCoinSmall className='merccoin' />;
+      } else if (m.preEngineered && typeof m.preEngineered.availability === 'undefined') {
+        availabilityIcon = <TechBrokerSmall className='techbroker' />;
+      }
+    }
+
     // Modifications tooltip shows blueprint and grade, if available
       let modTT = translate('modified');
       if (m && m.blueprint && m.blueprint.name) {
@@ -165,7 +181,7 @@ export default class StandardSlot extends TranslatedComponent {
         <div className={cn('details-container', { warning: warning && warning(slot.m), disabled: m.grp !== 'bh' && !slot.enabled })}>
           <div className={'sz'}>{m.grp == 'bh' ? m.name.charAt(0) : slot.maxClass}</div>
           <div className={'details'}>
-            <div className={'l'}>{classRating} {m.getInfo() ? translate(m.ukName) : translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='r' onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified />{m.blueprint && m.blueprint.grade ? <sub className='eng-grade'>{m.blueprint.grade}</sub> : null}</span> : null }</div>
+            <div className={'l'}>{availabilityIcon}{classRating} {m.getInfo() ? translate(m.ukName) : translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='r' onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified />{m.blueprint && m.blueprint.grade ? <sub className='eng-grade'>{m.blueprint.grade}</sub> : null}</span> : null }</div>
             <div className={'r'}>{formats.round(mass)}{units.T}</div>
 	    <div/>
             <div className={'cb'}>

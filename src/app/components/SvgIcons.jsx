@@ -643,6 +643,28 @@ export class PowerPlaySmall extends SvgIcon {
   }
 }
 
+/**
+ * Merc Coin small icon
+ * A diamond shape with a stylized angular 'F'/chevron inside, matching the in-game Merc Coin icon.
+ */
+export class MercCoinSmall extends SvgIcon {
+  /**
+   * Overriden view box
+   * @return {String} view box
+   */
+  viewBox() { return '0 0 100 100'; }
+  /**
+   * Generate the SVG
+   * @return {React.Component} SVG Contents
+   */
+  svg() {
+    return <g>
+      <path d="M50,2 L98,50 L50,98 L2,50 Z M50,12 L88,50 L50,88 L12,50 Z" fillRule="evenodd" />
+      <path d="M35,62 L35,38 L50,24 L65,38 L55,38 L50,33 L45,38 L45,47 L58,47 L58,55 L45,55 L45,62 Z" />
+    </g>;
+  }
+}
+
 export class PowerPlay extends SvgIcon {
   /**
    * Overriden view box

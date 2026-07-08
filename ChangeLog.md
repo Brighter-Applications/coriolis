@@ -1,3 +1,5 @@
+#4.1.0
+  * Operations update, new modules, new blueprints, etc.
 #4.0.30
   * Fixing tooltip issues, including crashes when selecting experimentals
 #4.0.29

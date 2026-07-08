@@ -2,7 +2,7 @@ import React from 'react';
 import cn from 'classnames';
 import Slot from './Slot';
 import Persist from '../stores/Persist';
-import { ListModifications, Modified, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall, StarHollow, StarFilled } from './SvgIcons';
+import { ListModifications, Modified, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall, MercCoinSmall, StarHollow, StarFilled } from './SvgIcons';
 import { Modifications } from 'coriolis-data/dist';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
 import { getBlueprint, blueprintTooltip } from '../utils/BlueprintFunctions';
@@ -26,11 +26,20 @@ export default class InternalSlot extends Slot {
       return <PowerPlaySmall className='powerplay' />;
     }
 
+    // Check for Merc Coin modules
+    if (mod.mercModule) {
+      return <MercCoinSmall className='merccoin' />;
+    }
+
     // Then check for pre-engineered modules (CG or Tech Broker)
     if (!mod.preEngineered) return null;
 
     if (mod.preEngineered.availability === 'CG') {
       return <CommunityGoalSmall className='community' />;
+    }
+
+    if (mod.preEngineered.availability === 'MercCoin') {
+      return <MercCoinSmall className='merccoin' />;
     }
 
     if (typeof mod.preEngineered.availability === 'undefined') {
@@ -109,7 +118,7 @@ export default class InternalSlot extends Slot {
       }
 
       let mass = m.getMass() || m.get('cargo') || m.fuel || 0;
-      if (m.cargo) mass = Math.floor(mass);  // Cargo capacity is always an integer
+      if (m.cargo) mass = Math.round(mass);  // Cargo capacity is always an integer
       const className = cn('details', enabled ? '' : 'disabled');
 
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
