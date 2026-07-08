@@ -3,7 +3,7 @@ import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
 import cn from 'classnames';
 import { stopCtxPropagation } from '../utils/UtilityFunctions';
-import { MountFixed, MountGimballed, MountTurret, Warning, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall, StarHollow, StarFilled, Reload } from './SvgIcons';
+import { MountFixed, MountGimballed, MountTurret, Warning, CommunityGoalSmall, TechBrokerSmall, PowerPlaySmall, MercCoinSmall, StarHollow, StarFilled, Reload } from './SvgIcons';
 import ModalConfirmCG from './ModalConfirmCG';
 import Persist from '../stores/Persist';
 import Module from '../shipyard/Module';
@@ -35,6 +35,7 @@ const GRPCAT = {
   'pcm': 'passenger cabins',
   'pcq': 'passenger cabins',
   'fh': 'hangars',
+  'fhmkii': 'hangars',
   'pv': 'hangars',
   'fs': 'fuel',
   'ft': 'fuel',
@@ -104,7 +105,7 @@ const INTCAT = {
   'cargo racks': ['cr', 'crl'],
   'fsd interdictor': ['fi'],
   'fuel': ['ft', 'fs'],
-  'hangars': ['fh', 'pv'],
+  'hangars': ['fh', 'fhmkii', 'pv'],
   'limpet controllers': ['cc', 'fx', 'hb', 'pc', 'rpl', 'mlc'],
   'passenger cabins': ['pce', 'pcemkii', 'pci', 'pcimkii', 'pcm', 'pcq'],
   'refineries': ['rf'],
@@ -181,11 +182,20 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       return <PowerPlaySmall className='powerplay' />;
     }
 
+    // Check for Merc Coin modules (via flag or preEngineered availability)
+    if (mod.mercModule) {
+      return <MercCoinSmall className='merccoin' />;
+    }
+
     // Then check for pre-engineered modules (CG or Tech Broker)
     if (!mod.preEngineered) return null;
 
     if (mod.preEngineered.availability === 'CG') {
       return <CommunityGoalSmall className='community' />;
+    }
+
+    if (mod.preEngineered.availability === 'MercCoin') {
+      return <MercCoinSmall className='merccoin' />;
     }
 
     if (typeof mod.preEngineered.availability === 'undefined') {
@@ -303,7 +313,21 @@ export default class AvailableModulesMenu extends TranslatedComponent {
 
     // Fuel scoop / tank
     if (mod.fuel) rows.push(<div key='fuel'>{translate('fuel')}: {mod.fuel}{units.T}</div>);
-    if (mod.cargo) rows.push(<div key='cargo'>{translate('cargo')}: {mod.cargo}{units.T}</div>);
+    if (mod.cargo) {
+      let displayCargo = mod.cargo;
+      if (mod.preEngineered && mod.preEngineered.blueprints) {
+        for (const bpName of mod.preEngineered.blueprints) {
+          const findBp = val => Object.keys(Modifications.blueprints).find(elem => elem.toString().toLowerCase().search(val.toString().toLowerCase()) >= 0);
+          const bp = Modifications.blueprints[findBp(bpName)];
+          const grade = mod.preEngineered.grade || 1;
+          if (bp && bp.grades && bp.grades[grade] && bp.grades[grade].features && bp.grades[grade].features.cargo) {
+            const cargoMod = bp.grades[grade].features.cargo[1];
+            displayCargo = Math.round(displayCargo * (1 + cargoMod));
+          }
+        }
+      }
+      rows.push(<div key='cargo'>{translate('cargo')}: {displayCargo}{units.T}</div>);
+    }
 
     // Scan stats
     if (mod.getScanTime()) rows.push(<div key='scantime'>{translate('scantime')}: {formats.f1(mod.getScanTime())}{units.s}</div>);
@@ -1364,7 +1388,8 @@ export default class AvailableModulesMenu extends TranslatedComponent {
       'rsl': 'Research Limpet Controller',
       'rcpl': 'Recon Limpet Controller',
       'dtl': 'Decontamination Limpet Controller',
-      'fh': 'Fighter Hangar',
+      'fh': 'Vessel Hangar',
+      'fhmkii': 'Mk II Vessel Hangar',
       'pv': 'Planetary Vehicle Hangar',
       'fs': 'Fuel Scoop',
       'ft': 'Fuel Tank',

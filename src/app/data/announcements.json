@@ -1,5 +1,13 @@
 [
   {
+    "id": 53,
+    "version": "4.1.0",
+    "text": "Operations update, new modules, new blueprints, etc.",
+    "changes": [
+      "Operations update, new modules, new blueprints, etc."
+    ]
+  },
+  {
     "id": 52,
     "version": "4.0.30",
     "text": "Fixing tooltip issues, including crashes when selecting experimentals",

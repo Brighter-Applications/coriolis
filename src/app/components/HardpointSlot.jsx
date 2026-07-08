@@ -15,6 +15,7 @@ import {
   CommunityGoalSmall,
   TechBrokerSmall,
   PowerPlaySmall,
+  MercCoinSmall,
   StarHollow,
   StarFilled
 } from './SvgIcons';
@@ -60,11 +61,20 @@ export default class HardpointSlot extends Slot {
       return <PowerPlaySmall className='powerplay' />;
     }
 
+    // Check for Merc Coin modules
+    if (mod.mercModule) {
+      return <MercCoinSmall className='merccoin' />;
+    }
+
     // Then check for pre-engineered modules (CG or Tech Broker)
     if (!mod.preEngineered) return null;
 
     if (mod.preEngineered.availability === 'CG') {
       return <CommunityGoalSmall className='community' />;
+    }
+
+    if (mod.preEngineered.availability === 'MercCoin') {
+      return <MercCoinSmall className='merccoin' />;
     }
 
     if (typeof mod.preEngineered.availability === 'undefined') {
@@ -130,13 +140,19 @@ export default class HardpointSlot extends Slot {
       }
 
       let cgttip = '';
-      // Get availability icon (CG, Tech Broker, or PowerPlay)
+      // Get availability icon (CG, Tech Broker, PowerPlay, or Merc Coin)
       const availabilityIcon = this._getAvailabilityIcon(m);
       if (m && (m.powerplay === 'True' || m.powerplay === true)) {
         cgttip = 'PowerPlay Module';
       }
+      else if (m && m.mercModule) {
+        cgttip = 'Merc Coin Module';
+      }
       else if (m && m.preEngineered && m.preEngineered.availability === 'CG') {
         cgttip = 'Community Goal Module';
+      }
+      else if (m && m.preEngineered && m.preEngineered.availability === 'MercCoin') {
+        cgttip = 'Merc Coin Module';
       }
       else if (m && m.preEngineered && m.preEngineered.availability === undefined) {
         cgttip = 'Tech Broker Module';
