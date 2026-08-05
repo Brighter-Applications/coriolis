@@ -65,19 +65,20 @@ jobs:
   # ------------------------------------------------------------------ #
   # Wake the EC2 build server                                          #
   # ------------------------------------------------------------------ #
-  wake-builder:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
-    steps:
-      - name: Wake the Builder
-        shell: bash
-        run: /usr/local/bin/stop-start-builder.sh start
+  # wake-builder:
+  #   runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+  #   steps:
+  #     - name: Wake the Builder
+  #       shell: bash
+  #       run: /usr/local/bin/stop-start-builder.sh start
 
   # ------------------------------------------------------------------ #
   # Build on EC2 and upload artifact to GCP                            #
   # ------------------------------------------------------------------ #
   build:
-    needs: wake-builder
-    runs-on: [self-hosted, aws, brapps, build]
+    # needs: wake-builder
+    # runs-on: [self-hosted, aws, brapps, build]
+    runs-on: [self-hosted, fleetdom, OnPrem, build]
     steps:
       - name: Download the code
         shell: bash
