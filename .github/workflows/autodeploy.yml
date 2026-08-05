@@ -78,7 +78,7 @@ jobs:
   build:
     # needs: wake-builder
     # runs-on: [self-hosted, aws, brapps, build]
-    runs-on: [self-hosted, fleetdom, OnPrem, build]
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
     steps:
       - name: Download the code
         shell: bash
@@ -124,14 +124,14 @@ jobs:
   # ------------------------------------------------------------------ #
   # Stop the EC2 build server                                          #
   # ------------------------------------------------------------------ #
-  sleep-builder:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
-    needs: build
-    if: ${{ always() }}
-    steps:
-      - name: Sleep the Builder
-        shell: bash
-        run: /usr/local/bin/stop-start-builder.sh stop
+  # sleep-builder:
+  #   runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+  #   needs: build
+  #   if: ${{ always() }}
+  #   steps:
+  #     - name: Sleep the Builder
+  #       shell: bash
+  #       run: /usr/local/bin/stop-start-builder.sh stop
 
   # ------------------------------------------------------------------ #
   # Deploy to alpha.coriolis.io                                        #
