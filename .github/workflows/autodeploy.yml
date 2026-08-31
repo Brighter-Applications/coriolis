@@ -93,12 +93,20 @@ jobs:
           cd ./coriolis-data
           export NVM_DIR=~/.nvm
           source ~/.nvm/nvm.sh
-          rm -Rf node_modules package-lock.json
+          # coriolis-data has no committed package-lock.json; a plain install is fine
+          # as it only runs data generation and has no build-toolchain sensitivity.
+          rm -Rf node_modules
           npm install --legacy-peer-deps 2>&1
           npm start
           cd ../coriolis
-          rm -Rf node_modules package-lock.json
-          npm install --legacy-peer-deps 2>&1
+          # IMPORTANT: do NOT delete package-lock.json. Deleting it lets the caret
+          # version ranges in package.json float to newer webpack/plugin releases at
+          # build time (e.g. webpack 5.110 vs the locked 5.102), which broke CSS
+          # extraction (MiniCssExtractPlugin produced orphan modules and emitted no
+          # stylesheet), resulting in an unstyled site. `npm ci` installs the exact
+          # versions from the committed lockfile so CI builds match local builds.
+          rm -Rf node_modules
+          npm ci --legacy-peer-deps 2>&1
           npm run build 2>&1
 
       - name: Zip the build

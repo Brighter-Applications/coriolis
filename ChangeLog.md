@@ -1,3 +1,5 @@
+#4.1.2
+  * Fixing deployment breaking on new modules being imported.
 #4.1.1
   * Fixes to operations module/blueprint stats
 #4.1.0
