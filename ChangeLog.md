@@ -1,3 +1,5 @@
+#4.1.1
+  * Fixes to operations module/blueprint stats
 #4.1.0
   * Operations update, new modules, new blueprints, etc.
 #4.0.30
