@@ -1,5 +1,13 @@
 [
   {
+    "id": 54,
+    "version": "4.1.1",
+    "text": "Fixes to operations module/blueprint stats",
+    "changes": [
+      "Fixes to operations module/blueprint stats"
+    ]
+  },
+  {
     "id": 53,
     "version": "4.1.0",
     "text": "Operations update, new modules, new blueprints, etc.",
