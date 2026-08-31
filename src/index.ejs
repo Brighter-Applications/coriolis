@@ -3,7 +3,11 @@
   <head>
     <title>Coriolis EDCD Edition</title>
     <meta charset="UTF-8">
-    <link rel="stylesheet" href="<%= htmlWebpackPlugin.files.css[0] %>">
+    <!-- The extracted CSS <link> is injected automatically by HtmlWebpackPlugin
+         (inject: true). Do NOT hard-code htmlWebpackPlugin.files.css[0] here:
+         in production the extracted CSS is not always exposed on that array,
+         which produced an empty href (`<link rel=stylesheet href>`) and an
+         unstyled page on deploy while the dev server still looked fine. -->
     <!-- Standard headers -->
     <meta name="description" content="A ship builder, outfitting and comparison
       tool for Elite Dangerous">
