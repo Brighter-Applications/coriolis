@@ -1,6 +1,8 @@
+#4.1.4
+  * Fixed Federal Dropship import
+  * Added test for Federal Dropship internal slot indexing
 #4.1.3
-  * Fixed hull armour resistance calculation (kinetic/explosive/thermal/caustic) to match in-game diminishing returns, including the bonus applied to a single reinforcement above 30% and the 75% cap
-  * Added a unit test covering the armour resistance stacking algorithm
+  * Fixed hull armour resistance calculation
 #4.1.2
   * Fixing deployment breaking on new modules being imported.
 #4.1.1
