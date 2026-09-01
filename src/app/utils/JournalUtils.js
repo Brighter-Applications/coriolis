@@ -335,7 +335,7 @@ export function shipFromLoadoutJSON(json) {
         // Some ships skip internal slot indexes because military/restricted slots occupy those numbers in the journal
         // Anaconda skips 12 and 13, Dropship skips 7 and 8, T9 skips 9 and 10, T10 skips 9 and 10, Vulture skips 4
         if ((internalSlotNum === 11 && shipModel === 'anaconda') ||
-            (internalSlotNum === 7 && shipModel === 'federation_dropship') ||
+            (internalSlotNum === 7 && shipModel === 'federal_dropship') ||
             (internalSlotNum === 9 && shipModel === 'type_9_heavy') ||
             (internalSlotNum === 9 && shipModel === 'type_10_defender')) {
           internalSlotNum += 2;
