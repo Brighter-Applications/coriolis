@@ -27,7 +27,7 @@ jobs:
   # Gate: verify beta has been deployed                                #
   # ------------------------------------------------------------------ #
   check-pipeline-state:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
     outputs:
       feature_branch: ${{ steps.check.outputs.feature_branch }}
     steps:
@@ -54,7 +54,7 @@ jobs:
   # Gate: verify the version number has been bumped                    #
   # ------------------------------------------------------------------ #
   check-version:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
     needs: check-pipeline-state
     steps:
       - name: Checkout beta branch
@@ -107,7 +107,7 @@ jobs:
   # Merge beta → live                                                  #
   # ------------------------------------------------------------------ #
   merge-beta-to-live:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
     needs: check-version
     steps:
       - name: Checkout repo
@@ -163,7 +163,7 @@ jobs:
   # Merge feature branch → develop and clean up                       #
   # ------------------------------------------------------------------ #
   finalise-release:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
     needs: [deploy, check-pipeline-state]
     steps:
       - name: Checkout develop
@@ -211,7 +211,7 @@ jobs:
   # Create a GitHub Release                                            #
   # ------------------------------------------------------------------ #
   create-release:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
     needs: [finalise-release, check-pipeline-state]
     steps:
       - name: Checkout live

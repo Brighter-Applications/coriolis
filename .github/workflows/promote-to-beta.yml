@@ -25,7 +25,7 @@ jobs:
   # Gate: verify alpha has been deployed                               #
   # ------------------------------------------------------------------ #
   check-pipeline-state:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
     outputs:
       feature_branch: ${{ steps.check.outputs.feature_branch }}
     steps:
@@ -53,7 +53,7 @@ jobs:
   # Merge alpha → beta                                                 #
   # ------------------------------------------------------------------ #
   merge-alpha-to-beta:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
     needs: check-pipeline-state
     steps:
       - name: Checkout repo
@@ -109,7 +109,7 @@ jobs:
   # Update pipeline state: beta deployed, ready for live promotion     #
   # ------------------------------------------------------------------ #
   mark-beta-deployed:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
     needs: [deploy, check-pipeline-state]
     steps:
       - name: Checkout repo
