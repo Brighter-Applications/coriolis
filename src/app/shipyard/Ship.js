@@ -1918,16 +1918,54 @@ export default class Ship {
       let oldModule = slot.m;
       slot.m = m;
 
+      // If the module is pre-engineered and has no experimental applied, we need to apply the blueprints specified in the module
+      if (m && m.preEngineered && m.preEngineered.modifiers && (!m.blueprint || (!m.blueprint.fdname && !m.blueprint.special))) {
+        // This pre-engineered module carries an explicit bespoke modifiers map
+        // (e.g. Guardian weapons). These exact values live only in the modifiers
+        // map, not in the generic blueprint grade tables, so route through the
+        // unified helper which prefers that map (PATH A) and forces the mods
+        // through even for groups that can't be user-engineered. This is the same
+        // path buildWith uses on reload, so fresh-select now matches reload.
+        this._applyPreEngineeredModifiers(m, { setupBlueprint: true, force: true });
+      } else if (m && m.preEngineered && m.preEngineered.blueprints && (!m.blueprint || (!m.blueprint.fdname && !m.blueprint.special))) {
+        // This is a pre-engineered module, so we need to apply ALL blueprints cumulatively
+        const blueprintNames = _.split(m.preEngineered.blueprints, ',');
+
+        // Set up the blueprint object with the first blueprint's structure
+        const firstBlueprintName = blueprintNames[0].trim();
+        const firstBlueprint = getBlueprint(firstBlueprintName, m);
+        if (firstBlueprint) {
+          m.blueprint = firstBlueprint;
+          m.blueprint.grade = m.preEngineered.grade || 5;
+        }
+
+        // If the pre-engineered module has a default experimental effect, apply it
+        if (m.preEngineered.experimentalEffects && m.preEngineered.experimentalEffects.length > 0) {
+          const specialName = m.preEngineered.experimentalEffects[0];
+          const special = _.find(Modifications.specials, o => o.edname === specialName);
+          if (special) {
+            m.blueprint.special = special;
+          }
+        }
+
+        // Apply all blueprints cumulatively
+        for (const blueprintName of blueprintNames) {
+          const blueprint = getBlueprint(blueprintName.trim(), m);
+          if (blueprint) {
+            blueprint.grade = m.preEngineered.grade || 5;
+            setQualityCB(blueprint, 1, (featureName, value) => {
+              // For pre-engineered modules, add modifications cumulatively instead of replacing
+              const currentMod = m.getModValue(featureName, true) || 0;
+              this.setModification(m, featureName, currentMod + value, false, preventUpdate, true);
+            });
+          }
+        }
+      }
+
       slot.enabled = true;
       slot.discountedCost = (m && m.cost) ? m.cost * this.moduleCostMultiplier : 0;
 
-      // Initialize pre-engineered modules if this is a new module being installed.
-      // initializePreEngineeredModule routes to _applyPreEngineeredModifiers, which
-      // prefers the module's own preEngineered.modifiers map (PATH A) and forces the
-      // modifications through even for module groups that can't be user-engineered
-      // (e.g. Guardian weapons, whose allowed-modifications list is intentionally empty).
-      // This is the same path buildWith uses when loading a build from a URL, so a
-      // freshly-selected module and a reloaded one now behave identically.
+      // Initialize pre-engineered modules if this is a new module being installed
       if (m && m.preEngineered && (!m.blueprint || !m.blueprint.name)) {
         this.initializePreEngineeredModule(m);
       }
