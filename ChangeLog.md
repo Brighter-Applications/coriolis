@@ -1,3 +1,5 @@
+#4.1.9
+  * Fix Cargo Grade change not displaying ship capacity increase
 #4.1.8
   * Fix MkII Vessel Hanger ID's
 #4.1.7

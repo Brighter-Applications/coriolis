@@ -770,6 +770,12 @@ export default class Ship {
     } else if (name === 'engcap') {
       // Might have resulted in a change in boostability
       this.updateMovement();
+    } else if (name === 'cargo') {
+      // Cargo capacity affects the ship's total cargo and its laden mass,
+      // which in turn affects movement and jump range
+      this.recalculateMass();
+      this.updateMovement();
+      this.updateJumpStats();
     }
   }
 

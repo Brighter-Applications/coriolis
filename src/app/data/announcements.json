@@ -1,5 +1,21 @@
 [
   {
+    "id": 61,
+    "version": "4.1.8",
+    "text": "Fix MkII Vessel Hanger ID's",
+    "changes": [
+      "Fix MkII Vessel Hanger ID's"
+    ]
+  },
+  {
+    "id": 60,
+    "version": "4.1.7",
+    "text": "More Operations modules and blueprints",
+    "changes": [
+      "More Operations modules and blueprints"
+    ]
+  },
+  {
     "id": 59,
     "version": "4.1.6",
     "text": "Materials list now shows Merc Coin and total credits separately, with linked builds showing the amount still needed",
