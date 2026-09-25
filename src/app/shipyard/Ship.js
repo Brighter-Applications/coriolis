@@ -1919,7 +1919,15 @@ export default class Ship {
       slot.m = m;
 
       // If the module is pre-engineered and has no experimental applied, we need to apply the blueprints specified in the module
-      if (m && m.preEngineered && m.preEngineered.blueprints && (!m.blueprint || (!m.blueprint.fdname && !m.blueprint.special))) {
+      if (m && m.preEngineered && m.preEngineered.modifiers && (!m.blueprint || (!m.blueprint.fdname && !m.blueprint.special))) {
+        // This pre-engineered module carries an explicit bespoke modifiers map
+        // (e.g. Guardian weapons). These exact values live only in the modifiers
+        // map, not in the generic blueprint grade tables, so route through the
+        // unified helper which prefers that map (PATH A) and forces the mods
+        // through even for groups that can't be user-engineered. This is the same
+        // path buildWith uses on reload, so fresh-select now matches reload.
+        this._applyPreEngineeredModifiers(m, { setupBlueprint: true, force: true });
+      } else if (m && m.preEngineered && m.preEngineered.blueprints && (!m.blueprint || (!m.blueprint.fdname && !m.blueprint.special))) {
         // This is a pre-engineered module, so we need to apply ALL blueprints cumulatively
         const blueprintNames = _.split(m.preEngineered.blueprints, ',');
 
