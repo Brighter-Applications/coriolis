@@ -1,3 +1,5 @@
+#4.1.12
+  * Add hullboost to HRPs so ship HP is reported correct when Lightweight is applied
 #4.1.11
   * Fixing Pre-Eng Shard Cannon Stats
 #4.1.10
