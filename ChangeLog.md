@@ -1,3 +1,5 @@
+#4.1.10
+  * Fixing Mining Volley Repeater Stats
 #4.1.9
   * Fix Cargo Grade change not displaying ship capacity increase
 #4.1.8
