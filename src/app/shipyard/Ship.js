@@ -646,8 +646,12 @@ export default class Ship {
       return; // Not a pre-engineered module
     }
 
-    // Set up blueprint structure and apply modifiers
-    this._applyPreEngineeredModifiers(m, { setupBlueprint: true });
+    // Set up blueprint structure and apply modifiers.
+    // force: true is required because pre-engineered modules apply their own
+    // baked-in modifiers, which must bypass the per-group user-engineering
+    // allow-list (that list is intentionally empty for modules like the
+    // Guardian weapons, which cannot be manually engineered).
+    this._applyPreEngineeredModifiers(m, { setupBlueprint: true, force: true });
   }
 
   /**
@@ -863,8 +867,10 @@ export default class Ship {
             }
             // Regular modules: saved mods are already loaded and correct
           } else if (module.preEngineered && module.preEngineered.blueprints) {
-            // This is a pre-engineered module with no saved blueprint - set up and apply
-            this._applyPreEngineeredModifiers(module, { setupBlueprint: true, preventUpdate: true });
+            // This is a pre-engineered module with no saved blueprint - set up and apply.
+            // force: true so the module's own pre-eng modifiers bypass the
+            // per-group user-engineering allow-list (see initializePreEngineeredModule).
+            this._applyPreEngineeredModifiers(module, { setupBlueprint: true, preventUpdate: true, force: true });
           } else {
             module.blueprint = {};
           }
