@@ -36,7 +36,7 @@ jobs:
   detect-feature-branch:
     # Only run if the PR was actually merged, not just closed
     if: github.event.pull_request.merged == true
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
     outputs:
       feature_branch: ${{ steps.find.outputs.branch }}
     steps:
@@ -179,7 +179,7 @@ jobs:
   # Mark pipeline state: alpha deployed, ready for beta promotion      #
   # ------------------------------------------------------------------ #
   mark-alpha-deployed:
-    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
     needs: [deploy, detect-feature-branch]
     steps:
       - name: Checkout repo
