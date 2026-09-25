@@ -1,3 +1,5 @@
+#4.1.8
+  * Fix MkII Vessel Hanger ID's
 #4.1.7
   * More Operations modules and blueprints
 #4.1.6
