@@ -1,3 +1,5 @@
+#4.1.13
+  * Show Merc Coin Costs including engineering costs
 #4.1.12
   * Add hullboost to HRPs so ship HP is reported correct when Lightweight is applied
 #4.1.11
