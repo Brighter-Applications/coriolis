@@ -446,13 +446,18 @@ export default class Ship {
    * Recalculate all item costs and total based on discounts.
    * @param  {Number} shipDiscount      Ship cost discount (e.g. 0.1 === 10% discount)
    * @param  {Number} moduleDiscount    Module cost discount (e.g. 0.75 === 25% discount)
+   * @param  {Object} [rolls]           Map of engineering grade -> rolls (matsPerGrade)
+   *                                     used to cost Merc Coin engineering. Defaults to
+   *                                     one roll per grade when omitted.
    * @return {this} The current ship instance for chaining
    */
-  applyDiscounts(shipDiscount, moduleDiscount) {
+  applyDiscounts(shipDiscount, moduleDiscount, rolls) {
     let shipCostMultiplier = 1 - shipDiscount;
     let moduleCostMultiplier = 1 - moduleDiscount;
     let total = 0;
+    let totalMercCoin = 0;
     let costList = this.costList;
+    this.mercCoinRolls = rolls;
 
     for (let i = 0, l = costList.length; i < l; i++) {
       let item = costList[i];
@@ -462,9 +467,17 @@ export default class Ship {
           total += item.discountedCost;
         }
       }
+      // Merc Coin is a separate in-game currency with no discount concept.
+      // It covers both the module's purchase price and any Merc Coin spent
+      // engineering it. Merc Coin modules typically have a credit cost of 0,
+      // so they are handled independently of the credit total above.
+      if (item.m && item.incCost && item.type !== 'SHIP' && item.m.getTotalMercCoin) {
+        totalMercCoin += item.m.getTotalMercCoin(rolls);
+      }
     }
     this.moduleCostMultiplier = moduleCostMultiplier;
     this.totalCost = total;
+    this.totalMercCoin = totalMercCoin;
     return this;
   }
 
@@ -808,6 +821,7 @@ export default class Ship {
     this.shield = this.baseShieldStrength;
     this.shieldCells = 0;
     this.totalCost = this.m.incCost ? this.m.discountedCost : 0;
+    this.totalMercCoin = 0;
     this.dryMass = this.hullMass;
     this.unladenMass = this.hullMass;
     this.totalDpe = 0;
@@ -1127,6 +1141,10 @@ export default class Ship {
   setCostIncluded(item, included) {
     if (item.incCost != included && item.m) {
       this.totalCost += included ? item.discountedCost : -item.discountedCost;
+      if (item.m.getTotalMercCoin) {
+        const mc = item.m.getTotalMercCoin(this.mercCoinRolls);
+        this.totalMercCoin = (this.totalMercCoin || 0) + (included ? mc : -mc);
+      }
     }
     item.incCost = included;
     return this;
