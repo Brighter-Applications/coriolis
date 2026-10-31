@@ -108,6 +108,28 @@ export function internal(id) {
 };
 
 /**
+ * Fit the Advanced Planetary Approach Suite into any empty Planetary Approach
+ * Suite slot on a ship. Every ship has a PAS and Coriolis displays it, so an
+ * imported ship must never be left with that slot empty, whether or not the
+ * import source included it (SLEF deliberately omits it, and older builds may
+ * pre-date it). Matches the default the journal and Companion API importers
+ * already apply (int_planetapproachsuite_advanced).
+ * @param  {Ship} ship The ship to update in place
+ * @return {Ship}      The same ship
+ */
+export function fitDefaultPlanetaryApproachSuite(ship) {
+  for (const slot of ship.internal) {
+    if (slot.eligible && slot.eligible.pas && !slot.m) {
+      const apas = internal('4F');
+      if (apas) {
+        ship.use(slot, apas, true);
+      }
+    }
+  }
+  return ship;
+}
+
+/**
  * Finds a standard module based on Class, Rating, Group and/or name.
  * At least one of Group name or unique module name must be provided
  *

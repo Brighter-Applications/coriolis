@@ -114,6 +114,27 @@ describe('SLEF export calculated values', () => {
     expect(data.MaxJumpRange).toBeGreaterThan(0);
   });
 
+  describe('slot names match the game exactly (ship-slots.json)', () => {
+    // Real journal Loadout events (31 Oct 2026) with every slot filled. The
+    // game's numbering has gaps and duplicates the old counter-based export
+    // could not reproduce: the Type-8 has no SmallHardpoint3 (1,2,4,5,6) and
+    // the Type-7 starts at Slot00 and has both Slot09_Size2 and Slot09_Size1.
+    const isSlot = n => /hardpoint|^slot\d|^military|^cargo\d/i.test(n);
+    for (const ship of ['type7', 'type8']) {
+      it(`exports every ${ship} hardpoint/internal module under the journal's own slot name`, () => {
+        const ev = require(`./fixtures/journal-loadout-${ship}.json`);
+        const id = shipModelFromJson(ev);
+        const sd = Ships[id];
+        // Build via the build code, as the outfitting page holds the ship.
+        const s = new Ship(id, sd.properties, sd.slots);
+        s.buildFrom(shipFromLoadoutJSON(ev).toString());
+        const exported = Serializer.toSLEF('x', s)[0].data.Modules;
+        const pairs = mods => mods.filter(m => isSlot(m.Slot)).map(m => `${m.Slot}=${m.Item.toLowerCase()}`).sort();
+        expect(pairs(exported)).toEqual(pairs(ev.Modules));
+      });
+    }
+  });
+
   it('round-trips: the exported data re-imports to the same ship', () => {
     for (const id of ['explorer_nx', 'krait_mkii', 'anaconda2', 'federal_corvette']) {
       const { data } = slefData(id);

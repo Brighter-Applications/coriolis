@@ -6,7 +6,7 @@ import * as Calc from './Calculations';
 import * as Utils from '../utils/UtilityFunctions';
 import LZString from 'lz-string';
 import { outfitURL } from '../utils/UrlGenerators';
-import { SHIP_FD_NAME_TO_CORIOLIS_NAME } from '../utils/CompanionApiUtils';
+import { SHIP_FD_NAME_TO_CORIOLIS_NAME, shipSlots } from '../utils/CompanionApiUtils';
 
 /**
  * Generates ship-loadout JSON Schema standard object
@@ -457,17 +457,32 @@ export function toSLEF(buildName, ship) {
     }
   });
 
-  // Add hardpoints (with proper size names and named slot prefixes)
+  // Hardpoint and internal slot names come from ship-slots.json, the
+  // authoritative list of the exact journal slot names for each ship (in the
+  // same order as the coriolis-data slots). The game's numbering has gaps and
+  // duplicates (e.g. the Type-8 has no SmallHardpoint3; the Type-7 has both
+  // Slot09_Size2 and Slot09_Size1) and the `_SizeN` suffix does not always
+  // match the slot's real class, so names cannot be reconstructed with a
+  // counter. The counter-based reconstruction below is only a fallback for a
+  // ship with no (or a mismatched) ship-slots entry.
+  const ssHardpoints = shipSlots(ship.id, 'hardpoints');
+  const useSsHardpoints = !!ssHardpoints && ssHardpoints.length === ship.hardpoints.length;
+  const ssInternal = shipSlots(ship.id, 'internal');
+  const useSsInternal = !!ssInternal && ssInternal.length === ship.internal.length;
+
+  // Add hardpoints
   const hpClassCounters = {};
   const HP_SIZE_NAMES = {0: 'Tiny', 1: 'Small', 2: 'Medium', 3: 'Large', 4: 'Huge'};
-  ship.hardpoints.forEach(slot => {
+  ship.hardpoints.forEach((slot, hpIndex) => {
     const classNum = slot.maxClass;
     hpClassCounters[classNum] = (hpClassCounters[classNum] || 0) + 1;
     const slotNum = hpClassCounters[classNum];
 
     if (slot.m && slot.m.symbol) {
       const namePrefix = slot.name || '';
-      const slotName = `${HP_SIZE_NAMES[classNum]}${namePrefix}Hardpoint${slotNum}`;
+      const slotName = useSsHardpoints
+        ? ssHardpoints[hpIndex].name
+        : `${HP_SIZE_NAMES[classNum]}${namePrefix}Hardpoint${slotNum}`;
 
       const module = {
         Slot: slotName,
@@ -495,14 +510,16 @@ export function toSLEF(buildName, ship) {
   };
   let slotNum = 1;
   const namedSlotCounters = {};
-  ship.internal.forEach(slot => {
+  ship.internal.forEach((slot, intIndex) => {
     if (slot.m && slot.m.grp === 'pas') return; // Exclude Planetary Approach Suite for compatibility
     if (slot.name === 'PlanetaryApproachSuite') return;
 
     // Determine the FD-style slot name
     let fdSlotName;
     const namedPrefix = slot.name && NAMED_INTERNAL_PREFIXES[slot.name];
-    if (namedPrefix) {
+    if (useSsInternal) {
+      fdSlotName = ssInternal[intIndex].name;
+    } else if (namedPrefix) {
       namedSlotCounters[slot.name] = (namedSlotCounters[slot.name] || 0) + 1;
       fdSlotName = `${namedPrefix}${String(namedSlotCounters[slot.name]).padStart(2, '0')}`;
     } else {

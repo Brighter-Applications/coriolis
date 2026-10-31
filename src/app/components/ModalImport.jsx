@@ -14,7 +14,6 @@ import { outfitURL } from '../utils/UrlGenerators';
 import { shipFromJson, shipModelFromJson } from '../utils/CompanionApiUtils';
 import { shipFromLoadoutJSON } from '../utils/JournalUtils';
 
-const zlib = require('pako');
 
 const textBuildRegex = new RegExp('^\\[([\\w \\-]+)\\]\n');
 const lineRegex = new RegExp('^([\\dA-Z]{1,2}): (\\d)([A-I])[/]?([FGT])?([SD])? ([\\w\\- ]+)');
@@ -79,6 +78,9 @@ function detailedJsonToBuild(detailedBuild) {
     throw detailedBuild.ship + ' Build "' + detailedBuild.name + '": Invalid data';
   }
 
+  // Never leave the Planetary Approach Suite slot empty on import
+  ModuleUtils.fitDefaultPlanetaryApproachSuite(ship);
+
   return { shipId: ship.id, name: detailedBuild.name, code: ship.toString() };
 }
 
@@ -103,7 +105,6 @@ export default class ModalImport extends TranslatedComponent {
     this.state = {
       builds: props.builds,
       canEdit: !props.builds,
-      loadoutEvent: null,
       comparisons: null,
       shipDiscount: null,
       moduleDiscount: null,
@@ -129,13 +130,27 @@ export default class ModalImport extends TranslatedComponent {
    * @throws {string} If import fails
    */
   _importLoadout(data) {
-    if (data && data.Ship && data.Modules) {
-      const deflated = zlib.deflate(JSON.stringify(data), { to: 'string' });
-      let compressed = btoa(deflated);
-      this.setState({loadoutEvent: compressed});
-    } else {
+    if (!(data && data.Ship && data.Modules)) {
       throw 'Loadout event must contain Ship and Modules';
     }
+    // Build the ship here, exactly as a single SLEF build is imported (a SLEF
+    // `data` object IS a journal Loadout event). This used to gzip the event
+    // into a /import?data= URL instead, which broke with pako 2 (deflate no
+    // longer supports { to: 'string' }) and could exceed browser URL limits
+    // for large ships.
+    const shipModel = shipModelFromJson(data);
+    if (!shipModel || !Ships[shipModel]) {
+      throw 'No such ship found: "' + data.Ship + '"';
+    }
+    let ship;
+    try {
+      ship = shipFromLoadoutJSON(data);
+    } catch (e) {
+      throw Ships[shipModel].properties.name + ' loadout could not be imported: ' + (typeof e == 'string' ? e : e.message);
+    }
+    const shipName = data.ShipName || Ships[shipModel].properties.name;
+    const builds = { [shipModel]: { [`Imported ${shipName}`]: ship.toString() } };
+    this.setState({ builds, singleBuild: true });
   }
 
   /**
@@ -317,6 +332,9 @@ export default class ModalImport extends TranslatedComponent {
       }
     }
 
+    // Never leave the Planetary Approach Suite slot empty on import
+    ModuleUtils.fitDefaultPlanetaryApproachSuite(ship);
+
     let builds = {};
     builds[shipId] = {};
     builds[shipId]['Imported ' + buildName] = ship.toString();
@@ -412,10 +430,6 @@ export default class ModalImport extends TranslatedComponent {
    */
   _process() {
     let builds = null, comparisons = null;
-
-    if (this.state.loadoutEvent) {
-      return Router.go(`/import?data=${this.state.loadoutEvent}`);
-    }
 
     // If only importing a single build go straight to the outfitting page
     if (this.state.singleBuild) {

@@ -24,6 +24,10 @@ jest.mock('../src/app/Router', () => ({
 import Router from '../src/app/Router';
 import Persist from '../src/app/stores/Persist';
 import ModalImport from '../src/app/components/ModalImport';
+import { Ships } from 'coriolis-data/dist';
+import Ship from '../src/app/shipyard/Ship';
+import * as ModuleUtils from '../src/app/shipyard/ModuleUtils';
+import * as Serializer from '../src/app/shipyard/Serializer';
 
 describe('Import Modal', function() {
 
@@ -186,7 +190,7 @@ describe('Import Modal', function() {
       expect(modal.state.singleBuild).toBe(true);
       clickProceed();
       expect(Router.go.mock.calls.length).toBe(1);
-      expect(Router.go.mock.calls[0][0]).toBe('/outfit/anaconda?code=B4putkFklkdzsuf52c0o0o0o1m1m0q0q0404-0l0b0100034k5n052d04---0303326b--.AwRj4zNLeYg%3D.CwBhCYzBGW9qCTSqq5IiA%3D%3D%3D.&bn=Test%20My%20Ship');
+      expect(Router.go.mock.calls[0][0]).toBe('/outfit/anaconda?code=B4putkFklkdzsuf52c0o0o0o1m1m0q0q0404-0l0b0100034k5n052d04---0303326b-4F.AwRj4zNLeYg%3D.CwBhCYzBGW9qCTSqq5IiA%3D%3D%3D.&bn=Test%20My%20Ship');
     });
 
     it('catches an invalid build', function() {
@@ -211,7 +215,7 @@ describe('Import Modal', function() {
       expect(modal.state.singleBuild).toBe(true);
       clickProceed();
       expect(Router.go.mock.calls.length).toBe(1);
-      expect(Router.go.mock.calls[0][0]).toBe('/outfit/anaconda?code=B4putkFklkdzsuf52c0o0o0o1m1m0q0q0404-0l0b0100034k5n052d04---0303326b--.AwRj4zNLeYg%3D.CwBhCYzBGW9qCTSqq5IiA%3D%3D%3D.H4sIAAAAAAAAA2MUe8HMwPD%2FPwMAAGvB0AkAAAA%3D&bn=Test%20My%20Ship');
+      expect(Router.go.mock.calls[0][0]).toBe('/outfit/anaconda?code=B4putkFklkdzsuf52c0o0o0o1m1m0q0q0404-0l0b0100034k5n052d04---0303326b-4F.AwRj4zNLeYg%3D.CwBhCYzBGW9qCTSqq5IiA%3D%3D%3D.H4sIAAAAAAAAA2MUe8HMwPD%2FPwMAAGvB0AkAAAA%3D&bn=Test%20My%20Ship');
     });
   });
 
@@ -245,7 +249,7 @@ describe('Import Modal', function() {
       expect(modal.state.singleBuild).toBe(true);
       clickProceed();
       expect(Router.go.mock.calls.length).toBe(1);
-      expect(Router.go.mock.calls[0][0]).toBe('/outfit/asp?code=B0pftiFflfddsnf5------020202033c044002v6-2i--.AwRj4yvZiA%3D%3D.CwRgDBldHn5iA%3D%3D%3D.H4sIAAAAAAAAAzWMzQ2CQBgFZ1EJnDZh0Wy4UgEdWBM9WIgFGK5UYAFWohfDT%2Fie7oG5vnnj7ApsDiiek3TJgWpwoMziPp1HB%2F5rUvtapLrIIH4AHaxJ0im97gH8NkvxVkKdBwh9Kh2t20vV4y35dZIk%2FvwATHGqVIAAAAA%3D&bn=Multi-purpose%20Asp%20Explorer');
+      expect(Router.go.mock.calls[0][0]).toBe('/outfit/asp?code=B0pftiFflfddsnf5------020202033c044002v6-2i-4F.AwRj4yvZiA%3D%3D.CwRgDBldHn5iA%3D%3D%3D.H4sIAAAAAAAAAzWMzQ2CQBgFZ1EJnDZh0Wy4UgEdWBM9WIgFGK5UYAFWohfDT%2Fie7oG5vnnj7ApsDiiek3TJgWpwoMziPp1HB%2F5rUvtapLrIIH4AHaxJ0im97gH8NkvxVkKdBwh9Kh2t20vV4y35dZIk%2FvwATHGqVIAAAAA%3D&bn=Multi-purpose%20Asp%20Explorer');
     });
 
     it('imports a valid v4 build with modifications', function() {
@@ -257,7 +261,7 @@ describe('Import Modal', function() {
       expect(modal.state.singleBuild).toBe(true);
       clickProceed();
       expect(Router.go.mock.calls.length).toBe(1);
-      expect(Router.go.mock.calls[0][0]).toBe('/outfit/imperial_courier?code=B0patzF5l0das8f31a1a270202000e402t0101-----.AwRj4zOGg%3D%3D%3D.CwRgDBldLuFA.H4sIAAAAAAAAA12OvUrDYABFT35tjJKaJk2xacHWTi7i4CBCQBS6uNeti5NDn0IQZ3cnN8HHEBz0IRxFQcHi0H5XviEg3uEu51y4jqmApQO0Sx%2BSvpEazx7INW2LfCC%2Fj2A460LnNYTkDsjOl5I8s2mlAEi%2FEkiu51JnHkJWtUANc1bz3k4BwVhScw8IH96lgnVQ9Ee6SCG4tVLfSocfUrFlj1UOaNVMrOkBC1vBZQThLIfe1IfmATA8CqDz6UGyL4ndH0mxGdVDrlqQZidQvo1Aa%2F%2FRZAxlPAAl5rRG%2BXQF4kcHNgYubB%2F74D59S92bhRS%2B2Heizi%2Fs%2BCJdVwEAAA%3D%3D&bn=Multi-purpose%20Imperial%20Courier');
+      expect(Router.go.mock.calls[0][0]).toBe('/outfit/imperial_courier?code=B0patzF5l0das8f31a1a270202000e402t0101----4F.AwRj4zOGg%3D%3D%3D.CwRgDBldLuFA.H4sIAAAAAAAAA12OvUrDYABFT35tjJKaJk2xacHWTi7i4CBCQBS6uNeti5NDn0IQZ3cnN8HHEBz0IRxFQcHi0H5XviEg3uEu51y4jqmApQO0Sx%2BSvpEazx7INW2LfCC%2Fj2A460LnNYTkDsjOl5I8s2mlAEi%2FEkiu51JnHkJWtUANc1bz3k4BwVhScw8IH96lgnVQ9Ee6SCG4tVLfSocfUrFlj1UOaNVMrOkBC1vBZQThLIfe1IfmATA8CqDz6UGyL4ndH0mxGdVDrlqQZidQvo1Aa%2F%2FRZAxlPAAl5rRG%2BXQF4kcHNgYubB%2F74D59S92bhRS%2B2Heizi%2Fs%2BCJdVwEAAA%3D%3D&bn=Multi-purpose%20Imperial%20Courier');
     });
   });
 
@@ -278,11 +282,25 @@ describe('Import Modal', function() {
 
       let builds = Persist.getBuilds();
 
+      // expected-builds.json holds the raw decoded codes (also used by the
+      // link-migration tests). Importing additionally fits the default
+      // Planetary Approach Suite into an empty PAS slot, so apply the same to
+      // the expectation.
+      const withPas = (shipId, code) => {
+        const sd = Ships[shipId];
+        const s = new Ship(shipId, sd.properties, sd.slots);
+        s.buildFrom(code);
+        return ModuleUtils.fitDefaultPlanetaryApproachSuite(s).toString();
+      };
+
+      let compared = 0;
       for (let s in builds) {
         for (let b in builds[s]) {
-          expect(builds[s][b]).toEqual(expectedBuilds[s][b]);
+          expect(builds[s][b]).toEqual(withPas(s, expectedBuilds[s][b]));
+          compared++;
         }
       }
+      expect(compared).toBe(importData.length);
     });
   });
 
@@ -364,6 +382,96 @@ describe('Import Modal', function() {
       expect(modal.state.errorMsg).toEqual(null);
       clickImport();
       expect(Persist.getBuilds()).toEqual(importBuilds);
+    });
+  });
+
+  describe('Imports a journal Loadout event', () => {
+    beforeEach(reset);
+
+    // Regression: pasting a Loadout used to crash with "incorrect header check"
+    // (pako 2 dropped deflate's { to: 'string' } so the /import?data= payload
+    // was garbage). The modal now builds the ship directly.
+    for (const [fixture, shipId] of [['journal-loadout-type7', 'type_7_transport'], ['journal-loadout-type8', 'type_8_transport']]) {
+      it(`imports a pasted ${shipId} Loadout and opens it in outfitting`, () => {
+        const loadout = require(`./fixtures/${fixture}.json`);
+        pasteText(JSON.stringify(loadout));
+
+        expect(modal.state.errorMsg).toEqual(null);
+        expect(modal.state.importValid).toBe(true);
+        expect(modal.state.singleBuild).toBe(true);
+        clickProceed();
+        expect(Router.go.mock.calls.length).toBe(1);
+        expect(Router.go.mock.calls[0][0]).toMatch(new RegExp(`^/outfit/${shipId}\\?code=B`));
+      });
+    }
+
+    it('reports an unknown ship in the modal instead of crashing', () => {
+      pasteText(JSON.stringify({ event: 'Loadout', Ship: 'not_a_ship', Modules: [{ Slot: 'Armour', Item: 'x' }] }));
+      expect(modal.state.importValid).toBe(false);
+      expect(modal.state.errorMsg).toContain('not_a_ship');
+      expect(Router.go.mock.calls.length).toBe(0);
+    });
+  });
+
+  describe('Never leaves the Planetary Approach Suite slot empty', () => {
+    beforeEach(reset);
+
+    // Every ship has a PAS and Coriolis displays it. Import sources often omit
+    // it (SLEF deliberately excludes it; older builds pre-date it), so every
+    // import path must fit the default Advanced PAS (id 4F) when it is missing.
+    const noPas = mods => mods.filter(m => m.Slot !== 'PlanetaryApproachSuite');
+    const pasAfterImport = () => {
+      expect(modal.state.errorMsg).toEqual(null);
+      expect(modal.state.importValid).toBe(true);
+      clickProceed();
+      const url = Router.go.mock.calls[0][0];
+      const shipId = url.match(/\/outfit\/([^?]+)/)[1];
+      const code = decodeURIComponent(url.match(/code=([^&]+)/)[1]);
+      const sd = Ships[shipId];
+      const ship = new Ship(shipId, sd.properties, sd.slots);
+      ship.buildFrom(code);
+      const slot = ship.internal.find(s => s.eligible && s.eligible.pas);
+      return slot && slot.m ? slot.m.id : null;
+    };
+
+    it('journal Loadout without a PAS', () => {
+      const ev = require('./fixtures/journal-loadout-type7.json');
+      pasteText(JSON.stringify({ ...ev, Modules: noPas(ev.Modules) }));
+      expect(pasAfterImport()).toBe('4F');
+    });
+
+    it('SLEF without a PAS', () => {
+      const slef = JSON.parse(JSON.stringify(require('./fixtures/slef-single-build.json')));
+      slef[0].data.Modules = noPas(slef[0].data.Modules);
+      pasteText(JSON.stringify(slef));
+      expect(pasAfterImport()).toBe('4F');
+    });
+
+    it('Companion API build without a PAS', () => {
+      const capi = JSON.parse(JSON.stringify(require('./fixtures/companion-api-import-4.json')));
+      delete (capi.ship ? capi.ship.modules : capi.modules).PlanetaryApproachSuite;
+      pasteText(JSON.stringify(capi));
+      expect(pasAfterImport()).toBe('4F');
+    });
+
+    it('detailed JSON build whose code has an empty PAS slot', () => {
+      const sd = Ships.anaconda;
+      const ship = new Ship('anaconda', sd.properties, sd.slots);
+      ship.buildWith(sd.defaults);
+      ship.use(ship.internal.find(s => s.eligible && s.eligible.pas), null);
+      pasteText(JSON.stringify(Serializer.toDetailedBuild('No PAS', ship, ship.toString())));
+      expect(pasAfterImport()).toBe('4F');
+    });
+
+    it('E:D Shipyard text build (which never lists a PAS)', () => {
+      pasteText([
+        '[Sidewinder]',
+        'BH: 1I Lightweight Alloy',
+        'RB: 2E Power Plant', 'TM: 2E Thrusters', 'FH: 2E Frame Shift Drive',
+        'EC: 1E Life Support', 'PC: 1E Power Distributor', 'SS: 1E Sensors', 'FS: 1C Fuel Tank',
+        'S: 1F/F Pulse Laser', 'S: 1F/F Pulse Laser', ''
+      ].join('\n'));
+      expect(pasAfterImport()).toBe('4F');
     });
   });
 

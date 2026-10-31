@@ -5220,7 +5220,7 @@
         },
         {
           "class": 1,
-          "name": "Slot10_Size1"
+          "name": "Slot09_Size1"
         },
         {
           "class": 1,
@@ -5287,15 +5287,15 @@
         },
         {
           "class": 1,
-          "name": "SmallHardpoint3"
-        },
-        {
-          "class": 1,
           "name": "SmallHardpoint4"
         },
         {
           "class": 1,
           "name": "SmallHardpoint5"
+        },
+        {
+          "class": 1,
+          "name": "SmallHardpoint6"
         },
         {
           "class": 0,
