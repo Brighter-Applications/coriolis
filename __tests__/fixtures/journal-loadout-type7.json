@@ -1,0 +1,194 @@
+{
+  "timestamp": "2026-10-31T13:00:55Z",
+  "event": "Loadout",
+  "Ship": "type7",
+  "ShipName": "",
+  "ShipIdent": "",
+  "Modules": [
+    {
+      "Slot": "SmallHardpoint1",
+      "Item": "hpt_pulselaser_fixed_small",
+      "On": true,
+      "Priority": 2,
+      "Health": 1.0,
+      "Value": 1930
+    },
+    {
+      "Slot": "SmallHardpoint2",
+      "Item": "hpt_pulselaser_fixed_small",
+      "On": true,
+      "Priority": 2,
+      "Health": 1.0,
+      "Value": 1930
+    },
+    {
+      "Slot": "Armour",
+      "Item": "type7_armour_grade1",
+      "On": true,
+      "Priority": 1,
+      "Health": 1.0
+    },
+    {
+      "Slot": "PowerPlant",
+      "Item": "int_powerplant_size4_class1",
+      "On": true,
+      "Priority": 1,
+      "Health": 1.0,
+      "Value": 15613
+    },
+    {
+      "Slot": "MainEngines",
+      "Item": "int_engine_size5_class1",
+      "On": true,
+      "Priority": 2,
+      "Health": 1.0,
+      "Value": 55293
+    },
+    {
+      "Slot": "FrameShiftDrive",
+      "Item": "int_hyperdrive_size5_class1",
+      "On": true,
+      "Priority": 2,
+      "Health": 1.0,
+      "Value": 55293
+    },
+    {
+      "Slot": "LifeSupport",
+      "Item": "int_lifesupport_size4_class1",
+      "On": true,
+      "Priority": 2,
+      "Health": 1.0,
+      "Value": 9958
+    },
+    {
+      "Slot": "PowerDistributor",
+      "Item": "int_powerdistributor_size3_class1",
+      "On": true,
+      "Priority": 2,
+      "Health": 1.0,
+      "Value": 3556
+    },
+    {
+      "Slot": "Radar",
+      "Item": "int_sensors_size3_class1",
+      "On": true,
+      "Priority": 2,
+      "Health": 1.0,
+      "Value": 3556
+    },
+    {
+      "Slot": "FuelTank",
+      "Item": "int_fueltank_size5_class3",
+      "On": true,
+      "Priority": 1,
+      "Health": 1.0,
+      "Value": 85779
+    },
+    {
+      "Slot": "Slot00_Size7",
+      "Item": "int_cargorack_size7_class1",
+      "On": true,
+      "Priority": 1,
+      "Health": 1.0
+    },
+    {
+      "Slot": "Slot00_Size6",
+      "Item": "int_cargorack_size6_class1",
+      "On": true,
+      "Priority": 1,
+      "Health": 1.0
+    },
+    {
+      "Slot": "Slot01_Size6",
+      "Item": "int_cargorack_size6_class1",
+      "On": true,
+      "Priority": 1,
+      "Health": 1.0,
+      "Value": 97899
+    },
+    {
+      "Slot": "Slot02_Size6",
+      "Item": "int_cargorack_size6_class1",
+      "On": true,
+      "Priority": 1,
+      "Health": 1.0,
+      "Value": 97899
+    },
+    {
+      "Slot": "Slot03_Size5",
+      "Item": "int_repairer_size6_class5",
+      "On": true,
+      "Priority": 0,
+      "Health": 1.0,
+      "Value": 97899
+    },
+    {
+      "Slot": "Slot04_Size5",
+      "Item": "int_dronecontrol_collection_size5_class3",
+      "On": true,
+      "Priority": 0,
+      "Health": 1.0,
+      "Value": 30122
+    },
+    {
+      "Slot": "Slot05_Size4",
+      "Item": "int_dronecontrol_collection_size5_class3",
+      "On": true,
+      "Priority": 0,
+      "Health": 1.0,
+      "Value": 30122
+    },
+    {
+      "Slot": "Slot06_Size4",
+      "Item": "int_dronecontrol_fueltransfer_size5_class5",
+      "On": true,
+      "Priority": 0,
+      "Health": 1.0,
+      "Value": 17442
+    },
+    {
+      "Slot": "Slot07_Size2",
+      "Item": "int_dronecontrol_collection_size3_class5",
+      "On": true,
+      "Priority": 0,
+      "Health": 1.0
+    },
+    {
+      "Slot": "Slot08_Size2",
+      "Item": "int_cargorack_size3_class1",
+      "On": true,
+      "Priority": 1,
+      "Health": 1.0
+    },
+    {
+      "Slot": "Slot09_Size1",
+      "Item": "int_supercruiseassist",
+      "On": true,
+      "Priority": 2,
+      "Health": 1.0,
+      "Value": 8003
+    },
+    {
+      "Slot": "PlanetaryApproachSuite",
+      "Item": "int_planetapproachsuite_advanced",
+      "On": true,
+      "Priority": 1,
+      "Health": 1.0,
+      "Value": 438
+    },
+    {
+      "Slot": "Slot09_Size2",
+      "Item": "int_cargorack_size2_class1",
+      "On": true,
+      "Priority": 1,
+      "Health": 1.0
+    },
+    {
+      "Slot": "CargoHatch",
+      "Item": "modularcargobaydoor",
+      "On": true,
+      "Priority": 2,
+      "Health": 1.0
+    }
+  ]
+}
