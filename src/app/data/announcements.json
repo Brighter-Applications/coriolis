@@ -1,5 +1,13 @@
 [
   {
+    "id": 68,
+    "version": "4.1.15",
+    "text": "Fix SLEF Export to work with Spansh",
+    "changes": [
+      "Fix SLEF Export to work with Spansh"
+    ]
+  },
+  {
     "id": 67,
     "version": "4.1.14",
     "text": "Fixes to Operations updates",
