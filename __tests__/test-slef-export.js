@@ -62,6 +62,58 @@ describe('SLEF export calculated values', () => {
     }
   });
 
+  it('exports every module Item in lowercase, as the game writes them', () => {
+    for (const id of ['explorer_nx', 'anaconda2', 'krait_mkii']) {
+      const { data } = slefData(id);
+      for (const m of data.Modules) {
+        expect(m.Item).toBe(m.Item.toLowerCase());
+      }
+    }
+  });
+
+  describe('engineered modifier labels', () => {
+    // An imported loadout with an engineered (G2 Increased Range) FSD.
+    const fixture = require('./fixtures/slef-single-build.json')[0].data;
+    const exported = Serializer.toSLEF('x', shipFromLoadoutJSON(fixture))[0].data;
+    const labelsFor = (slot) => {
+      const mod = exported.Modules.find(m => m.Slot === slot);
+      return ((mod && mod.Engineering && mod.Engineering.Modifiers) || []).map(x => x.Label);
+    };
+
+    it('labels an engineered FSD optimal mass as FSDOptimalMass (not EngineOptimalMass)', () => {
+      const labels = labelsFor('FrameShiftDrive');
+      expect(labels).toContain('FSDOptimalMass');
+      expect(labels).not.toContain('EngineOptimalMass');
+      expect(labels).not.toContain('ShieldGenOptimalMass');
+    });
+
+    it('preserves the engineered FSD optimal mass through export and re-import', () => {
+      const original = shipFromLoadoutJSON(fixture);
+      const back = shipFromLoadoutJSON(exported);
+      expect(Math.round(back.standard[2].m.getOptMass())).toBe(Math.round(original.standard[2].m.getOptMass()));
+    });
+
+    it('only uses real Frontier modifier labels', () => {
+      const { Modifications } = require('coriolis-data/dist');
+      const valid = new Set(Object.keys(Modifications.modifierActions).map(k => k.replace('OutfittingFieldType_', '')));
+      for (const mod of exported.Modules) {
+        for (const x of ((mod.Engineering && mod.Engineering.Modifiers) || [])) {
+          expect(valid.has(x.Label)).toBe(true);
+        }
+      }
+    });
+  });
+
+  it('exports a ship imported from a loadout that omits Priority values', () => {
+    // The fixture omits Priority on several modules (incl. a Guardian FSD
+    // Booster, which MaxJumpRange checks the power status of). This used to
+    // crash the export.
+    const fixture = require('./fixtures/slef-single-build.json')[0].data;
+    const ship = shipFromLoadoutJSON(fixture);
+    const data = Serializer.toSLEF('x', ship)[0].data;
+    expect(data.MaxJumpRange).toBeGreaterThan(0);
+  });
+
   it('round-trips: the exported data re-imports to the same ship', () => {
     for (const id of ['explorer_nx', 'krait_mkii', 'anaconda2', 'federal_corvette']) {
       const { data } = slefData(id);

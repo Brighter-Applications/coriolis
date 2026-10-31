@@ -379,7 +379,7 @@ describe('Import Modal', function() {
       expect(modal.state.singleBuild).toBe(true);
       clickProceed();
       expect(Router.go.mock.calls.length).toBe(1);
-      expect(Router.go.mock.calls[0][0]).toBe('/outfit/krait_mkii?code=B2pptkFflidussf52l1o1o2g2g020g040405051Ofr45C9C91oP34F.Iw18RQ%3D%3D.AwRgzKIsQ%3D%3D%3D.H4sIAAAAAAAAA4XOsQ2CQBiG4ZeTg%2BBhwIuJFxMrTZyBQUjcwJYRGIWSESwcwgEcwxLuJ78Jtc3XPG%2FxEXNgtoB7Gdj1JezvBvzTwfWbgGziSSMDVOMs4j8WDk0BQUsp4mP1CcAOFWTvHC4%2F3%2F5xF9v1BPUNUh3fHSFodA6TiIgqC3IQl9WwAAAA&bn=Imported%20pancake%20hammer');
+      expect(Router.go.mock.calls[0][0]).toBe('/outfit/krait_mkii?code=B2pptkFflidussf52l1o1o2g2g020g040405051Ofr45C9C91oP34F.Iw18RQ%3D%3D.AwRmwZnafF9tIA%3D%3D.H4sIAAAAAAAAA4XOsQ2CQBiG4ZeTg%2BBhwIuJFxMrTZyBQUjcwJYRGIWSESwcwgEcwxLuJ78Jtc3XPG%2FxEXNgtoB7Gdj1JezvBvzTwfWbgGziSSMDVOMs4j8WDk0BQUsp4mP1CcAOFWTvHC4%2F3%2F5xF9v1BPUNUh3fHSFodA6TiIgqC3IQl9WwAAAA&bn=Imported%20pancake%20hammer');
     });
 
     it('imports multiple SLEF builds', () => {

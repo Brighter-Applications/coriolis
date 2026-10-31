@@ -1,5 +1,5 @@
 import { ModuleGroupToName, MountMap, BulkheadNames } from './Constants';
-import { Ships, Modifications } from 'coriolis-data/dist';
+import { Ships, Modules, Modifications } from 'coriolis-data/dist';
 import Module from './Module';
 import Ship from './Ship';
 import * as Calc from './Calculations';
@@ -237,9 +237,9 @@ export function toComparison(code) {
 
 /**
  * Build a reverse mapping from Coriolis internal attribute names to FD label names.
- * Some internal names map to multiple FD labels (e.g. 'optmass' → FSDOptimalMass,
- * EngineOptimalMass, ShieldGenOptimalMass). We pick the first match since the
- * Modifiers array only needs one label per attribute.
+ * Used for attributes that map to exactly ONE Frontier label. Attributes shared
+ * by several Frontier labels (e.g. 'optmass') are resolved per module group by
+ * _fdLabelFor() below, because the correct label depends on the module type.
  */
 const _internalToFdLabel = {};
 for (const [fdLabel, actions] of Object.entries(Modifications.modifierActions)) {
@@ -250,6 +250,55 @@ for (const [fdLabel, actions] of Object.entries(Modifications.modifierActions)) 
       _internalToFdLabel[internalName] = fdLabel;
     }
   }
+}
+
+// Module groups used to pick the right Frontier label for shared attributes.
+const _SHIELD_GEN_GROUPS = ['sg', 'bsg', 'psg'];
+const _SCANNER_GROUPS = ['cs', 'kw', 'ws', 'sc', 'ss', 'xs', 'pwa'];
+
+/**
+ * Per-attribute label choice for attributes that Frontier reports under
+ * different labels depending on the module type. Each entry maps a module
+ * group (or a predicate) to the Frontier label; `default` applies otherwise.
+ * Getting this wrong makes consumers such as Spansh misread the value (e.g. an
+ * engineered FSD's optimal mass exported as EngineOptimalMass instead of
+ * FSDOptimalMass gives the wrong jump range).
+ */
+const _AMBIGUOUS_LABELS = {
+  optmass: (grp) => grp === 'fsd' ? 'FSDOptimalMass'
+    : _SHIELD_GEN_GROUPS.includes(grp) ? 'ShieldGenOptimalMass'
+    : 'EngineOptimalMass',
+  optmul: (grp) => _SHIELD_GEN_GROUPS.includes(grp) ? 'ShieldGenStrength' : 'EngineOptPerformance',
+  thermload: (grp) => grp === 't' ? 'EngineHeatRate'
+    : grp === 'fsd' ? 'FSDHeatRate'
+    : grp === 'scb' ? 'ShieldBankHeat'
+    : 'ThermalLoad',
+  distdraw: (grp) => _SHIELD_GEN_GROUPS.includes(grp) ? 'EnergyPerRegen' : 'DistributorDraw',
+  angle: (grp) => grp === 's' ? 'SensorTargetScanAngle' : 'MaxAngle',
+  range: (grp, isHardpoint) => grp === 's' ? 'Range'
+    : _SCANNER_GROUPS.includes(grp) ? 'ScannerRange'
+    : isHardpoint ? 'MaximumRange'
+    : 'Range',
+  clip: () => 'AmmoClipSize'
+};
+
+/**
+ * Resolve the Frontier modifier label (without the OutfittingFieldType_ prefix)
+ * for a module attribute, taking the module group into account where the same
+ * internal attribute maps to several Frontier labels.
+ * @param  {String} attrName  Coriolis internal attribute (e.g. 'optmass')
+ * @param  {Object} m         The module
+ * @return {String|null}      Frontier label, or null if unmapped
+ */
+function _fdLabelFor(attrName, m) {
+  const resolver = _AMBIGUOUS_LABELS[attrName];
+  if (resolver) {
+    const grp = m && m.grp;
+    const isHardpoint = !!(m && (m.mount || (grp && Modules.hardpoints && Modules.hardpoints[grp])));
+    return resolver(grp, isHardpoint);
+  }
+  const fdLabel = _internalToFdLabel[attrName];
+  return fdLabel ? fdLabel.replace('OutfittingFieldType_', '') : null;
 }
 
 /**
@@ -269,7 +318,7 @@ function _buildModifiers(m) {
     // Skip hidden/object modifications (like damagedist)
     if (modification.hidden || modification.type === 'object') continue;
 
-    const fdLabel = _internalToFdLabel[attrName];
+    const fdLabel = _fdLabelFor(attrName, m);
     if (!fdLabel) continue;
 
     const baseValue = m[attrName];
@@ -297,7 +346,7 @@ function _buildModifiers(m) {
     if (modifiedValue === null || isNaN(modifiedValue)) continue;
 
     modifiers.push({
-      Label: fdLabel.replace('OutfittingFieldType_', ''),
+      Label: fdLabel,
       Value: Math.round(modifiedValue * 1000000) / 1000000,
       OriginalValue: Math.round(baseValue * 1000000) / 1000000,
       LessIsGood: modification.higherbetter === false ? 1 : 0
@@ -367,7 +416,7 @@ export function toSLEF(buildName, ship) {
     }
     const module = {
       Slot: 'Armour',
-      Item: bulkheadItem,
+      Item: bulkheadItem.toLowerCase(),
       On: true,
       Priority: ship.bulkheads.priority
     };
@@ -394,7 +443,7 @@ export function toSLEF(buildName, ship) {
     if (slot.m && slot.m.symbol) {
       const module = {
         Slot: standardSlots[index],
-        Item: slot.m.symbol,
+        Item: slot.m.symbol.toLowerCase(),
         On: Boolean(slot.enabled),
         Priority: slot.priority
       };
@@ -422,7 +471,7 @@ export function toSLEF(buildName, ship) {
 
       const module = {
         Slot: slotName,
-        Item: slot.m.symbol,
+        Item: slot.m.symbol.toLowerCase(),
         On: Boolean(slot.enabled),
         Priority: slot.priority
       };
@@ -464,7 +513,7 @@ export function toSLEF(buildName, ship) {
     if (slot.m && slot.m.symbol) {
       const module = {
         Slot: fdSlotName,
-        Item: slot.m.symbol,
+        Item: slot.m.symbol.toLowerCase(),
         On: Boolean(slot.enabled),
         Priority: slot.priority
       };

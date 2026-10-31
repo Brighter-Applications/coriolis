@@ -111,7 +111,7 @@ export function shipFromLoadoutJSON(json) {
       // Cargo Hatch.
       case 'cargohatch':
         ship.cargoHatch.enabled = module.On;
-        ship.cargoHatch.priority = module.Priority;
+        ship.cargoHatch.priority = module.Priority !== undefined ? module.Priority : 0;
         break;
       // Add the bulkheads
       case 'armour': {
@@ -149,7 +149,7 @@ export function shipFromLoadoutJSON(json) {
         }
         ship.use(ship.standard[0], powerplant, true);
         ship.standard[0].enabled = module.On;
-        ship.standard[0].priority = module.Priority;
+        ship.standard[0].priority = module.Priority !== undefined ? module.Priority : 0;
         if (module.Engineering) _addModifications(powerplant, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'mainengines':
@@ -162,7 +162,7 @@ export function shipFromLoadoutJSON(json) {
         }
         ship.use(ship.standard[1], thrusters, true);
         ship.standard[1].enabled = module.On;
-        ship.standard[1].priority = module.Priority;
+        ship.standard[1].priority = module.Priority !== undefined ? module.Priority : 0;
         if (module.Engineering) _addModifications(thrusters, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'frameshiftdrive':
@@ -175,7 +175,7 @@ export function shipFromLoadoutJSON(json) {
         }
         ship.use(ship.standard[2], frameshiftdrive, true);
         ship.standard[2].enabled = module.On;
-        ship.standard[2].priority = module.Priority;
+        ship.standard[2].priority = module.Priority !== undefined ? module.Priority : 0;
         if (module.Engineering)  _addModifications(frameshiftdrive, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'lifesupport':
@@ -188,7 +188,7 @@ export function shipFromLoadoutJSON(json) {
         }
         ship.use(ship.standard[3], lifesupport, true);
         ship.standard[3].enabled = module.On === true;
-        ship.standard[3].priority = module.Priority;
+        ship.standard[3].priority = module.Priority !== undefined ? module.Priority : 0;
         if (module.Engineering) _addModifications(lifesupport, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'powerdistributor':
@@ -201,7 +201,7 @@ export function shipFromLoadoutJSON(json) {
         }
         ship.use(ship.standard[4], powerdistributor, true);
         ship.standard[4].enabled = module.On;
-        ship.standard[4].priority = module.Priority;
+        ship.standard[4].priority = module.Priority !== undefined ? module.Priority : 0;
         if (module.Engineering) _addModifications(powerdistributor, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'radar':
@@ -214,7 +214,7 @@ export function shipFromLoadoutJSON(json) {
         }
         ship.use(ship.standard[5], sensors, true);
         ship.standard[5].enabled = module.On;
-        ship.standard[5].priority = module.Priority;
+        ship.standard[5].priority = module.Priority !== undefined ? module.Priority : 0;
         if (module.Engineering) _addModifications(sensors, module.Engineering.Modifiers, module.Engineering.Quality, module.Engineering.BlueprintName, module.Engineering.Level, module.Engineering.ExperimentalEffect);
         break;
       case 'fueltank':
@@ -274,11 +274,11 @@ export function shipFromLoadoutJSON(json) {
             }
             ship.use(ship.hardpoints[hardpointArrayNum], hardpoint, true);
             ship.hardpoints[hardpointArrayNum].enabled = hardpointSlot.On;
-            ship.hardpoints[hardpointArrayNum].priority = hardpointSlot.Priority;
+            ship.hardpoints[hardpointArrayNum].priority = hardpointSlot.Priority !== undefined ? hardpointSlot.Priority : 0;
           } else {
             ship.use(ship.hardpoints[hardpointArrayNum], hardpoint, true);
             ship.hardpoints[hardpointArrayNum].enabled = hardpointSlot.On;
-            ship.hardpoints[hardpointArrayNum].priority = hardpointSlot.Priority;
+            ship.hardpoints[hardpointArrayNum].priority = hardpointSlot.Priority !== undefined ? hardpointSlot.Priority : 0;
             modsToAdd.push({ coriolisMod: hardpoint, json: hardpointSlot });
           }
         }
@@ -398,13 +398,13 @@ export function shipFromLoadoutJSON(json) {
         internal = _moduleFromFdName('Int_Missing_Module');
         ship.use(ship.internal[i], internal, true);
         ship.internal[i].enabled = internalJson.On === true;
-        ship.internal[i].priority = internalJson.Priority;
+        ship.internal[i].priority = internalJson.Priority !== undefined ? internalJson.Priority : 0;
         //throw 'Unknown internal module: "' + module.Item + '"';
       }
       else {
         ship.use(ship.internal[i], internal, true);
         ship.internal[i].enabled = internalJson.On === true;
-        ship.internal[i].priority = internalJson.Priority;
+        ship.internal[i].priority = internalJson.Priority !== undefined ? internalJson.Priority : 0;
         modsToAdd.push({ coriolisMod: internal, json: internalSlot });
       }
     }
