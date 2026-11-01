@@ -1,0 +1,207 @@
+# ---------------------------------------------------------------------------
+# Alpha: Deploy Contribution
+#
+# Manually triggered after merging a PR from a FORK into 'alpha'.
+#
+# Why this exists:
+#   When a PR from a fork is merged, GitHub runs 'Alpha: Build & Deploy'
+#   in the fork's security context, so no repository secrets are passed
+#   and the build/deploy fails. Re-running that run reuses the same
+#   context, so it fails again. This workflow is started by a maintainer,
+#   so it runs with our secrets.
+#
+# What it does:
+#   - Verifies the PR's head commit has been merged into 'alpha'
+#   - Copies the contributor's branch into this repo (from refs/pull/N/head)
+#     so 'Live: Promote from Beta' can merge it into 'develop' and delete it
+#   - Builds, uploads to GCP and deploys to alpha.coriolis.io
+#   - Creates the 'pipeline/alpha-deployed' tag, ready for 'Promote to Beta'
+#
+# Usage:
+#   Actions -> "Alpha: Deploy Contribution" -> Run workflow (from master)
+#     pr_number:      the merged PR number, e.g. 365
+#     feature_branch: the contributor's branch name, e.g. feature-implementHeatStats
+#                     (use the same name in coriolis-data if both repos changed)
+# ---------------------------------------------------------------------------
+name: "Alpha: Deploy Contribution"
+on:
+  workflow_dispatch:
+    inputs:
+      pr_number:
+        description: "Merged PR number (from a fork, into alpha)"
+        required: true
+        type: string
+      feature_branch:
+        description: "Branch name to create in this repo for the contribution"
+        required: true
+        type: string
+permissions:
+  contents: write
+env:
+  BRANCH_NAME: alpha
+  TARGET_ZIP: build.zip
+  BUCKET_FOLDER: build
+jobs:
+  # ------------------------------------------------------------------ #
+  # Verify the PR is merged and copy its branch into this repo         #
+  # ------------------------------------------------------------------ #
+  prepare-contribution:
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
+    outputs:
+      feature_branch: ${{ steps.copy.outputs.branch }}
+    steps:
+      - name: Checkout alpha
+        uses: actions/checkout@v6
+        with:
+          ref: alpha
+          fetch-depth: 0
+          token: ${{ secrets.DEPLOY_TOKEN }}
+      - name: Validate inputs, verify merge and copy branch
+        id: copy
+        shell: bash
+        env:
+          # Inputs are passed via env (never interpolated into the script)
+          PR_NUMBER: ${{ inputs.pr_number }}
+          FEATURE: ${{ inputs.feature_branch }}
+        run: |
+          set -euo pipefail
+          if ! [[ "$PR_NUMBER" =~ ^[0-9]+$ ]]; then
+            echo "::error::pr_number must be a number, got '$PR_NUMBER'."
+            exit 1
+          fi
+          if ! git check-ref-format --branch "$FEATURE" >/dev/null 2>&1 || [[ "$FEATURE" == -* ]]; then
+            echo "::error::'$FEATURE' is not a valid branch name."
+            exit 1
+          fi
+          case "$FEATURE" in
+            master|develop|alpha|beta|live)
+              echo "::error::'$FEATURE' is a pipeline branch; choose a feature branch name."
+              exit 1 ;;
+          esac
+          # GitHub keeps every PR's head (including fork PRs) at refs/pull/N/head
+          if ! git fetch origin "refs/pull/${PR_NUMBER}/head"; then
+            echo "::error::PR #${PR_NUMBER} not found in this repository."
+            exit 1
+          fi
+          HEAD_SHA=$(git rev-parse FETCH_HEAD)
+          echo "PR #${PR_NUMBER} head: ${HEAD_SHA}"
+          if ! git merge-base --is-ancestor "$HEAD_SHA" origin/alpha; then
+            echo "::error::PR #${PR_NUMBER} head ${HEAD_SHA} is not in alpha. Merge the PR into alpha first."
+            exit 1
+          fi
+          # Create the branch, or accept it if it already points at this PR (safe to re-run)
+          EXISTING=$(git ls-remote --heads origin "refs/heads/${FEATURE}" | cut -f1)
+          if [ -z "$EXISTING" ]; then
+            git push origin "${HEAD_SHA}:refs/heads/${FEATURE}"
+            echo "::notice::Created branch '${FEATURE}' at ${HEAD_SHA} from PR #${PR_NUMBER}."
+          elif [ "$EXISTING" == "$HEAD_SHA" ]; then
+            echo "::notice::Branch '${FEATURE}' already points at PR #${PR_NUMBER}; reusing it."
+          else
+            echo "::error::Branch '${FEATURE}' already exists at ${EXISTING}, not PR #${PR_NUMBER} (${HEAD_SHA}). Choose another name."
+            exit 1
+          fi
+          echo "branch=${FEATURE}" >> "$GITHUB_OUTPUT"
+  # ------------------------------------------------------------------ #
+  # Build on the on-prem runner and upload artifact to GCP             #
+  # (keep in step with the 'build' job in autodeploy.yml on alpha)     #
+  # ------------------------------------------------------------------ #
+  build:
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
+    needs: prepare-contribution
+    steps:
+      - name: Download the code
+        shell: bash
+        run: |
+          rm -Rf ./coriolis ./coriolis-data
+          git clone https://github.com/Brighter-Applications/coriolis.git --single-branch --branch ${BRANCH_NAME}
+          git clone https://github.com/Brighter-Applications/coriolis-data.git --single-branch --branch ${BRANCH_NAME}
+      - name: Build the code
+        shell: bash
+        run: |
+          cd ./coriolis-data
+          export NVM_DIR=~/.nvm
+          source ~/.nvm/nvm.sh
+          # coriolis-data has no committed package-lock.json; a plain install is fine
+          rm -Rf node_modules
+          npm install --legacy-peer-deps 2>&1
+          npm start
+          cd ../coriolis
+          # Do NOT delete package-lock.json; npm ci installs the locked versions
+          # (see autodeploy.yml for why floating versions broke CSS extraction).
+          rm -Rf node_modules
+          npm ci --legacy-peer-deps 2>&1
+          npm run build 2>&1
+      - name: Zip the build
+        shell: bash
+        run: zip -r ./${TARGET_ZIP} ./coriolis/build/*
+      - name: Authorize GCP
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.CORIOLIS_GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          version: '>=363.0.0'
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+      - name: Upload build artifact to GCP
+        run: |
+          BUCKET_PATH=${{ secrets.CORIOLIS_GCP_TARGET_BUCKET }}/${{ env.BUCKET_FOLDER }}
+          gsutil cp ./${TARGET_ZIP} gs://${BUCKET_PATH}/build_latest.zip
+  # ------------------------------------------------------------------ #
+  # Deploy to alpha.coriolis.io                                        #
+  # ------------------------------------------------------------------ #
+  deploy:
+    runs-on: [self-hosted, Linux, X64, aws, brapps, web]
+    needs: build
+    steps:
+      - name: Authorize GCP
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.CORIOLIS_GCP_SA_KEY }}
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v3
+        with:
+          version: '>=363.0.0'
+          project_id: ${{ secrets.GCP_PROJECT_ID }}
+      - name: Download and unzip the build
+        shell: bash
+        run: |
+          rm -Rf ./*
+          BUCKET_PATH=${{ secrets.CORIOLIS_GCP_TARGET_BUCKET }}/${{ env.BUCKET_FOLDER }}
+          gsutil cp gs://${BUCKET_PATH}/build_latest.zip build_latest.zip
+          unzip ./build_latest.zip
+      - name: Deploy to alpha.coriolis.io
+        shell: bash
+        run: |
+          echo "Deploying to alpha.coriolis.io"
+          rsync -av --omit-dir-times --no-perms --delete \
+            --exclude='.git/' --exclude='.github/' \
+            ./coriolis/build/* /var/www/alpha.coriolis.io/
+  # ------------------------------------------------------------------ #
+  # Mark pipeline state: alpha deployed, ready for beta promotion      #
+  # ------------------------------------------------------------------ #
+  mark-alpha-deployed:
+    runs-on: [self-hosted, fleetdom, OnPrem, Linux, X64, goxhillit]
+    needs: [deploy, prepare-contribution]
+    steps:
+      - name: Checkout repo
+        uses: actions/checkout@v6
+        with:
+          ref: alpha
+          fetch-depth: 1
+          token: ${{ secrets.DEPLOY_TOKEN }}
+      - name: Tag pipeline state
+        shell: bash
+        env:
+          FEATURE_BRANCH: ${{ needs.prepare-contribution.outputs.feature_branch }}
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "github-actions[bot]@users.noreply.github.com"
+          # Remove stale pipeline tags
+          git push origin --delete refs/tags/pipeline/alpha-deployed 2>/dev/null || true
+          git push origin --delete refs/tags/pipeline/beta-deployed 2>/dev/null || true
+          git push origin --delete refs/tags/pipeline/live-deployed 2>/dev/null || true
+          # Create new alpha-deployed tag with feature branch info
+          git tag -a pipeline/alpha-deployed -m "feature-branch: ${FEATURE_BRANCH}" -f
+          git push origin pipeline/alpha-deployed --force
+          echo "::notice::Pipeline state set — alpha deployed (feature branch: ${FEATURE_BRANCH}). Ready for 'Promote to Beta'."
