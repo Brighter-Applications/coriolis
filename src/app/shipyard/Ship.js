@@ -2221,37 +2221,37 @@ export default class Ship {
 
   /**
    * Get the heat equilibrium.
-   * @param heatDisipationMax
+   * @param heatDissipationMax
    * @param thermalLoad
    * @returns {number} heat level
    */
-  getEquilibriumHeatLevel(heatDisipationMax, thermalLoad) {
+  getEquilibriumHeatLevel(heatDissipationMax, thermalLoad) {
     // https://forums.frontier.co.uk/threads/research-detailed-heat-mechanics.286628/post-6399855
-    return Math.sqrt(thermalLoad / heatDisipationMax);
+    return Math.sqrt(thermalLoad / heatDissipationMax);
   };
 
   /**
    * Calculate the time to reach a certain heat level.
    * @param heatCapacity
-   * @param heatDisipationMax
+   * @param heatDissipationMax
    * @param thermalLoad
    * @param heatLevel0
    * @param heatLevel
    * @returns {number} seconds
    */
-  getTimeUntilHeatLevel(heatCapacity, heatDisipationMax, thermalLoad, heatLevel0, heatLevel) {
+  getTimeUntilHeatLevel(heatCapacity, heatDissipationMax, thermalLoad, heatLevel0, heatLevel) {
     // https://forums.frontier.co.uk/threads/research-detailed-heat-mechanics.286628/post-6519883
     let C;
 
-    heatDisipationMax /= heatCapacity;
+    heatDissipationMax /= heatCapacity;
     if (!thermalLoad) {
-      C = -1 / (heatDisipationMax * heatLevel0);
-      return ((1 / (heatDisipationMax * heatLevel)) + C);
+      C = -1 / (heatDissipationMax * heatLevel0);
+      return ((1 / (heatDissipationMax * heatLevel)) + C);
     }
 
     thermalLoad /= heatCapacity;
-    const sqrtAdivB = Math.sqrt(heatDisipationMax / thermalLoad);
-    const sqrtAmulB = Math.sqrt(heatDisipationMax * thermalLoad);
+    const sqrtAdivB = Math.sqrt(heatDissipationMax / thermalLoad);
+    const sqrtAmulB = Math.sqrt(heatDissipationMax * thermalLoad);
     C = -Math.atanh(heatLevel0 * sqrtAdivB) / sqrtAmulB
 
     return ((Math.atanh(heatLevel * sqrtAdivB) / sqrtAmulB) + C);
@@ -2260,25 +2260,25 @@ export default class Ship {
   /**
    * Calculate the heat level after x seconds.
    * @param heatCapacity
-   * @param heatDisipationMax
+   * @param heatDissipationMax
    * @param thermalLoad
    * @param heatLevel0
    * @param seconds
    * @returns {number} heat level
    */
-  getThermalLoadAtTime(heatCapacity, heatDisipationMax, thermalLoad, heatLevel0, seconds) {
+  getThermalLoadAtTime(heatCapacity, heatDissipationMax, thermalLoad, heatLevel0, seconds) {
     // https://forums.frontier.co.uk/threads/research-detailed-heat-mechanics.286628/post-6519883
     let C;
 
-    heatDisipationMax /= heatCapacity;
+    heatDissipationMax /= heatCapacity;
     if (!thermalLoad) {
-      C = -1 / (heatDisipationMax * heatLevel0);
-      return ((1 / (seconds - C)) / heatDisipationMax);
+      C = -1 / (heatDissipationMax * heatLevel0);
+      return ((1 / (seconds - C)) / heatDissipationMax);
     }
 
     thermalLoad /= heatCapacity;
-    const sqrtAdivB = Math.sqrt(heatDisipationMax / thermalLoad);
-    const sqrtAmulB = Math.sqrt(heatDisipationMax * thermalLoad);
+    const sqrtAdivB = Math.sqrt(heatDissipationMax / thermalLoad);
+    const sqrtAmulB = Math.sqrt(heatDissipationMax * thermalLoad);
     C = -Math.atanh(heatLevel0 * sqrtAdivB) / sqrtAmulB
 
     return (Math.tanh((seconds - C) * sqrtAmulB) / sqrtAdivB);
