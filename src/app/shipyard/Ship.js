@@ -2344,11 +2344,11 @@ export default class Ship {
    * @returns {number} percentage of sustained weapons fire
    */
   getSustainedWeaponsFireRate(wep) {
-    const weaponsCapacitorRechargeRate = this.standard[4].m.get('weprate');
+    const pdWeaponRechargeRate = this.standard[4].m.getWeaponsRechargeRate(); // Power Distributor weapon capacitor recharge rate
     const pdWeaponMultiplier = Math.pow(wep / 4, 1.1);
     const sustainedEnergyDrawPerSecond = this.getSustainedHardpointEnergyDrawPerSecond();
 
-    return Math.min(Math.max(weaponsCapacitorRechargeRate * pdWeaponMultiplier / sustainedEnergyDrawPerSecond, 0), 1);
+    return Math.min(Math.max(pdWeaponRechargeRate * pdWeaponMultiplier / sustainedEnergyDrawPerSecond, 0), 1);
   };
 
   /**
