@@ -2393,7 +2393,7 @@ export default class Ship {
    */
   getWeaponsThermalLoad(wep) {
     const weaponSustainedFireRate = this.getSustainedWeaponsFireRate(wep);
-    const pdWeaponCapacitor = this.standard[4].m.wepcap; // Power Distributor weapon capacitor (MJ)
+    const pdWeaponsCapacity = this.standard[4].m.getWeaponsCapacity(); // Power Distributor weapon capacity (MJ)
     const effectiveThermalLoad = {
       weaponCapacitorFull: 0,
       weaponCapacitorEmpty: 0,
@@ -2403,8 +2403,8 @@ export default class Ship {
       if (slot.enabled && slot.m && slot.maxClass > 0) { // is this a (non-disabled) weapon module?
         const sustainedSecondsPerCycle = slot.m.getSustainedSecondsPerCycle() || 1;
         const thermalLoad = slot.m.get('thermload') * (slot.m.getSustainedFiringsPerCycle() / sustainedSecondsPerCycle);
-        effectiveThermalLoad.weaponCapacitorFull += this.getEffectiveWeaponThermalLoad(thermalLoad, slot.m.get('distdraw'), pdWeaponCapacitor, 1);
-        effectiveThermalLoad.weaponCapacitorEmpty += this.getEffectiveWeaponThermalLoad(thermalLoad, slot.m.get('distdraw'), pdWeaponCapacitor, 0);
+        effectiveThermalLoad.weaponCapacitorFull += this.getEffectiveWeaponThermalLoad(thermalLoad, slot.m.get('distdraw'), pdWeaponsCapacity, 1);
+        effectiveThermalLoad.weaponCapacitorEmpty += this.getEffectiveWeaponThermalLoad(thermalLoad, slot.m.get('distdraw'), pdWeaponsCapacity, 0);
       }
     }
     effectiveThermalLoad.weaponCapacitorFull *= weaponSustainedFireRate;
