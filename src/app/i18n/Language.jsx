@@ -66,7 +66,7 @@ export function getLanguage(langCode) {
     },
     translate,
     units: {
-      ang: '°',                         // Angle
+      ang: '°',                         // Degrees (Angle)
       CR: <u>{translate('CR')}</u>,     // Credits
       MC: <u>{translate('MC')}</u>,     // Merc Coin
       kg: <u>{translate('kg')}</u>,     // Kilograms
@@ -74,16 +74,16 @@ export function getLanguage(langCode) {
       km: <u>{translate('km')}</u>,     // Kilometers
       Ls: <u>{translate('Ls')}</u>,     // Light Seconds
       LY: <u>{translate('LY')}</u>,     // Light Years
-      m: <u>{translate('m')}</u>,      // Meters
+      m: <u>{translate('m')}</u>,       // Meters
       MJ: <u>{translate('MJ')}</u>,     // Mega Joules
       'm/s': <u>{translate('m/s')}</u>, // Meters per second
       '°/s': <u>{translate('°/s')}</u>, // Degrees per second
       MW: <u>{translate('MW')}</u>,     // Mega Watts (same as Mega Joules per second)
-      mps: <u>{translate('m/s')}</u>,    // Metres per second
+      mps: <u>{translate('m/s')}</u>,   // Metres per second
       pct: '%',                         // Percent
-      ps: <u>{translate('/s')}</u>,           // per second
-      pm: <u>{translate('/min')}</u>,         // per minute
-      s: <u>{translate('secs')}</u>,         // Seconds
+      ps: <u>{translate('/s')}</u>,     // per second
+      pm: <u>{translate('/min')}</u>,   // per minute
+      s: <u>{translate('secs')}</u>,    // Seconds
       T: <u>{translate('T')}</u>,       // Metric Tons
     }
   };
