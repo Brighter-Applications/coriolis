@@ -2371,12 +2371,12 @@ export default class Ship {
    * @return {Number} the thermal efficiency of this power plant
    */
   getPowerPlantThermalEfficiency(modified = true) {
-    const ppEfficiencyBase= this.standard[0].m.getThermalEfficiency(false);
+    const ppEfficiencyBase= this.standard[0].m.getThermalEfficiency(false); // Power Plant Thermal Efficiency
     if (!modified) {
       return ppEfficiencyBase;
     }
 
-    const ppEfficiencyModified = this.standard[0].m.getThermalEfficiency(true);
+    const ppEfficiencyModified = this.standard[0].m.getThermalEfficiency(true); // Power Plant Thermal Efficiency
     const blueprint = this.standard[0].m.blueprint;
 
     if (blueprint && blueprint.fdname === 'PowerPlant_Armoured') { // Is the Armoured blueprint applied to this Power Plant module?
