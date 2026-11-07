@@ -57,7 +57,7 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
     const sgMetrics = Calc.shieldMetrics(ship, pips.sys);
     const distBoost = canBoost ? Calc.calcBoost(ship) : 'No Boost';
     const armourMetrics = Calc.armourMetrics(ship);
-    const hasWeapons = ship.hasHadrdpointMounted();
+    const hasWeapons = ship.hasHardpointMounted();
 
     // Heat stats
     const ppEfficiency = ship.getPowerPlantThermalEfficiency();

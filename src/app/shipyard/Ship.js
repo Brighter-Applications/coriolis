@@ -2297,7 +2297,7 @@ export default class Ship {
     return (thermalLoad * (1 + 4 * Math.min(Math.max(1 - (weaponCapacitor * weplvl - distributerDraw) / weaponCapacitor, 0), 1)));
   };
 
-  hasHadrdpointMounted() {
+  hasHardpointMounted() {
     for (let slot of this.hardpoints) {
       if (slot.maxClass > 0 && slot.m) { // is this a non-utility hardpoint, with a module fitted?
         return true;
