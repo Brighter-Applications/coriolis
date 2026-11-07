@@ -2470,7 +2470,7 @@ export default class Ship {
         type: 'string',
         result: '-',
         className: 'primary',
-        tooltip: 'PHRASE_HEAT_UNAVAILBLE_FOR_SHIP',
+        tooltip: 'PHRASE_HEAT_UNAVAILABLE_FOR_SHIP',
       }
     }
 
