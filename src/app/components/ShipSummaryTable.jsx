@@ -133,9 +133,13 @@ export default class ShipSummaryTable extends TranslatedComponent {
                 <td>{int(ship.hardness)}</td>
                 <td>{ship.crew}</td>
                 <td>{ship.masslock}</td>
-                <td onMouseEnter={termtip.bind(null, heat_idle.tooltip, { cap: 0 })} onMouseLeave={hide}>
-                  {heat_idle.type === 'string' ? heat_idle.result : heat_idle.type === 'percentage' ? formats.pct(heat_idle.result) : formats.time(heat_idle.result)}
-                  {heat_idle.className === 'warning' ? <span className='warning'> <Warning/></span> : null}
+                <td onMouseEnter={heat_idle.tooltip?termtip.bind(null, heat_idle.tooltip, { cap: 0 }):null} onMouseLeave={hide}>
+                  {
+                    heat_idle.type === 'string'
+                      ? heat_idle.result
+                      : heat_idle.type === 'percentage'
+                        ? formats.pct(heat_idle.result)
+                        : formats.time(heat_idle.result)}{heat_idle.type === 'time' ? u.s : null}
                 </td>
               </tr>
             </tbody>
