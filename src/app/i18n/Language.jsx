@@ -42,11 +42,34 @@ export function getLanguage(langCode) {
   let gen = d3Locale.format('');
   const round = function(x, n) { const ten_n = Math.pow(10,n); return Math.round(x * ten_n) / ten_n; };
 
-  if(lang === EN) {
-    translate = (t, x) => { return currentTerms[t + '_' + x] || currentTerms[t] || t; };
-  } else {
-    translate = (t, x) => { return currentTerms[t + '_' + x] || currentTerms[t] || fallbackTerms[t + '_' + x] || fallbackTerms[t] || t; };
-  }
+  const indexedReplace = (string, args) => { for (let i = 0; i < args.length; i++) { string = string.replace('{' + i + '}', args[i]); } return string; };
+
+  translate = (t, x) => {
+    let translated;
+
+    if (lang !== EN) {
+      translated = currentTerms[t]; // Localized terms
+      if (!translated && !Array.isArray(x)) {
+        translated = currentTerms[t + '_' + x]; // Localized terms
+      }
+    }
+
+    if (!translated && !Array.isArray(x)) {
+      translated = fallbackTerms[t + '_' + x]; // Fallback (=English) terms
+    }
+
+    if (!translated) {
+      translated = fallbackTerms[t] || t; // Fallback (=English) terms
+    }
+
+    if (Array.isArray(x)) {
+      translated = indexedReplace(translated, x);
+    }
+
+    return translated;
+  };
+
+
 
   return {
     formats: {
