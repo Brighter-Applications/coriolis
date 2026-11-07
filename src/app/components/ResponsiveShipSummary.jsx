@@ -56,8 +56,27 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
     const canJump = ship.getSlotStatus(ship.standard[2]) == 3;
     const sgMetrics = Calc.shieldMetrics(ship, pips.sys);
     const distBoost = canBoost ? Calc.calcBoost(ship) : 'No Boost';
-    const restingHeat = Math.sqrt(((ship.standard[0].m.pgen * ship.standard[0].m.eff) / ship.heatCapacity) / 0.2);
     const armourMetrics = Calc.armourMetrics(ship);
+    const hasWeapons = ship.hasHardpointMounted();
+
+    // Heat stats
+    const ppEfficiency = ship.getPowerPlantThermalEfficiency();
+    const thermalLoad = {
+      modulesTotal: {
+        retracted: ship.powerRetractedDraw * ppEfficiency, // Total thermal output for all modules, hardpoints retracted
+        deployed: ship.powerDeployedDraw * ppEfficiency,   // Total thermal output for all modules, hardpoints deployed
+      },
+      thrusters: ship.standard[1].m.get('thermload'),  // Thermal output for Thrusters under max thrust
+      fsd: ship.standard[2].m.get('thermload'),        // Thermal output for Frame Shift Drive while charging up
+      weaponsFiring: ship.getWeaponsThermalLoad(pips.wep), // Thermal output for Weapons while firing
+      scbsSpinningUp: ship.getScbsThermalLoad(),                  // Thermal output for SCBs while spinning up
+    };
+    const heat_idle = ship.getHeatLevel(translate, thermalLoad.modulesTotal.retracted, 0);
+    const heat_maxThrust = ship.getHeatLevel(translate, thermalLoad.thrusters, thermalLoad.modulesTotal.retracted);
+    const heat_maxThrustFsdCharging = ship.getHeatLevel(translate, thermalLoad.fsd, thermalLoad.modulesTotal.retracted + thermalLoad.thrusters);
+    const heat_allWeaponsFiring_capacitorFull = ship.getHeatLevel(translate, thermalLoad.weaponsFiring.weaponCapacitorFull, thermalLoad.modulesTotal.deployed + thermalLoad.thrusters);
+    const heat_allWeaponsFiring_capacitorNearEmpty = ship.getHeatLevel(translate, thermalLoad.weaponsFiring.weaponCapacitorEmpty, thermalLoad.modulesTotal.deployed + thermalLoad.thrusters);
+    const heat_maxThrustSbcFiring = ship.getHeatLevel(translate, thermalLoad.scbsSpinningUp, thermalLoad.modulesTotal.deployed + thermalLoad.thrusters, ship.getScbsMaxSpinupTime());
 
     /**
      * Format large credit values compactly (e.g. 1.05Bn, 52.4M)
@@ -495,11 +514,24 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
               </colgroup>
               <tbody>
                 <tr>
-                  <td className='label'>
-                    <span className='label-full'>HEAT ({translate('BETA')})</span>
-                    <span className='label-abbr'>HEAT ({translate('BETA')})</span>
+                  <td
+                    className='label'
+                    onMouseEnter={termtip.bind(null, 'TT_SUMMARY_HEAT_IDLE', { cap: 0 })}
+                    onMouseLeave={hide}
+                  >
+                    <span className='label-full'>{translate('HEAT (IDLE)')}</span>
+                    <span className='label-abbr'>{translate('HEAT (IDLE)')}</span>
                   </td>
-                  <td className='value'>{formats.pct(restingHeat)}</td>
+                  <td
+                    className='value'
+                    onMouseEnter={heat_idle.tooltip?termtip.bind(null, heat_idle.tooltip, { cap: 0 }):null}
+                    onMouseLeave={hide}
+                  ><span className={heat_idle.className}>{
+                    heat_idle.type === 'string'
+                      ? heat_idle.result
+                      : heat_idle.type === 'percentage'
+                        ? formats.pct(heat_idle.result)
+                        : formats.time(heat_idle.result)}{heat_idle.type === 'time' ? u.s : null}</span></td>
                 </tr>
                 <tr>
                   <td className='label'>
@@ -553,6 +585,119 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
                     {compactCredits(ship.totalCost * Insurance[Persist.getInsurance()])}{u.CR}
                   </td>
                 </tr>
+              </tbody>
+            </table>
+          </div>
+
+          {/* Heat Stats */}
+          <div className='stat-table'>
+            <div className='stat-table-header'>{translate('HEAT')} <sup>({translate('beta')})</sup></div>
+            <table>
+              <colgroup>
+                <col className='stat-label-col' />
+                <col className='stat-value-col' />
+              </colgroup>
+              <tbody>
+              <tr>
+                <td
+                  className='label'
+                  onMouseEnter={termtip.bind(null, 'TT_SUMMARY_HEAT_MAX_THRUST', { cap: 0 })}
+                  onMouseLeave={hide}
+                >
+                  <span className='label-full'>{translate('MAX THRUST')}</span>
+                  <span className='label-abbr'>{translate('MAX THRUST')}</span>
+                </td>
+                <td
+                  className='value'
+                  onMouseEnter={heat_maxThrust.tooltip?termtip.bind(null, heat_maxThrust.tooltip, { cap: 0 }):null}
+                  onMouseLeave={hide}
+                ><span className={heat_maxThrust.className}>{
+                  heat_maxThrust.type === 'string'
+                    ? heat_maxThrust.result
+                    : heat_maxThrust.type === 'percentage'
+                      ? formats.pct(heat_maxThrust.result)
+                      : formats.time(heat_maxThrust.result)}{heat_maxThrust.type === 'time' ? u.s : null}</span></td>
+              </tr>
+              <tr>
+                <td
+                  className='label'
+                  onMouseEnter={termtip.bind(null, 'TT_SUMMARY_HEAT_MAX_THRUST_AND_FSD', { cap: 0 })}
+                  onMouseLeave={hide}
+                >
+                  <span className='label-full'>{translate('THRUST+FSD')}</span>
+                  <span className='label-abbr'>{translate('THRUST+FSD')}</span>
+                </td>
+                <td
+                  className='value'
+                  onMouseEnter={heat_maxThrustFsdCharging.tooltip?termtip.bind(null, heat_maxThrustFsdCharging.tooltip, { cap: 0 }):null}
+                  onMouseLeave={hide}
+                ><span className={heat_maxThrustFsdCharging.className}>{
+                  heat_maxThrustFsdCharging.type === 'string'
+                    ? heat_maxThrustFsdCharging.result
+                    : heat_maxThrustFsdCharging.type === 'percentage'
+                      ? formats.pct(heat_maxThrustFsdCharging.result)
+                      : formats.time(heat_maxThrustFsdCharging.result)}{heat_maxThrustFsdCharging.type === 'time' ? u.s : null}</span></td>
+              </tr>
+              <tr>
+                <td
+                  className='label'
+                  onMouseEnter={termtip.bind(null, 'TT_SUMMARY_HEAT_MAX_THRUST_AND_WEAPONS_FULL_CAP', { cap: 0 })}
+                  onMouseLeave={hide}
+                >
+                  <span className='label-full'>{translate('THRUST+WPN')}</span>
+                  <span className='label-abbr'>{translate('THRUST+WPN')}</span>
+                </td>
+                <td
+                  className='value'
+                  onMouseEnter={heat_allWeaponsFiring_capacitorFull.tooltip?termtip.bind(null, heat_allWeaponsFiring_capacitorFull.tooltip, { cap: 0 }):null}
+                  onMouseLeave={hide}
+                ><span className={heat_allWeaponsFiring_capacitorFull.className}>{
+                  heat_allWeaponsFiring_capacitorFull.type === 'string'
+                    ? heat_allWeaponsFiring_capacitorFull.result
+                    : heat_allWeaponsFiring_capacitorFull.type === 'percentage'
+                      ? formats.pct(heat_allWeaponsFiring_capacitorFull.result)
+                      : formats.time(heat_allWeaponsFiring_capacitorFull.result)}{heat_allWeaponsFiring_capacitorFull.type === 'time' ? u.s : null}{hasWeapons && heat_allWeaponsFiring_capacitorFull.type !== 'string'?'*':null}</span></td>
+              </tr>
+              <tr>
+                <td
+                  className='label'
+                  onMouseEnter={termtip.bind(null, 'TT_SUMMARY_HEAT_MAX_THRUST_AND_WEAPONS_EMPTY_CAP', { cap: 0 })}
+                  onMouseLeave={hide}
+                >
+                  <span className='label-full'>{translate('THRUST+WPN')}</span>
+                  <span className='label-abbr'>{translate('THRUST+WPN')}</span>
+                </td>
+                <td
+                  className='value'
+                  onMouseEnter={heat_allWeaponsFiring_capacitorNearEmpty.tooltip?termtip.bind(null, heat_allWeaponsFiring_capacitorNearEmpty.tooltip, { cap: 0 }):null}
+                  onMouseLeave={hide}
+                ><span className={heat_allWeaponsFiring_capacitorNearEmpty.className}>{
+                  heat_allWeaponsFiring_capacitorNearEmpty.type === 'string'
+                    ? heat_allWeaponsFiring_capacitorNearEmpty.result
+                    : heat_allWeaponsFiring_capacitorNearEmpty.type === 'percentage'
+                      ? formats.pct(heat_allWeaponsFiring_capacitorNearEmpty.result)
+                      : formats.time(heat_allWeaponsFiring_capacitorNearEmpty.result)}{heat_allWeaponsFiring_capacitorNearEmpty.type === 'time' ? u.s : null}{hasWeapons && heat_allWeaponsFiring_capacitorNearEmpty.type !== 'string'?'*':null}</span></td>
+              </tr>
+              <tr>
+                <td
+                  className='label'
+                  onMouseEnter={termtip.bind(null, 'TT_SUMMARY_HEAT_MAX_THRUST_AND_SCBS', { cap: 0 })}
+                  onMouseLeave={hide}
+                >
+                  <span className='label-full'>{translate('THRUST+SCB')}</span>
+                  <span className='label-abbr'>{translate('THRUST+SCB')}</span>
+                </td>
+                <td
+                  className='value'
+                  onMouseEnter={heat_maxThrustSbcFiring.tooltip?termtip.bind(null, heat_maxThrustSbcFiring.tooltip, { cap: 0 }):null}
+                  onMouseLeave={hide}
+                ><span className={heat_maxThrustSbcFiring.className}>{
+                  heat_maxThrustSbcFiring.type === 'string'
+                    ? heat_maxThrustSbcFiring.result
+                    : heat_maxThrustSbcFiring.type === 'percentage'
+                      ? formats.pct(heat_maxThrustSbcFiring.result)
+                      : formats.time(heat_maxThrustSbcFiring.result)}{heat_maxThrustSbcFiring.type === 'time' ? u.s : null}</span></td>
+              </tr>
               </tbody>
             </table>
           </div>

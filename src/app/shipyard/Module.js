@@ -1048,9 +1048,9 @@ export default class Module {
     const burst = this.get('burst', modified) || 1;
     const burstRoF = this.get('burstrof', modified) || 1;
     const intRoF = this.get('rof', modified);
-    const charge = this.get('charge', modified) || 0;
+    const chargetime = this.get('chargetime', modified) || 0;
 
-    return burst / (((burst - 1) / burstRoF) + 1 / intRoF + charge);
+    return burst / (((burst - 1) / burstRoF) + 1 / intRoF + chargetime);
   }
 
   /**
@@ -1204,5 +1204,57 @@ export default class Module {
    */
   getMaxAngle(modified = true) {
     return this.get('maxangle', modified);
+  }
+
+  /**
+   * Get sustained firings per cycle.
+   * 'Sustained firings per cycle' is the number of individual shots that can be fired before taking a break to reload; for energy weapons that
+   * don't reload, this should always be equal to bstsize ("burst size") -- they're treated as reloading after every burst, but taking 0 seconds to
+   * do so. 'shots per cycle (spc)' might have been a more intuitive abbreviation, but that one is already taken by 'seconds per cycle'.
+   *
+   * @returns {number}
+   */
+  getSustainedFiringsPerCycle() {
+    let ammoclip = this.get('clip');
+    if (ammoclip) {
+      if (this.blueprint && this.blueprint.special && this.blueprint.special.name === 'Auto loader') {
+        ammoclip += ammoclip - 1; // The Auto Loader experimental effect adds 1 round per 2 shots for an almost-but-not-quite +100% effective clip size
+      }
+
+      return ammoclip;
+    }
+
+    return this.get('burst') || 1;
+  }
+
+  /**
+   * Get sustained seconds per cycle.
+   * 'Sustained seconds per cycle' is the total time between firing the first shot in a clip, emptying it, reloading, and being ready to fire the
+   * first shot in the next clip. For energy weapons this should always be the inverse of 'sustained rate of fire'.
+   * @returns {number}
+   */
+  getSustainedSecondsPerCycle() {
+    const burstInterval = this.get('fireint') || 0; // Burst Interval
+    const reloadTime = this.get('reload') || 0; // Reload Time
+    const burstSize = this.get('burst') || 1; // Burst Size
+    const burstRateOfFire = this.get('burstrof') || 1; // Burst Rate of Fire
+
+    let chargeTime = this.get('chargetime') || 0; // Time to reach maximum charge (in seconds)
+    chargeTime *= (this.get('damagemultiplier') ? 0 : 1);
+    if (this.name === 'Imperial Hammer') { // TODO: bug? Imperial Hammer Rail Gun can keep firing through reloads without re-charging
+      chargeTime = 0;
+    }
+
+    let spc = (chargeTime + (burstSize - 1) / burstRateOfFire + burstInterval);
+
+    let ammoclip = this.get('clip'); // Ammo Clip Size
+    if (ammoclip) {
+      if (this.blueprint && this.blueprint.special && this.blueprint.special.name === 'Auto loader') {
+        ammoclip += ammoclip - 1; // The Auto Loader experimental effect adds 1 round per 2 shots for an almost-but-not-quite +100% effective clip size
+      }
+      spc *= Math.ceil(ammoclip / burstSize);
+    }
+
+    return spc + Math.max(0, reloadTime - chargeTime - burstInterval);
   }
 }

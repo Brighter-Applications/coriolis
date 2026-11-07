@@ -54,7 +54,6 @@ export default class ShipSummaryTable extends TranslatedComponent {
     const sgMetrics = Calc.shieldMetrics(ship, pips.sys);
     const distBoost = canBoost ?  Calc.calcBoost(ship) : 'No Boost';
     //const shipBoost = ship.boostInterval(ship)
-    const restingHeat = Math.sqrt(((ship.standard[0].m.pgen * ship.standard[0].m.eff) / ship.heatCapacity) / 0.2);
     const armourMetrics = Calc.armourMetrics(ship);
     let shieldColour = 'blue';
     if (shieldGenerator && shieldGenerator.m.grp === 'psg') {
@@ -65,6 +64,11 @@ export default class ShipSummaryTable extends TranslatedComponent {
     this.state = {
       shieldColour
     };
+    // calculate heat level
+    const ppEfficiency = ship.getPowerPlantThermalEfficiency();
+    const thermalLoad_retracted = ship.powerRetractedDraw * ppEfficiency; // Total thermal output for all modules, hardpoints retracted
+    const heat_idle = ship.getHeatLevel(translate, thermalLoad_retracted, 0);
+
     return <div id='summary'>
       <div style={{display: "table", width: "100%"}}>
         <div style={{display: "table-row"}}>
@@ -88,7 +92,7 @@ export default class ShipSummaryTable extends TranslatedComponent {
                 <th onMouseEnter={termtip.bind(null, 'hull hardness', { cap: 0 })} onMouseLeave={hide} rowSpan={2}>{translate('hrd')}</th>
                 <th rowSpan={2}>{translate('crew')}</th>
                 <th onMouseEnter={termtip.bind(null, 'mass lock factor', { cap: 0 })} onMouseLeave={hide} rowSpan={2}>{translate('MLF')}</th>
-                <th rowSpan={2}>{translate('resting heat (Beta)')}</th>
+                <th rowSpan={2}>{translate('HEAT (IDLE)')}</th>
               </tr>
               <tr>
                 <th onMouseEnter={termtip.bind(null, 'TT_SUMMARY_BOOST_INTERVAL', { cap: 0 })} onMouseLeave={hide}>{translate('distro')}</th>
@@ -129,7 +133,14 @@ export default class ShipSummaryTable extends TranslatedComponent {
                 <td>{int(ship.hardness)}</td>
                 <td>{ship.crew}</td>
                 <td>{ship.masslock}</td>
-                <td>{formats.pct(restingHeat)}</td>
+                <td onMouseEnter={heat_idle.tooltip?termtip.bind(null, heat_idle.tooltip, { cap: 0 }):null} onMouseLeave={hide}>
+                  {
+                    heat_idle.type === 'string'
+                      ? heat_idle.result
+                      : heat_idle.type === 'percentage'
+                        ? formats.pct(heat_idle.result)
+                        : formats.time(heat_idle.result)}{heat_idle.type === 'time' ? u.s : null}
+                </td>
               </tr>
             </tbody>
           </table>

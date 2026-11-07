@@ -1491,32 +1491,32 @@ export default class Ship {
    */
   updatePowerUsed() {
     let bands = [
-      { deployed: 0, retracted: 0, },
-      { deployed: 0, retracted: 0, },
-      { deployed: 0, retracted: 0, },
-      { deployed: 0, retracted: 0, },
-      { deployed: 0, retracted: 0, }
+      { deployed: 0, retracted: 0, retractedSum: 0, deployedSum: 0, },
+      { deployed: 0, retracted: 0, retractedSum: 0, deployedSum: 0, },
+      { deployed: 0, retracted: 0, retractedSum: 0, deployedSum: 0, },
+      { deployed: 0, retracted: 0, retractedSum: 0, deployedSum: 0, },
+      { deployed: 0, retracted: 0, retractedSum: 0, deployedSum: 0, }
     ];
 
     if (this.cargoHatch.enabled) {
       bands[this.cargoHatch.priority].retracted += this.cargoHatch.m.getPowerUsage();
     }
 
-    for (let slotNum in this.standard) {
+    for (let slotNum in this.standard) { // core modules
       const slot = this.standard[slotNum];
       if (slot.m && slot.enabled) {
         bands[slot.priority][powerUsageType(slot, slot.m)] += slot.m.getPowerUsage();
       }
     }
 
-    for (let slotNum in this.internal) {
+    for (let slotNum in this.internal) { // optional internal
       const slot = this.internal[slotNum];
       if (slot.m && slot.enabled) {
         bands[slot.priority][powerUsageType(slot, slot.m)] += slot.m.getPowerUsage();
       }
     }
 
-    for (let slotNum in this.hardpoints) {
+    for (let slotNum in this.hardpoints) { // hardpoints (weapons + utility)
       const slot = this.hardpoints[slotNum];
       if (slot.m && slot.enabled) {
         bands[slot.priority][powerUsageType(slot, slot.m)] += slot.m.getPowerUsage();
@@ -1525,15 +1525,33 @@ export default class Ship {
 
     // Work out the running totals
     let prevRetracted = 0, prevDeployed = 0;
+    let prevRetractedDraw = 0, prevDeployedDraw = 0;
+    let retractedDrawExceeded = false, deployedDrawExceeded = false;
     for (let i = 0, l = bands.length; i < l; i++) {
-      let band = bands[i];
+      const band = bands[i];
       prevRetracted = band.retractedSum = prevRetracted + band.retracted;
-      prevDeployed = band.deployedSum = prevDeployed + band.deployed + band.retracted;
+      prevDeployed = band.deployedSum = prevDeployed + band.retracted + band.deployed;
+
+      const nextRetractedDraw = prevRetractedDraw + band.retracted;
+      if (!retractedDrawExceeded && nextRetractedDraw < this.powerAvailable) { // EDSY used <= but < better matches Coriolis' choices in other parts of the code
+        prevRetractedDraw = nextRetractedDraw;
+      } else {
+        retractedDrawExceeded = true;
+      }
+
+      const nextDeployedDraw = prevDeployedDraw + band.retracted + band.deployed;
+      if (!deployedDrawExceeded && nextDeployedDraw < this.powerAvailable) { // EDSY used <= but <  better matches Coriolis' choices in other parts of the code
+        prevDeployedDraw = nextDeployedDraw;
+      } else {
+        deployedDrawExceeded = true;
+      }
     }
 
     // Update global stats
     this.powerRetracted = prevRetracted;
     this.powerDeployed = prevDeployed;
+    this.powerRetractedDraw = prevRetractedDraw;
+    this.powerDeployedDraw = prevDeployedDraw;
     this.priorityBands = bands;
 
     return this;
@@ -2202,6 +2220,210 @@ export default class Ship {
   }
 
   /**
+   * Get the heat equilibrium.
+   * @param heatDissipationMax
+   * @param thermalLoad
+   * @returns {number} heat level
+   */
+  getEquilibriumHeatLevel(heatDissipationMax, thermalLoad) {
+    // https://forums.frontier.co.uk/threads/research-detailed-heat-mechanics.286628/post-6399855
+    return Math.sqrt(thermalLoad / heatDissipationMax);
+  };
+
+  /**
+   * Calculate the time to reach a certain heat level.
+   * @param heatCapacity
+   * @param heatDissipationMax
+   * @param thermalLoad
+   * @param heatLevel0
+   * @param heatLevel
+   * @returns {number} seconds
+   */
+  getTimeUntilHeatLevel(heatCapacity, heatDissipationMax, thermalLoad, heatLevel0, heatLevel) {
+    // https://forums.frontier.co.uk/threads/research-detailed-heat-mechanics.286628/post-6519883
+    let C;
+
+    heatDissipationMax /= heatCapacity;
+    if (!thermalLoad) {
+      C = -1 / (heatDissipationMax * heatLevel0);
+      return ((1 / (heatDissipationMax * heatLevel)) + C);
+    }
+
+    thermalLoad /= heatCapacity;
+    const sqrtAdivB = Math.sqrt(heatDissipationMax / thermalLoad);
+    const sqrtAmulB = Math.sqrt(heatDissipationMax * thermalLoad);
+    C = -Math.atanh(heatLevel0 * sqrtAdivB) / sqrtAmulB
+
+    return ((Math.atanh(heatLevel * sqrtAdivB) / sqrtAmulB) + C);
+  };
+
+  /**
+   * Calculate the heat level after x seconds.
+   * @param heatCapacity
+   * @param heatDissipationMax
+   * @param thermalLoad
+   * @param heatLevel0
+   * @param seconds
+   * @returns {number} heat level
+   */
+  getThermalLoadAtTime(heatCapacity, heatDissipationMax, thermalLoad, heatLevel0, seconds) {
+    // https://forums.frontier.co.uk/threads/research-detailed-heat-mechanics.286628/post-6519883
+    let C;
+
+    heatDissipationMax /= heatCapacity;
+    if (!thermalLoad) {
+      C = -1 / (heatDissipationMax * heatLevel0);
+      return ((1 / (seconds - C)) / heatDissipationMax);
+    }
+
+    thermalLoad /= heatCapacity;
+    const sqrtAdivB = Math.sqrt(heatDissipationMax / thermalLoad);
+    const sqrtAmulB = Math.sqrt(heatDissipationMax * thermalLoad);
+    C = -Math.atanh(heatLevel0 * sqrtAdivB) / sqrtAmulB
+
+    return (Math.tanh((seconds - C) * sqrtAmulB) / sqrtAdivB);
+  };
+
+  /**
+   * Get the effective thermal load for a hardpoint.
+   * @param thermalLoad
+   * @param distributerDraw
+   * @param weaponCapacitor
+   * @param weplvl
+   * @returns {number}
+   */
+  getEffectiveWeaponThermalLoad(thermalLoad, distributerDraw, weaponCapacitor, weplvl) {
+    // https://forums.frontier.co.uk/threads/research-detailed-heat-mechanics.286628/post-6408594
+    return (thermalLoad * (1 + 4 * Math.min(Math.max(1 - (weaponCapacitor * weplvl - distributerDraw) / weaponCapacitor, 0), 1)));
+  };
+
+  hasHardpointMounted() {
+    for (let slot of this.hardpoints) {
+      if (slot.maxClass > 0 && slot.m) { // is this a non-utility hardpoint, with a module fitted?
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  hasShieldCellBanksMounted() {
+    for (let slot of this.internal) {
+      if (slot.m && slot.m.grp === 'scb') { // is this an SCB module?
+        return true;
+      }
+    }
+
+    return false;
+  };
+
+  /**
+   * Calculate thermal load and (maximum) spinup time for the ship's Shield Bank Cells.
+   * @returns {{maxSpinupTime: number, thermalLoad: number}}
+   */
+  getShieldBankCellStats() {
+    let thermalLoad = 0;
+    let maxSpinupTime = 0;
+    for (let slot of this.internal) {
+      if (slot.enabled && slot.m && slot.m.grp === 'scb') { // is this a (non-disabled) SCB module?
+        thermalLoad += slot.m.get('thermload') / slot.m.get('spinup');
+        maxSpinupTime = Math.max(maxSpinupTime, slot.m.get('spinup'));
+      }
+    }
+
+    return {
+      thermalLoad: thermalLoad,
+      maxSpinupTime: maxSpinupTime,
+    };
+  }
+
+  /**
+   * Get the percentage of sustained DPS that can be accommodated by the WEP capacitor's current recharge rate, with current pips allocation
+   * the average WEP capacitor draw from firing all weapons continuously, including reload breaks.
+   * @param {int} wep the currently allocated weapon capacitor pips
+   * @returns {number} percentage of sustained weapons fire
+   */
+  getSustainedWeaponsFireRate(wep) {
+    const pdWeaponRechargeRate = this.standard[4].m.getWeaponsRechargeRate(); // Power Distributor weapon capacitor recharge rate
+    const pdWeaponMultiplier = Math.pow(wep / 4, 1.1);
+    const sustainedEnergyDrawPerSecond = this.getSustainedHardpointEnergyDrawPerSecond();
+
+    return Math.min(Math.max(pdWeaponRechargeRate * pdWeaponMultiplier / sustainedEnergyDrawPerSecond, 0), 1);
+  };
+
+  /**
+   * Get the sustained energy consumption per second, with all weapons firing, taking reloading into account.
+   * @returns {number}
+   */
+  getSustainedHardpointEnergyDrawPerSecond(){
+    let sustainedEnergyPerSecond = 0;
+    for (let slot of this.hardpoints) {
+      if (slot.enabled && slot.m) { // is this a (non-disabled) hardpoint (weapons + utility) module?
+        sustainedEnergyPerSecond += (slot.m.getClip() ? (slot.m.getClip() * slot.m.getEps() / slot.m.getRoF()) / ((slot.m.getClip() / slot.m.getRoF()) + slot.m.getReload()) : slot.m.getEps());
+      }
+    }
+    return sustainedEnergyPerSecond;
+  }
+
+  /**
+   * Get the Thermal Efficiency for the power plant, taking a bug in ED with the 'Armoured' blueprint into account
+   * @param {Boolean} [modified=true] Whether to take modifications into account
+   * @return {Number} the thermal efficiency of this power plant
+   */
+  getPowerPlantThermalEfficiency(modified = true) {
+    const ppEfficiencyBase= this.standard[0].m.getThermalEfficiency(false); // Power Plant Thermal Efficiency
+    if (!modified) {
+      return ppEfficiencyBase;
+    }
+
+    const ppEfficiencyModified = this.standard[0].m.getThermalEfficiency(true); // Power Plant Thermal Efficiency
+    const blueprint = this.standard[0].m.blueprint;
+
+    if (blueprint && blueprint.fdname === 'PowerPlant_Armoured') { // Is the Armoured blueprint applied to this Power Plant module?
+      return Math.max(ppEfficiencyModified, ppEfficiencyBase);
+    }
+
+    return ppEfficiencyModified;
+  }
+
+  /**
+   * Get the thermal load for the ship's hardpoints, both for a near-empty weapon capacitor and a full one
+   * @param {int} wep the currently allocated weapon capacitor pips
+   * @returns {{weaponCapacitorFull: number, weaponCapacitorEmpty: number}}
+   */
+  getWeaponsThermalLoad(wep) {
+    const weaponSustainedFireRate = this.getSustainedWeaponsFireRate(wep);
+    const pdWeaponsCapacity = this.standard[4].m.getWeaponsCapacity(); // Power Distributor weapon capacity (MJ)
+    const effectiveThermalLoad = {
+      weaponCapacitorFull: 0,
+      weaponCapacitorEmpty: 0,
+    };
+
+    for (let slot of this.hardpoints) {
+      if (slot.enabled && slot.m && slot.maxClass > 0) { // is this a (non-disabled) weapon module?
+        const sustainedSecondsPerCycle = slot.m.getSustainedSecondsPerCycle() || 1;
+        const thermalLoad = slot.m.get('thermload') * (slot.m.getSustainedFiringsPerCycle() / sustainedSecondsPerCycle);
+        effectiveThermalLoad.weaponCapacitorFull += this.getEffectiveWeaponThermalLoad(thermalLoad, slot.m.get('distdraw'), pdWeaponsCapacity, 1);
+        effectiveThermalLoad.weaponCapacitorEmpty += this.getEffectiveWeaponThermalLoad(thermalLoad, slot.m.get('distdraw'), pdWeaponsCapacity, 0);
+      }
+    }
+    effectiveThermalLoad.weaponCapacitorFull *= weaponSustainedFireRate;
+    effectiveThermalLoad.weaponCapacitorEmpty *= weaponSustainedFireRate;
+
+    return effectiveThermalLoad;
+  };
+
+  getScbsThermalLoad() {
+    const scbStats = this.getShieldBankCellStats();
+    return scbStats.thermalLoad;
+  }
+
+  getScbsMaxSpinupTime() {
+    const scbStats = this.getShieldBankCellStats();
+    return scbStats.maxSpinupTime;
+  }
+
+  /**
    * Upgrade information about internals with version changes
    * @param {array} internals     the internals from the ship code
    * @param {int}   offset        the offset of the internals information in the priorities etc. arrays
@@ -2233,4 +2455,93 @@ export default class Ship {
       internals.splice(Ships[this.id].slots.internal.length);
     }
   }
+
+  /**
+   * Get the ship's thermal load.
+   *
+   * @param translate
+   * @param thermalLoad
+   * @param thermalLoadBase
+   * @param duration
+   * @returns {object} thermal load information
+   */
+  getHeatLevel(translate, thermalLoad, thermalLoadBase, duration) {
+    if (!this.heatDissipation) {
+      return {
+        type: 'string',
+        result: '-',
+        className: 'primary',
+        tooltip: translate('PHRASE_HEAT_UNAVAILABLE_FOR_SHIP'),
+      }
+    }
+
+    if (thermalLoadBase > this.heatDissipation) {
+      return {
+        type: 'string',
+        result: '∞',
+        className: 'warning',
+        tooltip: translate('PHRASE_HEAT_BASE_OVERLOAD'),
+      }
+    }
+
+    if (thermalLoad === 0) {
+      return {
+        type: 'string',
+        result: 'N/A',
+        className: 'primary',
+      }
+    }
+
+    thermalLoad += thermalLoadBase;
+    if (thermalLoad <= this.heatDissipation) {
+      return {
+        type: 'percentage',
+        result: this.getEquilibriumHeatLevel(this.heatDissipation, thermalLoad) / 1.5,
+      }
+    }
+
+    const heatLevelBase = this.getEquilibriumHeatLevel(this.heatDissipation, thermalLoadBase);
+    const time10 = this.getTimeUntilHeatLevel(this.heatCapacity, this.heatDissipation, thermalLoad, heatLevelBase, 1.0);
+    const time15 = (this.heatCapacity / 2) / (thermalLoad - this.heatDissipation); // displayed heatLevel 66% -> 100% is actual heatlevel 1.0 -> 1.5
+
+    if (!duration) {
+      return {
+        type: 'time',
+        result: time10 + time15,
+        className: 'warning',
+        tooltip: translate('PHRASE_HEAT_TIME_UNTIL_OVERHEAT'),
+      }
+    }
+
+    if (time10 > duration) {
+      return {
+        type: 'percentage',
+        result: this.getThermalLoadAtTime(this.heatCapacity, this.heatDissipation, thermalLoad, heatLevelBase, duration) / 1.5,
+      }
+    }
+
+    if (time10 + time15 > duration) {
+      return {
+        type: 'percentage',
+        result: (2 + ((duration - time10) / time15)) / 3,
+      }
+    }
+
+    duration -= time10 + time15;
+    const heatLevelPeak = 1.5 + (duration * (thermalLoad - this.heatDissipation) / this.heatCapacity);
+    const timeCool = (heatLevelPeak - 1.5) / ((this.heatDissipation - thermalLoadBase) / this.heatCapacity);
+
+    // TODO: find a method to make this tooltip strings translatable?
+    return {
+      type: 'percentage',
+      result: (heatLevelPeak / 1.5),
+      className: 'warning',
+      tooltip: translate('PHRASE_HEAT_TIME_UNTIL_TEMPORARY_OVERHEAT', [
+        (time10 + time15).toFixed(1),
+        ((time10 + time15).toFixed(1) === '1.0' ? translate('second') : translate('seconds')),
+        (duration + timeCool).toFixed(1),
+        ((duration + timeCool).toFixed(1) === '1.0' ? translate('second') : translate('seconds')),
+      ]),
+    }
+  };
 }

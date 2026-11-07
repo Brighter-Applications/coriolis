@@ -42,11 +42,34 @@ export function getLanguage(langCode) {
   let gen = d3Locale.format('');
   const round = function(x, n) { const ten_n = Math.pow(10,n); return Math.round(x * ten_n) / ten_n; };
 
-  if(lang === EN) {
-    translate = (t, x) => { return currentTerms[t + '_' + x] || currentTerms[t] || t; };
-  } else {
-    translate = (t, x) => { return currentTerms[t + '_' + x] || currentTerms[t] || fallbackTerms[t + '_' + x] || fallbackTerms[t] || t; };
-  }
+  const indexedReplace = (string, args) => { for (let i = 0; i < args.length; i++) { string = string.replace('{' + i + '}', args[i]); } return string; };
+
+  translate = (t, x) => {
+    let translated;
+
+    if (lang !== EN) {
+      translated = currentTerms[t]; // Localized terms
+      if (!translated && !Array.isArray(x)) {
+        translated = currentTerms[t + '_' + x]; // Localized terms
+      }
+    }
+
+    if (!translated && !Array.isArray(x)) {
+      translated = fallbackTerms[t + '_' + x]; // Fallback (=English) terms
+    }
+
+    if (!translated) {
+      translated = fallbackTerms[t] || t; // Fallback (=English) terms
+    }
+
+    if (Array.isArray(x)) {
+      translated = indexedReplace(translated, x);
+    }
+
+    return translated;
+  };
+
+
 
   return {
     formats: {
@@ -66,7 +89,7 @@ export function getLanguage(langCode) {
     },
     translate,
     units: {
-      ang: '°',                         // Angle
+      ang: '°',                         // Degrees (Angle)
       CR: <u>{translate('CR')}</u>,     // Credits
       MC: <u>{translate('MC')}</u>,     // Merc Coin
       kg: <u>{translate('kg')}</u>,     // Kilograms
@@ -74,16 +97,16 @@ export function getLanguage(langCode) {
       km: <u>{translate('km')}</u>,     // Kilometers
       Ls: <u>{translate('Ls')}</u>,     // Light Seconds
       LY: <u>{translate('LY')}</u>,     // Light Years
-      m: <u>{translate('m')}</u>,      // Meters
+      m: <u>{translate('m')}</u>,       // Meters
       MJ: <u>{translate('MJ')}</u>,     // Mega Joules
       'm/s': <u>{translate('m/s')}</u>, // Meters per second
       '°/s': <u>{translate('°/s')}</u>, // Degrees per second
       MW: <u>{translate('MW')}</u>,     // Mega Watts (same as Mega Joules per second)
-      mps: <u>{translate('m/s')}</u>,    // Metres per second
+      mps: <u>{translate('m/s')}</u>,   // Metres per second
       pct: '%',                         // Percent
-      ps: <u>{translate('/s')}</u>,           // per second
-      pm: <u>{translate('/min')}</u>,         // per minute
-      s: <u>{translate('secs')}</u>,         // Seconds
+      ps: <u>{translate('/s')}</u>,     // per second
+      pm: <u>{translate('/min')}</u>,   // per minute
+      s: <u>{translate('secs')}</u>,    // Seconds
       T: <u>{translate('T')}</u>,       // Metric Tons
     }
   };
