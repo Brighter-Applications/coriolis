@@ -67,7 +67,7 @@ export default class ShipSummaryTable extends TranslatedComponent {
     // calculate heat level
     const ppEfficiency = ship.getPowerPlantThermalEfficiency();
     const thermalLoad_retracted = ship.powerRetractedDraw * ppEfficiency; // Total thermal output for all modules, hardpoints retracted
-    const heat_idle = ship.getHeatLevel(thermalLoad_retracted, 0);
+    const heat_idle = ship.getHeatLevel(translate, thermalLoad_retracted, 0);
 
     return <div id='summary'>
       <div style={{display: "table", width: "100%"}}>

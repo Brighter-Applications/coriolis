@@ -2459,18 +2459,19 @@ export default class Ship {
   /**
    * Get the ship's thermal load.
    *
+   * @param translate
    * @param thermalLoad
    * @param thermalLoadBase
    * @param duration
    * @returns {object} thermal load information
    */
-  getHeatLevel(thermalLoad, thermalLoadBase, duration) {
+  getHeatLevel(translate, thermalLoad, thermalLoadBase, duration) {
     if (!this.heatDissipation) {
       return {
         type: 'string',
         result: '-',
         className: 'primary',
-        tooltip: 'PHRASE_HEAT_UNAVAILABLE_FOR_SHIP',
+        tooltip: translate('PHRASE_HEAT_UNAVAILABLE_FOR_SHIP'),
       }
     }
 
@@ -2479,7 +2480,7 @@ export default class Ship {
         type: 'string',
         result: '∞',
         className: 'warning',
-        tooltip: 'PHRASE_HEAT_BASE_OVERLOAD',
+        tooltip: translate('PHRASE_HEAT_BASE_OVERLOAD'),
       }
     }
 
@@ -2508,7 +2509,7 @@ export default class Ship {
         type: 'time',
         result: time10 + time15,
         className: 'warning',
-        tooltip: 'PHRASE_HEAT_TIME_UNTIL_OVERHEAT',
+        tooltip: translate('PHRASE_HEAT_TIME_UNTIL_OVERHEAT'),
       }
     }
 
@@ -2535,7 +2536,12 @@ export default class Ship {
       type: 'percentage',
       result: (heatLevelPeak / 1.5),
       className: 'warning',
-      tooltip: 'Ship will overheat after ' +  Math.floor(time10 + time15) + ' second' + (Math.floor(time10 + time15) === 1 ? '' : 's') + ', and will remain overheated for ' + Math.floor(duration + timeCool) + ' second' + (Math.floor(duration + timeCool) === 1 ? '' : 's.'),
+      tooltip: translate('PHRASE_HEAT_TIME_UNTIL_TEMPORARY_OVERHEAT', [
+        (time10 + time15).toFixed(1),
+        ((time10 + time15).toFixed(1) === '1.0' ? translate('second') : translate('seconds')),
+        (duration + timeCool).toFixed(1),
+        ((duration + timeCool).toFixed(1) === '1.0' ? translate('second') : translate('seconds')),
+      ]),
     }
   };
 }

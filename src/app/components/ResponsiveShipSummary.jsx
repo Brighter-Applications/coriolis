@@ -71,12 +71,12 @@ export default class ResponsiveShipSummary extends TranslatedComponent {
       weaponsFiring: ship.getWeaponsThermalLoad(pips.wep), // Thermal output for Weapons while firing
       scbsSpinningUp: ship.getScbsThermalLoad(),                  // Thermal output for SCBs while spinning up
     };
-    const heat_idle = ship.getHeatLevel(thermalLoad.modulesTotal.retracted, 0);
-    const heat_maxThrust = ship.getHeatLevel(thermalLoad.thrusters, thermalLoad.modulesTotal.retracted);
-    const heat_maxThrustFsdCharging = ship.getHeatLevel(thermalLoad.fsd, thermalLoad.modulesTotal.retracted + thermalLoad.thrusters);
-    const heat_allWeaponsFiring_capacitorFull = ship.getHeatLevel(thermalLoad.weaponsFiring.weaponCapacitorFull, thermalLoad.modulesTotal.deployed + thermalLoad.thrusters);
-    const heat_allWeaponsFiring_capacitorNearEmpty = ship.getHeatLevel(thermalLoad.weaponsFiring.weaponCapacitorEmpty, thermalLoad.modulesTotal.deployed + thermalLoad.thrusters);
-    const heat_maxThrustSbcFiring = ship.getHeatLevel(thermalLoad.scbsSpinningUp, thermalLoad.modulesTotal.deployed + thermalLoad.thrusters, ship.getScbsMaxSpinupTime());
+    const heat_idle = ship.getHeatLevel(translate, thermalLoad.modulesTotal.retracted, 0);
+    const heat_maxThrust = ship.getHeatLevel(translate, thermalLoad.thrusters, thermalLoad.modulesTotal.retracted);
+    const heat_maxThrustFsdCharging = ship.getHeatLevel(translate, thermalLoad.fsd, thermalLoad.modulesTotal.retracted + thermalLoad.thrusters);
+    const heat_allWeaponsFiring_capacitorFull = ship.getHeatLevel(translate, thermalLoad.weaponsFiring.weaponCapacitorFull, thermalLoad.modulesTotal.deployed + thermalLoad.thrusters);
+    const heat_allWeaponsFiring_capacitorNearEmpty = ship.getHeatLevel(translate, thermalLoad.weaponsFiring.weaponCapacitorEmpty, thermalLoad.modulesTotal.deployed + thermalLoad.thrusters);
+    const heat_maxThrustSbcFiring = ship.getHeatLevel(translate, thermalLoad.scbsSpinningUp, thermalLoad.modulesTotal.deployed + thermalLoad.thrusters, ship.getScbsMaxSpinupTime());
 
     /**
      * Format large credit values compactly (e.g. 1.05Bn, 52.4M)
