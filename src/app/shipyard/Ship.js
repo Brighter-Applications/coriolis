@@ -2366,17 +2366,6 @@ export default class Ship {
   }
 
   /**
-   * Get the time to drain a full weapon capacitor, with all weapons firing
-   * @returns {number} time in seconds
-   */
-  getTimeTillWeaponCapacitorEmpty() {
-    const pdWeaponCapacitor = this.standard[4].m.wepcap; // Power Distributor weapon capacitor (MJ)
-    const sustainedEnergyDrawPerSecond = this.getSustainedHardpointEnergyDrawPerSecond();
-
-    return pdWeaponCapacitor / sustainedEnergyDrawPerSecond;
-  }
-
-  /**
    * Get the Thermal Efficiency for the power plant, taking a bug in ED with the 'Armoured' blueprint into account
    * @param {Boolean} [modified=true] Whether to take modifications into account
    * @return {Number} the thermal efficiency of this power plant
