@@ -1,3 +1,5 @@
+#4.1.18
+  * Add Heat Stats
 #4.1.17
   * Fix Journal Import of ship JSON
   * Fix slot names for T7 and T8
