@@ -398,6 +398,10 @@ export function isChangeValueBeneficial(feature, value) {
   }
 }
 
+// Former Coriolis-only limpet controller blueprint names (see EDCD/coriolis#913)
+const LEGACY_LIMPET_BLUEPRINT = /^(ProspectingLimpet|CollectionLimpet|FuelTransferLimpet|HatchBreakerLimpet)_(LightWeight|Reinforced|Shielded)$/i;
+const LIMPET_BLUEPRINT_SUFFIX = { lightweight: 'LightWeight', reinforced: 'Reinforced', shielded: 'Shielded' };
+
 /**
  * Get a blueprint with a given name and an optional module
  * @param   {string} name    The name of the blueprint
@@ -415,6 +419,12 @@ export function getBlueprint(name, module) {
     if (module.symbol.match(/MultiCannon/i)) {
       name = 'MC_Overcharged';
     }
+  }
+  // Limpet controllers use the game's Misc_* blueprint names. Older saved builds and imports
+  // may carry the previous Coriolis-specific names, which have identical effects; map them across.
+  const legacy = LEGACY_LIMPET_BLUEPRINT.exec(name || '');
+  if (legacy) {
+    name = 'Misc_' + LIMPET_BLUEPRINT_SUFFIX[legacy[2].toLowerCase()];
   }
   // Start with a copy of the blueprint
   const findMod = val => Object.keys(Modifications.blueprints).find(elem => elem.toString().toLowerCase().search(val.toString().toLowerCase().replace(/(OutfittingFieldType_|persecond)/igm, '')) >= 0);
