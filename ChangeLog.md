@@ -1,3 +1,5 @@
+#4.1.19
+  * Fixing jump calcs that still used the old method
 #4.1.18
   * Add Heat Stats
 #4.1.17
