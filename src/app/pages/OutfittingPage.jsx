@@ -39,7 +39,7 @@ import ModalExport from '../components/ModalExport';
 import ModalPermalink from '../components/ModalPermalink';
 import ModalShoppingList from '../components/ModalShoppingList';
 import ModalBuildLink from '../components/ModalBuildLink';
-import { syncSingleBuild } from '../utils/BuildSync';
+import { syncSingleBuild, deleteSyncedBuild } from '../utils/BuildSync';
 
 /**
  * Document Title Generator
@@ -569,6 +569,13 @@ export default class OutfittingPage extends Page {
   _deleteBuild() {
     const { shipId, buildName } = this.state;
     Persist.deleteBuild(shipId, buildName);
+    // Remove the synced copy from cmdr.coriolis.io too, if syncing is enabled
+    if (Persist.syncBuilds()) {
+      const link = Persist.getActiveCmdrLink();
+      if (link) {
+        deleteSyncedBuild(link, shipId, buildName);
+      }
+    }
 
     let opponentBuild;
     if (
@@ -590,11 +597,17 @@ export default class OutfittingPage extends Page {
    */
   _exportBuild() {
     let translate = this.context.language.translate;
-    let { buildName, ship } = this.state;
+    let { buildName, ship, shipId } = this.state;
+    // Offer the cmdr.coriolis.io export API links for saved builds that are synced there
+    const link = Persist.getActiveCmdrLink();
+    const cmdrBuild = Persist.syncBuilds() && link && Persist.hasBuild(shipId, buildName)
+      ? { link, shipId, buildName }
+      : null;
     this.context.showModal(
       <ModalExport
         title={(buildName || ship.name) + ' ' + translate('export')}
         description={translate('PHRASE_EXPORT_DESC')}
+        cmdrBuild={cmdrBuild}
         formats={[
           {
             name: 'JSON',
