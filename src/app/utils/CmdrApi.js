@@ -107,6 +107,19 @@ export function saveBuild(link, buildData) {
 }
 
 /**
+ * Delete a build by ship type and build name. Deleting a build that isn't
+ * stored on the server is not an error.
+ * @param  {Object} link       { host, apiKey }
+ * @param  {String} shipType   Coriolis ship key (e.g. 'anaconda')
+ * @param  {String} buildName  Build name
+ * @return {Promise<Object>}   { ok, deleted }
+ */
+export function deleteBuild(link, shipType, buildName) {
+  const query = `?shipType=${encodeURIComponent(shipType)}&buildName=${encodeURIComponent(buildName)}`;
+  return _send(link.host, link.apiKey, 'DELETE', '/api/builds/' + query);
+}
+
+/**
  * Update a build's description and/or linked ship
  * @param  {Object} link     { host, apiKey }
  * @param  {Number} buildId  Build primary key

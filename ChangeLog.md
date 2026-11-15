@@ -1,3 +1,5 @@
+#4.1.21
+  * Adding CMDR Ship API to cmdr.coriolis.io
 #4.1.20
   * Aligned LightWeight blueprint names to game names
 #4.1.19
