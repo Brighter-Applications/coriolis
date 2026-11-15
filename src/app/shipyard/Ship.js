@@ -220,7 +220,8 @@ export default class Ship {
   calcUnladenRange(massDelta, fuel, fsd) {
     fsd = fsd || this.standard[2].m;
     let fsdMaxFuelPerJump = fsd instanceof Module ? fsd.getMaxFuelPerJump() : fsd.maxfuel;
-    return Calc.jumpRange(this.unladenMass + (massDelta || 0) +  Math.min(fsdMaxFuelPerJump, fuel || this.fuelCapacity), fsd || this.standard[2].m, fuel, this);
+    // dryMass excludes fuel; add only the fuel needed for this jump (unladenMass already includes a full tank)
+    return Calc.jumpRange(this.dryMass + (massDelta || 0) + Math.min(fsdMaxFuelPerJump, fuel || this.fuelCapacity), fsd, fuel, this);
   }
 
   /**
@@ -1710,10 +1711,11 @@ export default class Ship {
 
     let { unladenMass, fuelCapacity } = this;
     this.unladenRange = this.calcUnladenRange(); // Includes fuel weight for jump
-    this.fullTankRange = Calc.jumpRange(unladenMass + fuelCapacity, fsd, fuelCapacity, this); // Full Tank
+    // unladenMass already includes a full tank, and ladenMass adds cargo on top
+    this.fullTankRange = Calc.jumpRange(unladenMass, fsd, fuelCapacity, this); // Full Tank
     this.ladenRange = this.calcLadenRange(); // Includes full tank and cargo
-    this.unladenFastestRange = Calc.totalJumpRange(unladenMass + this.fuelCapacity, fsd, fuelCapacity, this);
-    this.ladenFastestRange = Calc.totalJumpRange(unladenMass + this.fuelCapacity + this.cargoCapacity, fsd, fuelCapacity, this);
+    this.unladenFastestRange = Calc.totalJumpRange(unladenMass, fsd, fuelCapacity, this);
+    this.ladenFastestRange = Calc.totalJumpRange(this.ladenMass, fsd, fuelCapacity, this);
     this.maxJumpCount = Math.ceil(fuelCapacity / fsd.getMaxFuelPerJump());
     return this;
   }
