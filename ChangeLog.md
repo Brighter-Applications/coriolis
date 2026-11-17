@@ -1,3 +1,11 @@
+#4.1.21
+  * Adding CMDR Ship API to cmdr.coriolis.io
+#4.1.20
+  * Aligned LightWeight blueprint names to game names
+#4.1.19
+  * Fixing jump calcs that still used the old method
+#4.1.18
+  * Add Heat Stats
 #4.1.17
   * Fix Journal Import of ship JSON
   * Fix slot names for T7 and T8

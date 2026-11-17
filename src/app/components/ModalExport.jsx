@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import TranslatedComponent from './TranslatedComponent';
+import { fetchBuilds } from '../utils/CmdrApi';
 
 /**
  * Export Modal with support for multiple formats
@@ -14,7 +15,13 @@ export default class ModalExport extends TranslatedComponent {
     formats: PropTypes.arrayOf(PropTypes.shape({
       name: PropTypes.string.isRequired,
       data: PropTypes.oneOfType([PropTypes.string, PropTypes.object, PropTypes.array]).isRequired
-    }))
+    })),
+    // Saved build synced to cmdr.coriolis.io; when set, the export API links are shown
+    cmdrBuild: PropTypes.shape({
+      link: PropTypes.object.isRequired,
+      shipId: PropTypes.string.isRequired,
+      buildName: PropTypes.string.isRequired
+    })
   };
 
   /**
@@ -42,8 +49,63 @@ export default class ModalExport extends TranslatedComponent {
     this.state = {
       exportJson,
       formats,
-      selectedFormat: 0
+      selectedFormat: 0,
+      // cmdr.coriolis.io export API: null (not offered), 'loading', 'ready', 'missing' or 'error'
+      cmdrStatus: props.cmdrBuild ? 'loading' : null,
+      cmdrUrls: {}
     };
+  }
+
+  /**
+   * Look up the synced build on cmdr.coriolis.io to get its export API URLs
+   */
+  _loadCmdrUrls() {
+    const { link, shipId, buildName } = this.props.cmdrBuild;
+    fetchBuilds(link).then(resp => {
+      if (!this._mounted) return;
+      const build = (resp.builds || []).find(b => b.shipType === shipId && b.buildName === buildName);
+      const urls = build && build.exportUrls ? build.exportUrls : {};
+      this.setState({ cmdrStatus: Object.keys(urls).length ? 'ready' : 'missing', cmdrUrls: urls });
+    }).catch(err => {
+      console.warn('[ModalExport] could not fetch cmdr.coriolis.io builds', err);
+      if (this._mounted) this.setState({ cmdrStatus: 'error' });
+    });
+  }
+
+  /**
+   * Render the cmdr.coriolis.io export API section
+   * @param  {Function} translate Translate function
+   * @return {React.Component}    Section, or null if not offered
+   */
+  _renderCmdrApi(translate) {
+    const { cmdrStatus, cmdrUrls } = this.state;
+    if (!cmdrStatus) return null;
+    let body;
+    if (cmdrStatus === 'loading') {
+      body = <div>{translate('PHRASE_CMDR_EXPORT_LOADING')}</div>;
+    } else if (cmdrStatus === 'error') {
+      body = <div className='warning'>{translate('PHRASE_CMDR_EXPORT_ERROR')}</div>;
+    } else if (cmdrStatus === 'missing') {
+      body = <div>{translate('PHRASE_CMDR_EXPORT_MISSING')}</div>;
+    } else {
+      const exampleUrl = cmdrUrls.slef || cmdrUrls.json;
+      body = <div>
+        <div>{translate('PHRASE_CMDR_EXPORT_DESC')}</div>
+        {['slef', 'json'].filter(fmt => cmdrUrls[fmt]).map(fmt => (
+          <div key={fmt} style={{ marginTop: '0.3em' }}>
+            <span className='cap' style={{ display: 'inline-block', width: '3.5em' }}>{fmt.toUpperCase()}</span>
+            <input className='cmdr-export-url' type='text' readOnly value={cmdrUrls[fmt]} onFocus={e => e.target.select()} style={{ width: '80%' }} />
+          </div>
+        ))}
+        <div style={{ marginTop: '0.3em' }}>
+          {translate('example')}: <code>{`curl -H "Authorization: Bearer YOUR_API_KEY" ${exampleUrl}`}</code>
+        </div>
+      </div>;
+    }
+    return <div className='cmdr-export-api' style={{ marginTop: '0.8em' }}>
+      <h3>{translate('PHRASE_CMDR_EXPORT_TITLE')}</h3>
+      {body}
+    </div>;
   }
 
   /**
@@ -59,10 +121,21 @@ export default class ModalExport extends TranslatedComponent {
    * Focus on textarea and select all
    */
   componentDidMount() {
+    this._mounted = true;
     if (this.exportField) {
       this.exportField.focus();
       this.exportField.select();
     }
+    if (this.props.cmdrBuild) {
+      this._loadCmdrUrls();
+    }
+  }
+
+  /**
+   * Stop pending cmdr.coriolis.io lookups from updating an unmounted modal
+   */
+  componentWillUnmount() {
+    this._mounted = false;
   }
 
   /**
@@ -120,6 +193,7 @@ export default class ModalExport extends TranslatedComponent {
       <div>
         <textarea className='cb json' ref={node => this.exportField = node} readOnly value={this.state.exportJson} />
       </div>
+      {this._renderCmdrApi(translate)}
       <button className='r dismiss cap' onClick={this.context.hideModal}>{translate('close')}</button>
     </div>;
   }
