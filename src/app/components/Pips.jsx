@@ -55,9 +55,9 @@ export default class Pips extends TranslatedComponent {
       event.stopPropagation();
       event.preventDefault();
       if (key == 'rst') {
-        this._reset(multiCrewPip);
+        this._resetPips(multiCrewPip);
       } else {
-        this._inc(key, multiCrewPip);
+        this._incrementPip(key, multiCrewPip);
       }
     };
   }
@@ -71,19 +71,19 @@ export default class Pips extends TranslatedComponent {
       switch (event.keyCode) {
         case 37:     // Left arrow == increase SYS
           event.preventDefault();
-          this._inc('sys', false);
+          this._incrementPip('sys', false);
           break;
         case 38:     // Up arrow == increase ENG
           event.preventDefault();
-          this._inc('eng', false);
+          this._incrementPip('eng', false);
           break;
         case 39:     // Right arrow == increase WEP
           event.preventDefault();
-          this._inc('wep', false);
+          this._incrementPip('wep', false);
           break;
         case 40:     // Down arrow == reset
           event.preventDefault();
-          this._reset();
+          this._resetPips();
           break;
       }
     }
@@ -94,7 +94,7 @@ export default class Pips extends TranslatedComponent {
    * @param {String} key Pip name to increase. Valid values are 'sys', 'eng', and 'wep'
    * @param {Boolean} multiCrewPip True when a multi-crew pip is clicked, false otherwise
    */
-  _inc(key, multiCrewPip) {
+  _incrementPip(key, multiCrewPip) {
     if (!['sys', 'eng', 'wep'].includes(key)) {
       return;
     }
@@ -151,7 +151,7 @@ export default class Pips extends TranslatedComponent {
    * @param multiCrewPip True when resetting the multi-crew pips, false otherwise
    * @private
    */
-  _reset(multiCrewPip) {
+  _resetPips(multiCrewPip) {
     let { sys, eng, wep, mcSys, mcEng, mcWep } = this.props;
     if (multiCrewPip) {
       if (mcSys || mcEng || mcWep) {
@@ -161,7 +161,7 @@ export default class Pips extends TranslatedComponent {
         this.props.onChange(sys, eng, wep, 0, 0, 0);
       } else {
         // No multi-crew pips to reset — fall through to full pip reset
-        this._reset(false);
+        this._resetPips(false);
       }
     } else if (sys != 2 || eng != 2 || wep != 2) {
       sys = eng = wep = 2;
