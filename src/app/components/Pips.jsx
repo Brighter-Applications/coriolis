@@ -64,25 +64,25 @@ export default class Pips extends TranslatedComponent {
 
   /**
    * Handle Key Down events
-   * @param  {Event} e Keyboard event
+   * @param  {Event} event Keyboard event
    */
-  _onKeyDown(e) {
-    if (e.ctrlKey || e.metaKey) { // CTRL/CMD
-      switch (e.keyCode) {
+  _onKeyDown(event) {
+    if (event.ctrlKey || event.metaKey) { // CTRL/CMD
+      switch (event.keyCode) {
         case 37:     // Left arrow == increase SYS
-          e.preventDefault();
+          event.preventDefault();
           this._inc('sys', false);
           break;
         case 38:     // Up arrow == increase ENG
-          e.preventDefault();
+          event.preventDefault();
           this._inc('eng', false);
           break;
         case 39:     // Right arrow == increase WEP
-          e.preventDefault();
+          event.preventDefault();
           this._inc('wep', false);
           break;
         case 40:     // Down arrow == reset
-          e.preventDefault();
+          event.preventDefault();
           this._reset();
           break;
       }
