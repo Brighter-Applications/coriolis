@@ -71,15 +71,15 @@ export default class Pips extends TranslatedComponent {
       switch (e.keyCode) {
         case 37:     // Left arrow == increase SYS
           e.preventDefault();
-          this._incSys();
+          this._inc('sys', false);
           break;
         case 38:     // Up arrow == increase ENG
           e.preventDefault();
-          this._incEng();
+          this._inc('eng', false);
           break;
         case 39:     // Right arrow == increase WEP
           e.preventDefault();
-          this._incWep();
+          this._inc('wep', false);
           break;
         case 40:     // Down arrow == reset
           e.preventDefault();
@@ -110,30 +110,6 @@ export default class Pips extends TranslatedComponent {
       sys = eng = wep = 2;
       this.props.onChange(sys + mcSys, eng + mcEng, wep + mcWep, mcSys, mcEng, mcWep);
     }
-  }
-
-  /**
-   * Increment the (non multi-crew) SYS capacitor
-   * @private
-   */
-  _incSys() {
-    this._inc('sys', false);
-  }
-
-  /**
-   * Increment the (non multi-crew) ENG capacitor
-   * @private
-   */
-  _incEng() {
-    this._inc('eng', false);
-  }
-
-  /**
-   * Increment the (non multi-crew) WEP capacitor
-   * @private
-   */
-  _incWep() {
-    this._inc('wep', false);
   }
 
   /**
