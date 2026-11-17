@@ -46,7 +46,7 @@ export default class Pips extends TranslatedComponent {
   /**
    * Handle multi-crew pip changes
    * @private
-   * @param {string} key The name of the capacitor to change. Valid values are 'sys', 'eng', 'wep', and 'rst'
+   * @param {string} key The name of the pips to change. Valid values are 'sys', 'eng', 'wep', and 'rst'
    * @param {boolean} multiCrewPip True when a multi-crew pip is clicked, false otherwise
    * @returns {void}
    */
@@ -63,29 +63,30 @@ export default class Pips extends TranslatedComponent {
   }
 
   /**
-   * Handle Key Down events
+   * Handle Key Down events. The arrow keys, in combination with the CTRL/CMD key change the main pips
    * @param  {Event} event Keyboard event
    */
   _onKeyDown(event) {
-    if (event.ctrlKey || event.metaKey) { // CTRL/CMD
-      switch (event.keyCode) {
-        case 37:     // Left arrow == increase SYS
-          event.preventDefault();
-          this._incrementPip('sys', false);
-          break;
-        case 38:     // Up arrow == increase ENG
-          event.preventDefault();
-          this._incrementPip('eng', false);
-          break;
-        case 39:     // Right arrow == increase WEP
-          event.preventDefault();
-          this._incrementPip('wep', false);
-          break;
-        case 40:     // Down arrow == reset
-          event.preventDefault();
-          this._resetPips();
-          break;
-      }
+    if (!event.target.tagName.toLowerCase() === 'body') return; // ignore when an element other than body has the focus
+    if (!event.ctrlKey && !event.metaKey) return // ignore key-down events without the CTRL/CMD modifier depressed
+
+    switch (event.keyCode) {
+      case 37:     // Left arrow == increase SYS
+        event.preventDefault();
+        this._incrementPip('sys', false);
+        break;
+      case 38:     // Up arrow == increase ENG
+        event.preventDefault();
+        this._incrementPip('eng', false);
+        break;
+      case 39:     // Right arrow == increase WEP
+        event.preventDefault();
+        this._incrementPip('wep', false);
+        break;
+      case 40:     // Down arrow == Reset
+        event.preventDefault();
+        this._resetPips();
+        break;
     }
   }
 
