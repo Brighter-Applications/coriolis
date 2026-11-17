@@ -44,10 +44,10 @@ export default class Pips extends TranslatedComponent {
   }
 
   /**
-   * Handle multi-crew pips change
+   * Handle multi-crew pip changes
    * @private
-   * @param {string} key The name of the capacitor to change, valid values are: sys, eng, wep, and rst
-   * @param {boolean} multiCrewPip Is this a multi-crew pip? or a default (=pilot) pip?
+   * @param {string} key The name of the capacitor to change. Valid values are 'sys', 'eng', 'wep', and 'rst'
+   * @param {boolean} multiCrewPip True when a multi-crew pip is clicked, false otherwise
    * @returns {void}
    */
   _onPipClick(key, multiCrewPip) {
@@ -91,10 +91,10 @@ export default class Pips extends TranslatedComponent {
 
   /**
    * Increases a given capacitor
-   * @param {String} key Pip name to increase (one of 'sys', 'eng', 'wep')
-   * @param {Boolean} isMc True when increase is by multi-crew
+   * @param {String} key Pip name to increase. Valid values are 'sys', 'eng', and 'wep'
+   * @param {Boolean} multiCrewPip True when a multi-crew pip is clicked, false otherwise
    */
-  _inc(key, isMc) {
+  _inc(key, multiCrewPip) {
     if (!['sys', 'eng', 'wep'].includes(key)) {
       return;
     }
@@ -106,7 +106,7 @@ export default class Pips extends TranslatedComponent {
     let other2 = key == 'wep' ? eng - mcEng : wep - mcWep;
 
     const required = Math.min(1, 4 - mc - pips);
-    if (isMc) {
+    if (multiCrewPip) {
       // We can only set full pips in multi-crew also we can only set two pips
       if (required > 0.5 && mcSys + mcEng + mcWep < 2) {
         if (key == 'sys') {
@@ -148,12 +148,12 @@ export default class Pips extends TranslatedComponent {
 
   /**
    * Reset the capacitor
-   * @param isMc True when increase is by multi-crew
+   * @param multiCrewPip True when resetting the multi-crew pips, false otherwise
    * @private
    */
-  _reset(isMc) {
+  _reset(multiCrewPip) {
     let { sys, eng, wep, mcSys, mcEng, mcWep } = this.props;
-    if (isMc) {
+    if (multiCrewPip) {
       if (mcSys || mcEng || mcWep) {
         sys -= mcSys;
         eng -= mcEng;
