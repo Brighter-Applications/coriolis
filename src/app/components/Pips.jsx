@@ -33,14 +33,14 @@ export default class Pips extends TranslatedComponent {
    * Add listeners after mounting
    */
   componentDidMount() {
-    document.addEventListener('keydown', this._keyDown);
+    document.addEventListener('keydown', this._onKeyDown);
   }
 
   /**
    * Remove listeners before unmounting
    */
   componentWillUnmount() {
-    document.removeEventListener('keydown', this._keyDown);
+    document.removeEventListener('keydown', this._onKeyDown);
   }
 
   /**
@@ -50,7 +50,7 @@ export default class Pips extends TranslatedComponent {
    * @param {boolean} multiCrewPip Is this a multi-crew pip? or a default (=pilot) pip?
    * @returns {void}
    */
-  _pipClick(key, multiCrewPip) {
+  _onPipClick(key, multiCrewPip) {
     return (event) => {
       event.stopPropagation();
       event.preventDefault();
@@ -66,7 +66,7 @@ export default class Pips extends TranslatedComponent {
    * Handle Key Down events
    * @param  {Event} e Keyboard event
    */
-  _keyDown(e) {
+  _onKeyDown(e) {
     if (e.ctrlKey || e.metaKey) { // CTRL/CMD
       switch (e.keyCode) {
         case 37:     // Left arrow == increase SYS
@@ -232,33 +232,33 @@ export default class Pips extends TranslatedComponent {
             <tr>
               <td>&nbsp;</td>
               <td>&nbsp;</td>
-              <td className='clickable' onClick={this._pipClick('eng', false)}
-                onContextMenu={this._pipClick('eng', true)}>{pipsSvg['ENG']}</td>
+              <td className='clickable' onClick={this._onPipClick('eng', false)}
+                onContextMenu={this._onPipClick('eng', true)}>{pipsSvg['ENG']}</td>
               <td>&nbsp;</td>
             </tr>
             <tr>
               <td>&nbsp;</td>
-              <td className='clickable' onClick={this._pipClick('sys', false)}
-                onContextMenu={this._pipClick('sys', true)}>{pipsSvg['SYS']}</td>
-              <td className='clickable' onClick={this._pipClick('eng', false)}
-                onContextMenu={this._pipClick('eng', true)}>{translate('ENG')}</td>
-              <td className='clickable' onClick={this._pipClick('wep', false)}
-                onContextMenu={this._pipClick('wep', true)}>{pipsSvg['WEP']}</td>
+              <td className='clickable' onClick={this._onPipClick('sys', false)}
+                onContextMenu={this._onPipClick('sys', true)}>{pipsSvg['SYS']}</td>
+              <td className='clickable' onClick={this._onPipClick('eng', false)}
+                onContextMenu={this._onPipClick('eng', true)}>{translate('ENG')}</td>
+              <td className='clickable' onClick={this._onPipClick('wep', false)}
+                onContextMenu={this._onPipClick('wep', true)}>{pipsSvg['WEP']}</td>
             </tr>
             <tr>
               <td>&nbsp;</td>
-              <td className='clickable' onClick={this._pipClick('sys', false)}
-                onContextMenu={this._pipClick('sys', true)}>{translate('SYS')}</td>
-              <td className='clickable' onClick={this._pipClick('rst', false)}>
+              <td className='clickable' onClick={this._onPipClick('sys', false)}
+                onContextMenu={this._onPipClick('sys', true)}>{translate('SYS')}</td>
+              <td className='clickable' onClick={this._onPipClick('rst', false)}>
                 {translate('RST')}
               </td>
-              <td className='clickable' onClick={this._pipClick('wep', false)}
-                onContextMenu={this._pipClick('wep', true)}>{translate('WEP')}</td>
+              <td className='clickable' onClick={this._onPipClick('wep', false)}
+                onContextMenu={this._onPipClick('wep', true)}>{translate('WEP')}</td>
             </tr>
             <tr>
               <td>&nbsp;</td>
               <td>&nbsp;</td>
-              <td className='clickable secondary' onClick={this._pipClick('rst', true)}
+              <td className='clickable secondary' onClick={this._onPipClick('rst', true)}
                 onMouseEnter={termtip.bind(null, 'PHRASE_MULTI_CREW_CAPACITOR_POINTS')}
                 onMouseLeave={tooltip.bind(null, null)}>
                 {translate('RST')}
