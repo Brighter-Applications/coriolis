@@ -153,17 +153,13 @@ export default class Pips extends TranslatedComponent {
    */
   _resetPips(multiCrewPip) {
     let { sys, eng, wep, mcSys, mcEng, mcWep } = this.props;
-    if (multiCrewPip) {
-      if (mcSys || mcEng || mcWep) {
-        sys -= mcSys;
-        eng -= mcEng;
-        wep -= mcWep;
-        this.props.onChange(sys, eng, wep, 0, 0, 0);
-      } else {
-        // No multi-crew pips to reset — fall through to full pip reset
-        this._resetPips(false);
-      }
-    } else if (sys != 2 || eng != 2 || wep != 2) {
+
+    if (multiCrewPip && (mcSys || mcEng || mcWep)) { // If there are no multi-crew pips to reset, reset default pips instead
+      sys -= mcSys;
+      eng -= mcEng;
+      wep -= mcWep;
+      this.props.onChange(sys, eng, wep, 0, 0, 0);
+    } else if (sys != 2 || eng != 2 || wep != 2) { // reset the default pips, if needed
       sys = eng = wep = 2;
       this.props.onChange(sys + mcSys, eng + mcEng, wep + mcWep, mcSys, mcEng, mcWep);
     }
