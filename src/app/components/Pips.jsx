@@ -5,8 +5,8 @@ import { Pip } from './SvgIcons';
 import autoBind from 'auto-bind';
 
 /**
- * Pips displays SYS/ENG/WEP pips and allows users to change them with key presses by clicking on the relevant area.
- * Requires an onChange() function of the form onChange(sys, eng, wep) which is triggered whenever the pips change.
+ * Pips displays SYS/ENG/WEP pips and allows users to change them with key presses by clicking on the relevant area
+ * Requires an onChange() function of the form onChange(sys, eng, wep) which is triggered whenever the pips change
  */
 export default class Pips extends TranslatedComponent {
   static propTypes = {
@@ -21,8 +21,8 @@ export default class Pips extends TranslatedComponent {
 
   /**
    * Constructor
-   * @param  {Object} props   React Component properties
-   * @param  {Object} context   React Component context
+   * @param  {Object} props React Component properties
+   * @param  {Object} context React Component context
    */
   constructor(props, context) {
     super(props);
@@ -44,8 +44,8 @@ export default class Pips extends TranslatedComponent {
   }
 
   /**
-   * Handle Key Down
-   * @param  {Event} e  Keyboard Event
+   * Handle Key Down events
+   * @param  {Event} e Keyboard event
    */
   _keyDown(e) {
     if (e.ctrlKey || e.metaKey) { // CTRL/CMD
@@ -72,6 +72,8 @@ export default class Pips extends TranslatedComponent {
 
   /**
    * Reset the capacitor
+   * @param isMc True when increase is by multi-crew
+   * @private
    */
   _reset(isMc) {
     let { sys, eng, wep, mcSys, mcEng, mcWep } = this.props;
@@ -92,26 +94,35 @@ export default class Pips extends TranslatedComponent {
   }
 
   /**
-   * Increment the SYS capacitor
+   * Increment the (non multi-crew) SYS capacitor
+   * @private
    */
   _incSys() {
     this._inc('sys', false);
   }
 
   /**
-   * Increment the ENG capacitor
+   * Increment the (non multi-crew) ENG capacitor
+   * @private
    */
   _incEng() {
     this._inc('eng', false);
   }
 
   /**
-   * Increment the WEP capacitor
+   * Increment the (non multi-crew) WEP capacitor
+   * @private
    */
   _incWep() {
     this._inc('wep', false);
   }
 
+  /**
+   * Handle multi-crew pips change
+   * @private
+   * @param {string} key The name of the capacitor to change, valid values are: sys, eng, wep, and rst
+   * @returns {void}
+   */
   _wrapMcClick(key) {
     return (event) => {
       event.stopPropagation();
@@ -127,7 +138,7 @@ export default class Pips extends TranslatedComponent {
   /**
    * Increases a given capacitor
    * @param {String} key Pip name to increase (one of 'sys', 'eng', 'wep')
-   * @param {Boolean} isMc True when increase is by multi crew
+   * @param {Boolean} isMc True when increase is by multi-crew
    */
   _inc(key, isMc) {
     if (!['sys', 'eng', 'wep'].includes(key)) {
@@ -183,13 +194,13 @@ export default class Pips extends TranslatedComponent {
 
   /**
    * Set up the rendering for pips
-   * @param   {Number}     sys the SYS pips
-   * @param   {Number}     eng the ENG pips
-   * @param   {Number}     wep the WEP pips
-   * @param   {Number}     mcSys SYS pips from multi-crew
-   * @param   {Number}     mcEng ENG pips from multi-crew
-   * @param   {Number}     mcWep WEP pips from multi-crew
-   * @returns {Object}      Object containing the rendering for the pips
+   * @param   {Number} sys the SYS pips
+   * @param   {Number} eng the ENG pips
+   * @param   {Number} wep the WEP pips
+   * @param   {Number} mcSys SYS pips from multi-crew
+   * @param   {Number} mcEng ENG pips from multi-crew
+   * @param   {Number} mcWep WEP pips from multi-crew
+   * @returns {Object} Object containing the rendering for the pips
    */
   _renderPips(sys, eng, wep, mcSys, mcEng, mcWep) {
     const pipsSvg = {
@@ -228,7 +239,7 @@ export default class Pips extends TranslatedComponent {
   }
 
   /**
-   * Render pips
+   * Render pips component
    * @return {React.Component} contents
    */
   render() {
