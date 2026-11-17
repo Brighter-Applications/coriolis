@@ -47,16 +47,17 @@ export default class Pips extends TranslatedComponent {
    * Handle multi-crew pips change
    * @private
    * @param {string} key The name of the capacitor to change, valid values are: sys, eng, wep, and rst
+   * @param {boolean} multiCrewPip Is this a multi-crew pip? or a default (=pilot) pip?
    * @returns {void}
    */
-  _clickHandleMultiCrew(key) {
+  _pipClick(key, multiCrewPip) {
     return (event) => {
       event.stopPropagation();
       event.preventDefault();
       if (key == 'rst') {
-        this._reset(true);
+        this._reset(multiCrewPip);
       } else {
-        this._inc(key, true);
+        this._inc(key, multiCrewPip);
       }
     };
   }
@@ -255,33 +256,33 @@ export default class Pips extends TranslatedComponent {
             <tr>
               <td>&nbsp;</td>
               <td>&nbsp;</td>
-              <td className='clickable' onClick={() => this._inc('eng')}
-                onContextMenu={this._clickHandleMultiCrew('eng')}>{pipsSvg['ENG']}</td>
+              <td className='clickable' onClick={this._pipClick('eng', false)}
+                onContextMenu={this._pipClick('eng', true)}>{pipsSvg['ENG']}</td>
               <td>&nbsp;</td>
             </tr>
             <tr>
               <td>&nbsp;</td>
-              <td className='clickable' onClick={this._incSys}
-                onContextMenu={this._clickHandleMultiCrew('sys')}>{pipsSvg['SYS']}</td>
-              <td className='clickable' onClick={this._incEng}
-                onContextMenu={this._clickHandleMultiCrew('eng')}>{translate('ENG')}</td>
-              <td className='clickable' onClick={this._incWep}
-                onContextMenu={this._clickHandleMultiCrew('wep')}>{pipsSvg['WEP']}</td>
+              <td className='clickable' onClick={this._pipClick('sys', false)}
+                onContextMenu={this._pipClick('sys', true)}>{pipsSvg['SYS']}</td>
+              <td className='clickable' onClick={this._pipClick('eng', false)}
+                onContextMenu={this._pipClick('eng', true)}>{translate('ENG')}</td>
+              <td className='clickable' onClick={this._pipClick('wep', false)}
+                onContextMenu={this._pipClick('wep', true)}>{pipsSvg['WEP']}</td>
             </tr>
             <tr>
               <td>&nbsp;</td>
-              <td className='clickable' onClick={this._incSys}
-                onContextMenu={this._clickHandleMultiCrew('sys')}>{translate('SYS')}</td>
-              <td className='clickable' onClick={() => this._reset(false)}>
+              <td className='clickable' onClick={this._pipClick('sys', false)}
+                onContextMenu={this._pipClick('sys', true)}>{translate('SYS')}</td>
+              <td className='clickable' onClick={this._pipClick('rst', false)}>
                 {translate('RST')}
               </td>
-              <td className='clickable' onClick={this._incWep}
-                onContextMenu={this._clickHandleMultiCrew('wep')}>{translate('WEP')}</td>
+              <td className='clickable' onClick={this._pipClick('wep', false)}
+                onContextMenu={this._pipClick('wep', true)}>{translate('WEP')}</td>
             </tr>
             <tr>
               <td>&nbsp;</td>
               <td>&nbsp;</td>
-              <td className='clickable secondary' onClick={this._clickHandleMultiCrew('rst')}
+              <td className='clickable secondary' onClick={this._pipClick('rst', true)}
                 onMouseEnter={termtip.bind(null, 'PHRASE_MULTI_CREW_CAPACITOR_POINTS')}
                 onMouseLeave={tooltip.bind(null, null)}>
                 {translate('RST')}
