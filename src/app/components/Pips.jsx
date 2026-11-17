@@ -44,6 +44,24 @@ export default class Pips extends TranslatedComponent {
   }
 
   /**
+   * Handle multi-crew pips change
+   * @private
+   * @param {string} key The name of the capacitor to change, valid values are: sys, eng, wep, and rst
+   * @returns {void}
+   */
+  _clickHandleMultiCrew(key) {
+    return (event) => {
+      event.stopPropagation();
+      event.preventDefault();
+      if (key == 'rst') {
+        this._reset(true);
+      } else {
+        this._inc(key, true);
+      }
+    };
+  }
+
+  /**
    * Handle Key Down events
    * @param  {Event} e Keyboard event
    */
@@ -115,24 +133,6 @@ export default class Pips extends TranslatedComponent {
    */
   _incWep() {
     this._inc('wep', false);
-  }
-
-  /**
-   * Handle multi-crew pips change
-   * @private
-   * @param {string} key The name of the capacitor to change, valid values are: sys, eng, wep, and rst
-   * @returns {void}
-   */
-  _clickHandleMultiCrew(key) {
-    return (event) => {
-      event.stopPropagation();
-      event.preventDefault();
-      if (key == 'rst') {
-        this._reset(true);
-      } else {
-        this._inc(key, true);
-      }
-    };
   }
 
   /**
