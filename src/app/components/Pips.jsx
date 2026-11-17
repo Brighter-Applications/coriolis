@@ -26,6 +26,17 @@ export default class Pips extends TranslatedComponent {
    */
   constructor(props, context) {
     super(props);
+
+    // Sanitize incoming integer values to recover from potential invalid values from the URL provided state (see: https://github.com/EDCD/coriolis/issues/655)
+    this.props.onChange(
+      this._clamp(this.props.sys, 0, 6),
+      this._clamp(this.props.eng, 0, 6),
+      this._clamp(this.props.wep, 0, 6),
+      this._clamp(this.props.mcSys, 0, 2),
+      this._clamp(this.props.mcEng, 0, 2),
+      this._clamp(this.props.mcWep, 0, 2),
+    );
+
     autoBind(this);
   }
 
@@ -41,6 +52,18 @@ export default class Pips extends TranslatedComponent {
    */
   componentWillUnmount() {
     document.removeEventListener('keydown', this._onKeyDown);
+  }
+
+  /**
+   * Clamp value to within [min, max]
+   * @param value
+   * @param min
+   * @param max
+   * @returns {number}
+   * @private
+   */
+  _clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
   }
 
   /**
