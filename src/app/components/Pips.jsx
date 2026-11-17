@@ -90,29 +90,6 @@ export default class Pips extends TranslatedComponent {
   }
 
   /**
-   * Reset the capacitor
-   * @param isMc True when increase is by multi-crew
-   * @private
-   */
-  _reset(isMc) {
-    let { sys, eng, wep, mcSys, mcEng, mcWep } = this.props;
-    if (isMc) {
-      if (mcSys || mcEng || mcWep) {
-        sys -= mcSys;
-        eng -= mcEng;
-        wep -= mcWep;
-        this.props.onChange(sys, eng, wep, 0, 0, 0);
-      } else {
-        // No multi-crew pips to reset — fall through to full pip reset
-        this._reset(false);
-      }
-    } else if (sys != 2 || eng != 2 || wep != 2) {
-      sys = eng = wep = 2;
-      this.props.onChange(sys + mcSys, eng + mcEng, wep + mcWep, mcSys, mcEng, mcWep);
-    }
-  }
-
-  /**
    * Increases a given capacitor
    * @param {String} key Pip name to increase (one of 'sys', 'eng', 'wep')
    * @param {Boolean} isMc True when increase is by multi-crew
@@ -167,6 +144,29 @@ export default class Pips extends TranslatedComponent {
     eng = mcEng + (key == 'eng' ? pips : (key == 'sys' ? other1 : other2));
     wep = mcWep + (key == 'wep' ? pips : other2);
     this.props.onChange(sys, eng, wep, mcSys, mcEng, mcWep);
+  }
+
+  /**
+   * Reset the capacitor
+   * @param isMc True when increase is by multi-crew
+   * @private
+   */
+  _reset(isMc) {
+    let { sys, eng, wep, mcSys, mcEng, mcWep } = this.props;
+    if (isMc) {
+      if (mcSys || mcEng || mcWep) {
+        sys -= mcSys;
+        eng -= mcEng;
+        wep -= mcWep;
+        this.props.onChange(sys, eng, wep, 0, 0, 0);
+      } else {
+        // No multi-crew pips to reset — fall through to full pip reset
+        this._reset(false);
+      }
+    } else if (sys != 2 || eng != 2 || wep != 2) {
+      sys = eng = wep = 2;
+      this.props.onChange(sys + mcSys, eng + mcEng, wep + mcWep, mcSys, mcEng, mcWep);
+    }
   }
 
   /**
