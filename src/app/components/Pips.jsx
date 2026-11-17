@@ -46,18 +46,18 @@ export default class Pips extends TranslatedComponent {
   /**
    * Handle multi-crew pip changes
    * @private
-   * @param {string} key The name of the pips to change. Valid values are 'sys', 'eng', 'wep', and 'rst'
+   * @param {string} name The name of the pips to change. Valid values are 'sys', 'eng', 'wep', and 'rst'
    * @param {boolean} multiCrewPip True when a multi-crew pip is clicked, false otherwise
    * @returns {void}
    */
-  _onPipClick(key, multiCrewPip) {
+  _onPipClick(name, multiCrewPip) {
     return (event) => {
       event.stopPropagation();
       event.preventDefault();
-      if (key == 'rst') {
+      if (name == 'rst') {
         this._resetPips(multiCrewPip);
       } else {
-        this._incrementPip(key, multiCrewPip);
+        this._incrementPipValue(name, multiCrewPip);
       }
     };
   }
@@ -73,15 +73,15 @@ export default class Pips extends TranslatedComponent {
     switch (event.keyCode) {
       case 37:     // Left arrow == increase SYS
         event.preventDefault();
-        this._incrementPip('sys', false);
+        this._incrementPipValue('sys', false);
         break;
       case 38:     // Up arrow == increase ENG
         event.preventDefault();
-        this._incrementPip('eng', false);
+        this._incrementPipValue('eng', false);
         break;
       case 39:     // Right arrow == increase WEP
         event.preventDefault();
-        this._incrementPip('wep', false);
+        this._incrementPipValue('wep', false);
         break;
       case 40:     // Down arrow == Reset
         event.preventDefault();
@@ -91,60 +91,120 @@ export default class Pips extends TranslatedComponent {
   }
 
   /**
-   * Increases a given capacitor
-   * @param {String} key Pip name to increase. Valid values are 'sys', 'eng', and 'wep'
-   * @param {Boolean} multiCrewPip True when a multi-crew pip is clicked, false otherwise
+   * Increases a given capacitor.
+   * @param {'sys'|'eng'|'wep'} name Pip name to increase.
+   * @param {boolean} multiCrewPip True when a multi-crew pip is clicked.
    */
-  _incrementPip(key, multiCrewPip) {
-    if (!['sys', 'eng', 'wep'].includes(key)) {
+  _incrementPipValue(name, multiCrewPip) {
+    const pips = ['sys', 'eng', 'wep'];
+    if (!pips.includes(name)) {
       return;
     }
 
-    let { sys, eng, wep, mcSys, mcEng, mcWep } = this.props;
-    let mc = key == 'sys' ? mcSys : (key == 'eng' ? mcEng : mcWep);
-    let pips = this.props[key] - mc;
-    let other1 = key == 'sys' ? eng - mcEng : sys - mcSys;
-    let other2 = key == 'wep' ? eng - mcEng : wep - mcWep;
+    const pipTotals = {
+      sys: this.props.sys,
+      eng: this.props.eng,
+      wep: this.props.wep,
+    };
+    const multiCrewPips = {
+      sys: this.props.mcSys,
+      eng: this.props.mcEng,
+      wep: this.props.mcWep,
+    };
 
-    const required = Math.min(1, 4 - mc - pips);
+    // Main pips are the total pips minus the multi-crew pips
+    const mainPips = {};
+    pips.forEach((pip) => {
+      mainPips[pip] = pipTotals[pip] - multiCrewPips[pip];
+    });
+
+    const neededForMaxPips = 4 - multiCrewPips[name] - mainPips[name]; // the pips needed to reach 4 pips
+    const pipChangeValue = Math.min(neededForMaxPips, 1); // Pips still needed to reach the maximum of 4
+
+    let newMultiCrew = multiCrewPips;
+    let newMain = mainPips;
     if (multiCrewPip) {
-      // We can only set full pips in multi-crew also we can only set two pips
-      if (required > 0.5 && mcSys + mcEng + mcWep < 2) {
-        if (key == 'sys') {
-          mcSys += 1;
-        } else if (key == 'eng') {
-          mcEng += 1;
-        } else {
-          mcWep += 1;
-        }
-      }
-    } else if (required > 0) {
-      if (required == 0.5) {
-        // Take from whichever is larger
-        if (other1 > other2) {
-          other1 -= 0.5;
-        } else {
-          other2 -= 0.5;
-        }
-        pips += 0.5;
-      } else {
-        // Required is 1 - take from both if possible
-        if (other1 == 0) {
-          other2 -= 1;
-        } else if (other2 == 0) {
-          other1 -= 1;
-        } else {
-          other1 -= 0.5;
-          other2 -= 0.5;
-        }
-        pips += 1;
-      }
+      newMultiCrew = this._getMultiCrewPips(name, multiCrewPips, pipChangeValue);
+    } else if (pipChangeValue > 0) {
+      newMain = this._getMainPips(name, mainPips, pipChangeValue);
     }
 
-    sys = mcSys + (key == 'sys' ? pips : other1);
-    eng = mcEng + (key == 'eng' ? pips : (key == 'sys' ? other1 : other2));
-    wep = mcWep + (key == 'wep' ? pips : other2);
-    this.props.onChange(sys, eng, wep, mcSys, mcEng, mcWep);
+    this.props.onChange(
+      newMultiCrew.sys + newMain.sys,
+      newMultiCrew.eng + newMain.eng,
+      newMultiCrew.wep + newMain.wep,
+      newMultiCrew.sys,
+      newMultiCrew.eng,
+      newMultiCrew.wep,
+    );
+  }
+
+  /**
+   * Gets the updated values for the multi-crew pips.
+   * @param {String} name Pip name to increase
+   * @param {{sys: Number, eng: Number, wep: Number}} multiCrew Current multi-crew pip values
+   * @param {Number} pipChangeValue Amount of pip change available
+   * @returns {{sys: Number, eng: Number, wep: Number}} Updated multi-crew pip values
+   */
+  _getMultiCrewPips(name, multiCrew, pipChangeValue) {
+    if (pipChangeValue < 1 || multiCrew.sys + multiCrew.eng + multiCrew.wep === 2) { // In multi-crew, only full pips can be set, and only up to two pips in total
+      return multiCrew;
+    }
+
+    const updatedMultiCrew = {
+      sys: multiCrew.sys,
+      eng: multiCrew.eng,
+      wep: multiCrew.wep,
+    };
+    updatedMultiCrew[name] += 1;
+
+    return updatedMultiCrew;
+  }
+
+  /**
+   * Gets the updated values for the main pips
+   * @param {String} name Pip name to increase
+   * @param {{sys: Number, eng: Number, wep: Number}} mainPips Current main pip values
+   * @param {Number} pipChangeValue Amount of pip change to apply (0.5 or 1)
+   * @returns {{sys: Number, eng: Number, wep: Number}} Updated main pip values
+   */
+  _getMainPips(name, mainPips, pipChangeValue) {
+    const otherPips = {
+      sys: ['eng', 'wep'],
+      eng: ['sys', 'wep'],
+      wep: ['sys', 'eng'],
+    };
+    const [other1, other2] = otherPips[name];
+
+    const changedPips = {
+      sys: mainPips.sys,
+      eng: mainPips.eng,
+      wep: mainPips.wep,
+    };
+
+    // Compared to ED, we use a simplified method, where we always take either 1 or 0.5 pips.
+    if (pipChangeValue === 0.5) {
+      // Take from whichever of the other pips is larger (ties go to the second one)
+      if (mainPips[other1] > mainPips[other2]) {
+        changedPips[other1] -= 0.5;
+      } else {
+        changedPips[other2] -= 0.5;
+      }
+      changedPips[name] += 0.5;
+    } else {
+      // A full pip is required: take from both if possible, otherwise from the one with pips
+      if (mainPips[other1] === 0) {
+        changedPips[other2] -= 1;
+      } else if (mainPips[other2] === 0) {
+        changedPips[other1] -= 1;
+      } else {
+        changedPips[other1] -= 0.5;
+        changedPips[other2] -= 0.5;
+      }
+      changedPips[name] += 1;
+    }
+
+    return changedPips;
   }
 
   /**
