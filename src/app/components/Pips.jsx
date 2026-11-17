@@ -130,9 +130,9 @@ export default class Pips extends TranslatedComponent {
     }
 
     this.props.onChange(
-      newMultiCrew.sys + newMain.sys,
-      newMultiCrew.eng + newMain.eng,
-      newMultiCrew.wep + newMain.wep,
+      newMain.sys + newMultiCrew.sys,
+      newMain.eng + newMultiCrew.eng,
+      newMain.wep + newMultiCrew.wep,
       newMultiCrew.sys,
       newMultiCrew.eng,
       newMultiCrew.wep,
