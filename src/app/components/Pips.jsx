@@ -123,7 +123,7 @@ export default class Pips extends TranslatedComponent {
    * @param {string} key The name of the capacitor to change, valid values are: sys, eng, wep, and rst
    * @returns {void}
    */
-  _wrapMcClick(key) {
+  _clickHandleMultiCrew(key) {
     return (event) => {
       event.stopPropagation();
       event.preventDefault();
@@ -256,32 +256,32 @@ export default class Pips extends TranslatedComponent {
               <td>&nbsp;</td>
               <td>&nbsp;</td>
               <td className='clickable' onClick={() => this._inc('eng')}
-                onContextMenu={this._wrapMcClick('eng')}>{pipsSvg['ENG']}</td>
+                onContextMenu={this._clickHandleMultiCrew('eng')}>{pipsSvg['ENG']}</td>
               <td>&nbsp;</td>
             </tr>
             <tr>
               <td>&nbsp;</td>
               <td className='clickable' onClick={this._incSys}
-                onContextMenu={this._wrapMcClick('sys')}>{pipsSvg['SYS']}</td>
+                onContextMenu={this._clickHandleMultiCrew('sys')}>{pipsSvg['SYS']}</td>
               <td className='clickable' onClick={this._incEng}
-                onContextMenu={this._wrapMcClick('eng')}>{translate('ENG')}</td>
+                onContextMenu={this._clickHandleMultiCrew('eng')}>{translate('ENG')}</td>
               <td className='clickable' onClick={this._incWep}
-                onContextMenu={this._wrapMcClick('wep')}>{pipsSvg['WEP']}</td>
+                onContextMenu={this._clickHandleMultiCrew('wep')}>{pipsSvg['WEP']}</td>
             </tr>
             <tr>
               <td>&nbsp;</td>
               <td className='clickable' onClick={this._incSys}
-                onContextMenu={this._wrapMcClick('sys')}>{translate('SYS')}</td>
+                onContextMenu={this._clickHandleMultiCrew('sys')}>{translate('SYS')}</td>
               <td className='clickable' onClick={() => this._reset(false)}>
                 {translate('RST')}
               </td>
               <td className='clickable' onClick={this._incWep}
-                onContextMenu={this._wrapMcClick('wep')}>{translate('WEP')}</td>
+                onContextMenu={this._clickHandleMultiCrew('wep')}>{translate('WEP')}</td>
             </tr>
             <tr>
               <td>&nbsp;</td>
               <td>&nbsp;</td>
-              <td className='clickable secondary' onClick={this._wrapMcClick('rst')}
+              <td className='clickable secondary' onClick={this._clickHandleMultiCrew('rst')}
                 onMouseEnter={termtip.bind(null, 'PHRASE_MULTI_CREW_CAPACITOR_POINTS')}
                 onMouseLeave={tooltip.bind(null, null)}>
                 {translate('RST')}
