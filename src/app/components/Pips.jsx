@@ -227,13 +227,13 @@ export default class Pips extends TranslatedComponent {
   }
 
   /**
-   * Set up the rendering for pips
-   * @param   {Number} sys the SYS pips
-   * @param   {Number} eng the ENG pips
-   * @param   {Number} wep the WEP pips
-   * @param   {Number} mcSys SYS pips from multi-crew
-   * @param   {Number} mcEng ENG pips from multi-crew
-   * @param   {Number} mcWep WEP pips from multi-crew
+   * Set up the rendering for pips.
+   * @param {number} sys the main sys pips
+   * @param {number} eng the main eng pips
+   * @param {number} wep the main wep pips
+   * @param {number} mcSys the multi-crew sys pips
+   * @param {number} mcEng the multi-crew eng pips
+   * @param {number} mcWep the multi-crew wep pips
    * @returns {Object} Object containing the rendering for the pips
    */
   _renderPips(sys, eng, wep, mcSys, mcEng, mcWep) {
@@ -243,29 +243,35 @@ export default class Pips extends TranslatedComponent {
       WEP: [],
     };
 
-    // Multi-crew pipsSettings actually are included in the overall pip count therefore
-    // we can consider [0, sys - mcSys] as normal pipsSettings whilst [sys - mcSys, sys]
-    // are the multi-crew pipsSettings in what follows.
-
-    let pipsSettings = {
+    const pipValues = {
       SYS: [sys, mcSys],
       ENG: [eng, mcEng],
       WEP: [wep, mcWep],
     };
 
-    for (let pipName in pipsSettings) {
-      let [pips, mcPips] = pipsSettings[pipName];
-      for (let i = 0; i < Math.floor(pips - mcPips); i++) {
-        pipsSvg[pipName].push(<Pip key={i} className='full' />);
+    for (const pipName in pipValues) {
+      const [totalPips, multiCrewPips] = pipValues[pipName];
+      const mainPips =totalPips - multiCrewPips;
+
+      // Render full main pips
+      for (let index = 0; index < Math.floor(mainPips) && index < 4; index++) {
+        pipsSvg[pipName].push(<Pip className="full" key={index} />
+        );
       }
-      if (pips > Math.floor(pips)) {
-        pipsSvg[pipName].push(<Pip className='half' key={'half'} />);
+
+      // Render a half pip when the main pips have a fractional value
+      if (mainPips > Math.floor(mainPips)) {
+        pipsSvg[pipName].push(<Pip className="half" key="half" />);
       }
-      for (let i = pips - mcPips; i < Math.floor(pips); i++) {
-        pipsSvg[pipName].push(<Pip key={i} className='mc' />);
+
+      // Render the multi-crew pips
+      for (let index = mainPips; index < Math.floor(totalPips); index++) {
+        pipsSvg[pipName].push(<Pip className="mc" key={index} />);
       }
-      for (let i = Math.floor(pips + 0.5); i < 4; i++) {
-        pipsSvg[pipName].push(<Pip className='empty' key={i} />);
+
+      // Fill any remaining slots with empty pips
+      for (let index = Math.floor(totalPips + 0.5); index < 4; index++) {
+        pipsSvg[pipName].push(<Pip className="empty" key={index} />);
       }
     }
 
