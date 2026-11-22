@@ -1,3 +1,5 @@
+#4.1.22
+  * Fixed issues with pip controls
 #4.1.21
   * Adding CMDR Ship API to cmdr.coriolis.io
 #4.1.20
