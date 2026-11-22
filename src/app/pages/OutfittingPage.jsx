@@ -11,6 +11,11 @@ import * as _ from 'lodash';
 import { toDetailedBuild, toSLEF } from '../shipyard/Serializer';
 import { outfitURL } from '../utils/UrlGenerators';
 import {
+  buildControlString,
+  sanitisePips,
+  splitControlString
+} from '../utils/ControlCode';
+import {
   FloppyDisk,
   Bin,
   Switch,
@@ -235,15 +240,13 @@ export default class OutfittingPage extends Page {
       const parts = code.split('.');
       if (parts.length >= 5) {
         // We have control information in the code
-        const control = LZString.decompressFromBase64(
-          Utils.fromUrlSafe(parts[4])
-        ).split('/');
+        const control = splitControlString(
+          LZString.decompressFromBase64(Utils.fromUrlSafe(parts[4]))
+        );
+        // Pips are sanitised after the multi-crew values have been read, below
         sys = parseFloat(control[0]);
         eng = parseFloat(control[1]);
         wep = parseFloat(control[2]);
-        if (sys + eng + wep > 6) {
-          sys = eng = wep = 2;
-        }
         boost = control[3] == 1 ? true : false;
         fuel = parseFloat(control[4]) || fuel;
         cargo = parseInt(control[5]) || cargo;
@@ -424,11 +427,20 @@ export default class OutfittingPage extends Page {
       opponentBuild,
       engagementRange
     } = this.state;
-    const code = `${sys}/${eng}/${wep}/${boost ? 1 : 0}/${fuel ||
-      this.state.fuel}/${cargo || this.state.cargo}/${opponent.id}/${
-      opponentBuild ? opponentBuild : ''
-    }/${engagementRange}/${mcSys}/${mcEng}/${mcWep}`;
-    return code;
+    return buildControlString({
+      sys,
+      eng,
+      wep,
+      boost,
+      fuel: fuel || this.state.fuel,
+      cargo: cargo || this.state.cargo,
+      opponentId: opponent.id,
+      opponentBuild,
+      engagementRange,
+      mcSys,
+      mcEng,
+      mcWep
+    });
   }
 
   /**
