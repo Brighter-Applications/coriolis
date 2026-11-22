@@ -27,16 +27,6 @@ export default class Pips extends TranslatedComponent {
   constructor(props, context) {
     super(props);
 
-    // Sanitize incoming integer values to recover from potential invalid values from the URL provided state (see: https://github.com/EDCD/coriolis/issues/655)
-    this.props.onChange(
-      this._clamp(this.props.sys, 0, 6),
-      this._clamp(this.props.eng, 0, 6),
-      this._clamp(this.props.wep, 0, 6),
-      this._clamp(this.props.mcSys, 0, 2),
-      this._clamp(this.props.mcEng, 0, 2),
-      this._clamp(this.props.mcWep, 0, 2),
-    );
-
     autoBind(this);
   }
 
@@ -52,18 +42,6 @@ export default class Pips extends TranslatedComponent {
    */
   componentWillUnmount() {
     document.removeEventListener('keydown', this._onKeyDown);
-  }
-
-  /**
-   * Clamp value to within [min, max]
-   * @param value
-   * @param min
-   * @param max
-   * @returns {number}
-   * @private
-   */
-  _clamp(value, min, max) {
-    return Math.min(Math.max(value, min), max);
   }
 
   /**
@@ -90,8 +68,7 @@ export default class Pips extends TranslatedComponent {
    * @param  {Event} event Keyboard event
    */
   _onKeyDown(event) {
-    if (!event.target.tagName.toLowerCase() === 'body') return; // ignore when an element other than body has the focus
-    if (!event.ctrlKey && !event.metaKey) return // ignore key-down events without the CTRL/CMD modifier depressed
+    if (!event.ctrlKey && !event.metaKey) return; // ignore key-down events without the CTRL/CMD modifier depressed
 
     switch (event.keyCode) {
       case 37:     // Left arrow == increase SYS
@@ -274,12 +251,11 @@ export default class Pips extends TranslatedComponent {
 
     for (const pipName in pipValues) {
       const [totalPips, multiCrewPips] = pipValues[pipName];
-      const mainPips =totalPips - multiCrewPips;
+      const mainPips = totalPips - multiCrewPips;
 
       // Render full main pips
       for (let index = 0; index < Math.floor(mainPips) && index < 4; index++) {
-        pipsSvg[pipName].push(<Pip className="full" key={index} />
-        );
+        pipsSvg[pipName].push(<Pip className="full" key={`full-${index}`} />);
       }
 
       // Render a half pip when the main pips have a fractional value
@@ -288,13 +264,13 @@ export default class Pips extends TranslatedComponent {
       }
 
       // Render the multi-crew pips
-      for (let index = mainPips; index < Math.floor(totalPips); index++) {
-        pipsSvg[pipName].push(<Pip className="mc" key={index} />);
+      for (let index = Math.max(mainPips, 0); index < Math.floor(totalPips) && index < 4; index++) {
+        pipsSvg[pipName].push(<Pip className="mc" key={`mc-${index}`} />);
       }
 
-      // Fill any remaining slots with empty pips
-      for (let index = Math.floor(totalPips + 0.5); index < 4; index++) {
-        pipsSvg[pipName].push(<Pip className="empty" key={index} />);
+      // Fill any remaining slots with empty pips, so there are never more than 4 slots
+      for (let index = pipsSvg[pipName].length; index < 4; index++) {
+        pipsSvg[pipName].push(<Pip className="empty" key={`empty-${index}`} />);
       }
     }
 
