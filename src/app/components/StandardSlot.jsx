@@ -188,7 +188,7 @@ export default class StandardSlot extends TranslatedComponent {
           <div className={'sz'}>{m.grp == 'bh' ? m.name.charAt(0) : slot.maxClass}</div>
           <div className={'details'}>
             <div class={'ct'}>
-              <div className={'l'}>{availabilityIcon ? <span onMouseOver={termtip.bind(null, availabilityTip)} onMouseOut={tooltip.bind(null, null)}>{availabilityIcon}</span> : ''}{classRating} {m.getInfo() ? translate(m.ukName) : translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='r' onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified />{m.blueprint && m.blueprint.grade ? <sub className='eng-grade'>{m.blueprint.grade}</sub> : null}</span> : null }</div>
+              <div className={'l'}>{availabilityIcon ? <span onMouseOver={termtip.bind(null, availabilityTip)} onMouseOut={tooltip.bind(null, null)}>{availabilityIcon}</span> : ''}{classRating} {m.getInfo() ? translate(m.ukName) : translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='eng-icon' onMouseOver={termtip.bind(null, modTT)} onMouseOut={tooltip.bind(null, null)}><Modified />{m.blueprint && m.blueprint.grade ? <sub className='eng-grade'>{m.blueprint.grade}</sub> : null}</span> : null }</div>
               <div className={'r'}>{formats.round(mass)}{units.T}</div>
             </div>
             <div className={'cb'}>
