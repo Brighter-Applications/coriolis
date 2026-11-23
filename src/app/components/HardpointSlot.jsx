@@ -160,7 +160,7 @@ export default class HardpointSlot extends Slot {
 
       const className = cn('details', enabled ? '' : 'disabled');
       return <div className={className} draggable='true' onDragStart={drag} onDragEnd={drop}>
-        <div className={'cb'}>
+        <div className={'ct'}>
           <div className={'l'}>
             {availabilityIcon ? <span onMouseOver={termtip.bind(null, cgttip)}
                                                onMouseOut={tooltip.bind(null, null)}>{availabilityIcon}</span> : ''}
