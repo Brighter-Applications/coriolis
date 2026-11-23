@@ -178,7 +178,7 @@ export default class HardpointSlot extends Slot {
                                                               onMouseOut={tooltip.bind(null, null)}><DamageExplosive/></span> : ''}
             {m.getDamageDist() && m.getDamageDist().A ? <span onMouseOver={termtip.bind(null, 'absolute')}
                                                               onMouseOut={tooltip.bind(null, null)}><DamageAbsolute/></span> : ''}
-            {classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='r'
+            {classRating} {translate(m.name || m.grp)}{m.mods && Object.keys(m.mods).length > 0 ? <span className='eng-icon'
                                                                                                         onMouseOver={termtip.bind(null, modTT)}
                                                                                                         onMouseOut={tooltip.bind(null, null)}><Modified/>{m.blueprint && m.blueprint.grade ? <sub className='eng-grade'>{m.blueprint.grade}</sub> : null}</span> : null}
           </div>
