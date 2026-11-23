@@ -1,3 +1,5 @@
+#4.1.23
+  * Georgian Translations updated
 #4.1.22
   * Fixed issues with pip controls
 #4.1.21
