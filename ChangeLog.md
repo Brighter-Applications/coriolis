@@ -1,3 +1,5 @@
+#4.1.24
+  * Italian Translations updated
 #4.1.23
   * Georgian Translations updated
 #4.1.22
