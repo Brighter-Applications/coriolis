@@ -2352,7 +2352,10 @@ export default class Ship {
     const pdWeaponMultiplier = Math.pow(wep / 4, 1.1);
     const sustainedEnergyDrawPerSecond = this.getSustainedHardpointEnergyDrawPerSecond();
 
-    return Math.min(Math.max(pdWeaponRechargeRate * pdWeaponMultiplier / sustainedEnergyDrawPerSecond, 0), 1);
+    if (sustainedEnergyDrawPerSecond > 0) {
+      return Math.min(Math.max(pdWeaponRechargeRate * pdWeaponMultiplier / sustainedEnergyDrawPerSecond, 0), 1);
+    }
+    return 0;
   };
 
   /**
