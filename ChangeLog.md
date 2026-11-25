@@ -1,3 +1,5 @@
+#4.1.26
+  * Fixing PAS slot on Corsair
 #4.1.25
   * Slot Menu improvements
 #4.1.24
