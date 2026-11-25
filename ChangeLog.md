@@ -1,3 +1,5 @@
+#4.1.25
+  * Slot Menu improvements
 #4.1.24
   * Italian Translations updated
 #4.1.23
